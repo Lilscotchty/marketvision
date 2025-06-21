@@ -11,17 +11,6 @@ const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
 const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
 const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
 
-// Log the source of each configuration value
-console.log("--- Firebase Configuration (from .env.local) ---");
-console.log(`apiKey: ${apiKey ? apiKey.substring(0,5) + '...' : 'NOT FOUND in .env.local'}`);
-console.log(`authDomain: ${authDomain || 'NOT FOUND in .env.local'}`);
-console.log(`projectId: ${projectId || 'NOT FOUND in .env.local'}`);
-console.log(`storageBucket: ${storageBucket || 'NOT FOUND in .env.local'}`);
-console.log(`messagingSenderId: ${messagingSenderId || 'NOT FOUND in .env.local'}`);
-console.log(`appId: ${appId ? appId.substring(0,20) + '...' : 'NOT FOUND in .env.local'}`);
-console.log("--------------------------------------------------");
-
-
 const firebaseConfig = {
   apiKey: apiKey,
   authDomain: authDomain,
@@ -34,7 +23,7 @@ const firebaseConfig = {
 // Check if all required Firebase config values are present
 if (!apiKey || !authDomain || !projectId || !appId) {
   console.error(
-    'CRITICAL ERROR: Firebase configuration is missing. Ensure all NEXT_PUBLIC_FIREBASE_ variables are set in your .env.local file and the server is restarted. Firebase will not initialize correctly.'
+    'CRITICAL ERROR: Firebase configuration is missing. Ensure all NEXT_PUBLIC_FIREBASE_ variables are set in your .env.local file (for local) or in your hosting provider environment variables (for deployment). Firebase will not initialize correctly.'
   );
   // Firebase will likely throw an error during initialization if config is incomplete.
 }

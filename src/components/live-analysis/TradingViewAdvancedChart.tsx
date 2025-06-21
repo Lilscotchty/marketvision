@@ -25,7 +25,7 @@ function TradingViewAdvancedChartWidget() {
         "locale": "en",
         "backgroundColor": "rgba(16, 19, 24, 1)", // Matches app background (hsl(220, 20%, 7%))
         "gridColor": "rgba(46, 51, 56, 0.3)", // Grid lines from app border (hsl(220, 15%, 20%)), slightly transparent
-        "toolbar_bg": "rgba(23, 26, 31, 1)", // Toolbar background from app card (hsl(220, 20%, 10%))
+        "toolbar_bg": "rgba(16, 19, 24, 1)", // Toolbar background from app card (hsl(220, 20%, 10%))
         "withdateranges": true,
         "hide_side_toolbar": false,
         "allow_symbol_change": true,
