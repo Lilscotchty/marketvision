@@ -7,7 +7,7 @@ import { BarChart } from "lucide-react";
 
 export default function LiveAnalysisPage() {
   return (
-    <div className="container mx-auto py-8 space-y-12">
+    <div className="container mx-auto py-4 md:py-8 space-y-8">
       <section id="ticker-tape">
         <TradingViewTickerTape />
       </section>
