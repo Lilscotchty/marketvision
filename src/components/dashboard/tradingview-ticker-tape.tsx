@@ -8,8 +8,13 @@ function TradingViewTickerTape() {
   const scriptAppended = useRef(false);
 
   useEffect(() => {
+    // Ensure this only runs on the client
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const script = document.createElement("script");
     if (container.current && !scriptAppended.current) {
-        const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
         script.type = "text/javascript";
         script.async = true;
@@ -50,6 +55,21 @@ function TradingViewTickerTape() {
         container.current.appendChild(script);
         scriptAppended.current = true;
     }
+
+    // Cleanup function to remove the script and widget when the component unmounts
+    return () => {
+      if (container.current && script.parentNode === container.current) {
+        container.current.removeChild(script);
+      }
+      // Also, clear the inner HTML to ensure the widget itself is gone
+      if (container.current) {
+        const widgetContainer = container.current.querySelector('.tradingview-widget-container__widget');
+        if (widgetContainer) {
+            widgetContainer.innerHTML = '';
+        }
+      }
+      scriptAppended.current = false;
+    };
   }, []);
 
   return (
