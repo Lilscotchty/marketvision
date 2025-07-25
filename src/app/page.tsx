@@ -2,7 +2,6 @@
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import { CandlestickChart, TrendingUp } from "lucide-react";
 import { TradingViewMarketOverview } from "@/components/dashboard/tradingview-market-overview";
-import TradingViewTickerTape from "@/components/dashboard/tradingview-ticker-tape";
 import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
@@ -10,12 +9,6 @@ export default function DashboardPage() {
     <div className="container mx-auto py-2 md:py-8">
       
       <main className="space-y-10 md:space-y-12">
-
-        <section id="ticker-tape">
-           <TradingViewTickerTape />
-        </section>
-
-        <Separator />
 
         <section id="chart-analysis-tool">
           <header className="mb-6 text-center">
@@ -29,6 +22,8 @@ export default function DashboardPage() {
           </header>
           <ImageUploadForm />
         </section>
+
+        <Separator />
 
         <section id="global-market-data">
            <header className="mb-6 text-center">

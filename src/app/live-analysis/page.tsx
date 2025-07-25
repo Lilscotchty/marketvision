@@ -1,6 +1,7 @@
 
 import { LiveMarketDataDisplay } from "@/components/live-analysis/live-market-data-display";
-import TradingViewAdvancedChartWidget from "@/components/live-analysis/TradingViewAdvancedChart"; // New Import
+import TradingViewAdvancedChartWidget from "@/components/live-analysis/TradingViewAdvancedChart";
+import TradingViewTickerTape from "@/components/dashboard/tradingview-ticker-tape";
 import { Separator } from "@/components/ui/separator";
 import { BarChart } from "lucide-react";
 
@@ -16,6 +17,10 @@ export default function LiveAnalysisPage() {
           Observe the live market with the TradingView chart, then use the form below to input key data points and your observations for a conceptual AI-powered ICT analysis.
         </p>
       </header>
+      
+      <section id="ticker-tape">
+        <TradingViewTickerTape />
+      </section>
 
       <section id="live-trading-chart">
         <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
@@ -33,4 +38,3 @@ export default function LiveAnalysisPage() {
     </div>
   );
 }
-

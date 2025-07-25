@@ -4,11 +4,11 @@
 import React, { useEffect, useRef, memo } from 'react';
 
 function TradingViewTickerTape() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLDivElement>(null);
   const scriptAppended = useRef(false);
 
   useEffect(() => {
-    if (containerRef.current && !scriptAppended.current) {
+    if (container.current && !scriptAppended.current) {
         const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
         script.type = "text/javascript";
@@ -34,22 +34,26 @@ function TradingViewTickerTape() {
             {
               "proName": "BITSTAMP:ETHUSD",
               "title": "Ethereum"
+            },
+            {
+              "proName": "ICMARKETS:USTEC",
+              "title": "USTEC"
             }
           ],
           "showSymbolLogo": true,
           "colorTheme": "dark",
           "isTransparent": true,
-          "displayMode": "adaptive",
+          "displayMode": "regular",
           "locale": "en"
         });
 
-        containerRef.current.appendChild(script);
+        container.current.appendChild(script);
         scriptAppended.current = true;
     }
   }, []);
 
   return (
-    <div className="tradingview-widget-container" ref={containerRef}>
+    <div className="tradingview-widget-container" ref={container}>
       <div className="tradingview-widget-container__widget"></div>
     </div>
   );
