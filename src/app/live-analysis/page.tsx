@@ -24,7 +24,7 @@ export default function LiveAnalysisPage() {
       
       <section id="live-trading-chart">
         <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
-        <div className="rounded-lg overflow-hidden shadow-xl border border-border">
+        <div className="h-[500px] md:h-[650px] w-full rounded-lg overflow-hidden shadow-xl border border-border">
           <TradingViewAdvancedChartWidget />
         </div>
       </section>
