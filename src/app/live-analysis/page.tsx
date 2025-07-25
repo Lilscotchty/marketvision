@@ -13,8 +13,8 @@ export default function LiveAnalysisPage() {
       </section>
 
       <header className="text-center">
-        <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl flex items-center justify-center">
-          <BarChart className="mr-3 h-10 w-10 text-accent"/>
+        <h1 className="text-3xl font-headline font-bold tracking-tight sm:text-4xl flex items-center justify-center">
+          <BarChart className="mr-3 h-8 w-8 text-accent"/>
           In-depth <span className="text-accent">Analysis</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
