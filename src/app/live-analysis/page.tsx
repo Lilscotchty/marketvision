@@ -8,6 +8,10 @@ import { BarChart } from "lucide-react";
 export default function LiveAnalysisPage() {
   return (
     <div className="container mx-auto py-8 space-y-12">
+      <section id="ticker-tape">
+        <TradingViewTickerTape />
+      </section>
+
       <header className="text-center">
         <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl flex items-center justify-center">
           <BarChart className="mr-3 h-10 w-10 text-accent"/>
@@ -18,10 +22,6 @@ export default function LiveAnalysisPage() {
         </p>
       </header>
       
-      <section id="ticker-tape">
-        <TradingViewTickerTape />
-      </section>
-
       <section id="live-trading-chart">
         <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
         <div className="rounded-lg overflow-hidden shadow-xl border border-border">
