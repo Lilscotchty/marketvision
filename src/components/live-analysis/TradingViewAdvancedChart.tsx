@@ -32,7 +32,7 @@ function TradingViewWidget() {
       "symbol": "NASDAQ:AAPL",
       "theme": "dark",
       "timezone": "Etc/UTC",
-      "backgroundColor": "#0F0F0F",
+      "backgroundColor": "rgba(1, 3, 21, 0.31)",
       "gridColor": "rgba(242, 242, 242, 0.06)",
       "watchlist": [],
       "withdateranges": true,

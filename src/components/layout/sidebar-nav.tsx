@@ -22,7 +22,7 @@ export interface NavItem {
   fullLabel?: string; 
   authRequired?: boolean;
   guestOnly?: boolean;
-  mobileLocation?: 'header'; // Used for mobile header placement
+  mobileLocation?: 'header'; // Used for mobile placement
   showBadge?: boolean; // New property to indicate if badge should be shown
 }
 
