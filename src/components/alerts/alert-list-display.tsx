@@ -41,48 +41,50 @@ export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimul
         <CardDescription>Manage your existing market alerts and simulate triggers.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Asset</TableHead>
-              <TableHead>Condition</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {alerts.map((alert) => (
-              <TableRow key={alert.id}>
-                <TableCell className="font-medium">{alert.name}</TableCell>
-                <TableCell>{alert.asset}</TableCell>
-                <TableCell className="capitalize">
-                  {alert.conditionType.replace('_', ' ')}
-                </TableCell>
-                <TableCell>{alert.value}</TableCell>
-                <TableCell>
-                  <Badge variant={alert.isActive ? "default" : "outline"} className={alert.isActive ? "bg-green-600 hover:bg-green-700" : ""}>
-                    {alert.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right space-x-1">
-                   {alert.isActive && (
-                    <Button variant="ghost" size="icon" onClick={() => onSimulateTrigger(alert)} title="Simulate Trigger">
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="icon" onClick={() => onToggleAlert(alert.id)} title={alert.isActive ? "Deactivate" : "Activate"}>
-                    {alert.isActive ? <BellOff className="h-4 w-4" /> : <BellRing className="h-4 w-4" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDeleteAlert(alert.id)} title="Delete" className="text-destructive hover:text-destructive/80">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Asset</TableHead>
+                <TableHead>Condition</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {alerts.map((alert) => (
+                <TableRow key={alert.id} id={alert.id}>
+                  <TableCell className="font-medium">{alert.name}</TableCell>
+                  <TableCell>{alert.asset}</TableCell>
+                  <TableCell className="capitalize">
+                    {alert.conditionType.replace('_', ' ')}
+                  </TableCell>
+                  <TableCell>{alert.value}</TableCell>
+                  <TableCell>
+                    <Badge variant={alert.isActive ? "default" : "outline"} className={alert.isActive ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
+                      {alert.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-1 whitespace-nowrap">
+                    {alert.isActive && (
+                      <Button variant="ghost" size="icon" onClick={() => onSimulateTrigger(alert)} title="Simulate Trigger">
+                        <Zap className="h-4 w-4 text-yellow-500" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => onToggleAlert(alert.id)} title={alert.isActive ? "Deactivate" : "Activate"}>
+                      {alert.isActive ? <BellOff className="h-4 w-4" /> : <BellRing className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onDeleteAlert(alert.id)} title="Delete" className="text-destructive hover:text-destructive/80">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

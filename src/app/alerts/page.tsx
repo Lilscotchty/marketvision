@@ -59,7 +59,7 @@ export default function AlertsPage() {
   const handleSimulateTrigger = (alert: AlertConfig) => {
     addNotification({
       title: `Alert Triggered: ${alert.name}`,
-      message: `Your alert "${alert.name}" for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
+      message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
       type: 'alert_trigger',
       iconName: 'BellRing',
       relatedLink: `/alerts#${alert.id}` // Example link
