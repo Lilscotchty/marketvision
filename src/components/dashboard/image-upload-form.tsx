@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Loader2, UploadCloud, CreditCard, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, UploadCloud, CreditCard } from "lucide-react";
 import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
@@ -60,19 +60,6 @@ export function ImageUploadForm() {
   const needsSubscription = isFullyAuthenticated && !hasSubscription && trialPoints <= 0;
   const interactionDisabledForAuth = authLoading || !user;
 
-  useEffect(() => {
-    // This effect attempts to decrement trial points if analysis was successful.
-    // In a real app, this decrement should be tied to a successful server-side analysis confirmation.
-    if (state?.prediction && state?.analysis && !state?.error && isFullyAuthenticated && !hasSubscription && trialPoints > 0) {
-      // Check if this was a new analysis by comparing previewUrl or a unique ID from state if available
-      // For now, assuming any successful result means a point should be used if not subscribed.
-      // This is a simplification.
-      console.log("Attempting to decrement trial point after analysis.");
-      decrementTrialPoint(); 
-    }
-  }, [state, isFullyAuthenticated, hasSubscription, trialPoints, decrementTrialPoint]);
-
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!user && !authLoading) {
       toast({
@@ -116,15 +103,14 @@ export function ImageUploadForm() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    // formAction(undefined); // This would require a re-render/key change on the form itself to reset state.
   };
 
   const getHelperText = () => {
     if (authLoading) return "Loading user data...";
-    if (!user) return "Please log in or sign up to analyze charts.";
-    if (hasSubscription) return "Premium access enabled. Enjoy unlimited chart analysis!";
-    if (trialPoints > 0) return `You have ${trialPoints} trial analysis remaining.`;
-    return "Your trial has ended. Subscribe for unlimited analysis.";
+    if (!user) return "Log in or sign up to analyze charts.";
+    if (hasSubscription) return "Premium access enabled.";
+    if (trialPoints > 0) return `You have ${trialPoints} trial analyses remaining.`;
+    return "Your trial has ended. Subscribe to continue.";
   };
 
   return (
@@ -179,7 +165,7 @@ export function ImageUploadForm() {
                  <Alert variant="default" className="mb-4 sm:mb-0 border-green-500 text-green-500 [&>svg]:text-green-500">
                   <CheckCircle className="h-4 w-4" />
                   <AlertTitle>Analysis Complete</AlertTitle>
-                  <AlertDescription>Scroll down to see the results.</AlertDescription>
+                  <AlertDescription>Scroll down for results.</AlertDescription>
                 </Alert>
               )}
               {needsSubscription && (
@@ -187,7 +173,7 @@ export function ImageUploadForm() {
                   <CreditCard className="h-4 w-4" />
                   <AlertTitle>Subscription Required</AlertTitle>
                   <AlertDescription>
-                    Your trial points are used up. Subscribe to continue analyzing charts.
+                    Your trial has ended.
                     <Button 
                       variant="link" 
                       className="p-0 h-auto ml-1 text-accent font-semibold"
@@ -222,7 +208,7 @@ export function ImageUploadForm() {
         onClose={() => setIsSubscriptionModalOpen(false)}
         onSimulateSuccess={() => {
           activateSubscription();
-          toast({ title: "Subscription Activated (Simulated)", description: "You now have premium access!" });
+          toast({ title: "Subscription Activated", description: "You now have premium access!" });
         }}
         paymentLink={KORAPAY_TEST_PAYMENT_LINK}
       />

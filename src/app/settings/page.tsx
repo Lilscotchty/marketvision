@@ -11,7 +11,7 @@ export default function SettingsPage() {
           Application <span className="text-accent">Settings</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-          Manage your account, appearance, and notification preferences.
+          Manage account, appearance, and notifications.
         </p>
       </header>
       <main>

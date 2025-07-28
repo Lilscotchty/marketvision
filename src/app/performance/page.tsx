@@ -80,35 +80,6 @@ export default function PerformancePage() {
     });
   };
   
-  // Example: How a new prediction might be added (this logic should be on the dashboard page)
-  // This is just to illustrate how this page might receive data.
-  // useEffect(() => {
-  //   if (IS_BROWSER && !localStorage.getItem("marketVisionPerformance_seeded")) {
-  //     const examplePrediction: HistoricalPrediction = {
-  //       id: "1",
-  //       imagePreviewUrl: "https://placehold.co/120x80.png",
-  //       date: new Date().toISOString(),
-  //       asset: "BTC/USD",
-  //       prediction: {
-  //         priceTarget: 50000,
-  //         stopLossLevel: 45000,
-  //         confidenceLevel: 0.75,
-  //         marketDirection: "UP",
-  //         rationale: "Bullish pattern observed."
-  //       },
-  //       analysis: {
-  //         trend: "Uptrend",
-  //         patterns: ["Bullish Engulfing"],
-  //         summary: "Strong bullish indicators."
-  //       }
-  //     };
-  //     localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, JSON.stringify([examplePrediction]));
-  //     localStorage.setItem("marketVisionPerformance_seeded", "true");
-  //     addNewPredictionsFromStorage(); // Manually trigger for demo
-  //   }
-  // }, [addNewPredictionsFromStorage]);
-
-
   return (
     <div className="container mx-auto py-8 space-y-12">
       <header className="text-center">
@@ -116,7 +87,7 @@ export default function PerformancePage() {
           Performance <span className="text-accent">Metrics</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-          Track the history of predictions and evaluate their performance over time.
+          Track and evaluate prediction history.
         </p>
       </header>
 
@@ -126,19 +97,3 @@ export default function PerformancePage() {
     </div>
   );
 }
-
-// To be called from DashboardPage after successful analysis:
-// export const addPredictionToHistory = (predictionData: Omit<HistoricalPrediction, 'id' | 'date' | 'manualFlag'>) => {
-//   if (!IS_BROWSER) return;
-//   const newEntry: HistoricalPrediction = {
-//     ...predictionData,
-//     id: Date.now().toString(),
-//     date: new Date().toISOString(),
-//   };
-//   const existing = localStorage.getItem(MOCK_NEW_PREDICTIONS_KEY);
-//   const entries = existing ? JSON.parse(existing) : [];
-//   entries.push(newEntry);
-//   localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, JSON.stringify(entries));
-//   // The 'storage' event will notify the PerformancePage
-// };
-// This communication mechanism is basic. For robust solution, use context or a state manager.

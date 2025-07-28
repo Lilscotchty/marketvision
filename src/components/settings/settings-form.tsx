@@ -31,7 +31,7 @@ export function SettingsForm() {
   const handlePasswordChange = () => {
     toast({
       title: 'Password Change',
-      description: "For password changes, please use the 'Forgot Password' option on the login page or manage via your Firebase console. Direct in-app password change is not yet implemented.",
+      description: "Please use the 'Forgot Password' option on the login page.",
       duration: 7000,
     });
   };
@@ -40,23 +40,23 @@ export function SettingsForm() {
     try {
       await logout();
       toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
       });
       // Router will redirect via AuthContext
     } catch (error) {
       toast({
-        title: 'Logout Failed',
-        description: 'Could not log you out. Please try again.',
-        variant: 'destructive',
+        title: "Logout Failed",
+        description: "Could not log you out.",
+        variant: "destructive",
       });
     }
   };
 
   const handleDeleteAccount = () => {
     toast({
-      title: 'Account Deletion Requested',
-      description: 'This is a mock action. In a real application, this would initiate the account deletion process.',
+      title: 'Account Deletion',
+      description: 'This is a mock action. This would start account deletion.',
       variant: 'destructive',
       duration: 7000,
     });
@@ -67,7 +67,7 @@ export function SettingsForm() {
       <div className="space-y-6">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Loading Settings...</CardTitle>
+            <CardTitle>Loading...</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-20 animate-pulse bg-muted rounded-md"></div>
@@ -83,13 +83,13 @@ export function SettingsForm() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <User className="text-primary" /> Profile Management
+            <User className="text-primary" /> Profile
           </CardTitle>
-          <CardDescription>Manage your account details and session.</CardDescription>
+          <CardDescription>Manage your account and session.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">Email</Label>
             <p id="email" className="text-sm text-muted-foreground mt-1">
               {user ? user.email : 'Not logged in'}
             </p>
@@ -107,9 +107,6 @@ export function SettingsForm() {
             <Button variant="outline" onClick={handleLogout} className="mt-2 w-full sm:w-auto">
               <LogOut className="mr-2 h-4 w-4" /> Log Out
             </Button>
-             <p className="text-xs text-muted-foreground mt-1">
-              End your current session.
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -119,16 +116,16 @@ export function SettingsForm() {
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2">
             {theme === 'dark' ? <Moon className="text-primary" /> : <Sun className="text-primary" />}
-            Appearance Preferences
+            Appearance
           </CardTitle>
-          <CardDescription>Customize the look and feel of the application.</CardDescription>
+          <CardDescription>Customize the application's theme.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between space-x-2 py-2">
             <Label htmlFor="theme-toggle" className="flex flex-col space-y-1">
               <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
               <span className="font-normal leading-snug text-muted-foreground">
-                Switch between light and dark themes.
+                Switch between themes.
               </span>
             </Label>
             <Switch
@@ -145,16 +142,16 @@ export function SettingsForm() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <Bell className="text-primary" /> Notification Preferences
+            <Bell className="text-primary" /> Notifications
           </CardTitle>
-          <CardDescription>Choose how you receive notifications (mock settings).</CardDescription>
+          <CardDescription>Choose how you receive notifications.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between space-x-2 py-2">
             <Label htmlFor="email-notifications" className="flex flex-col space-y-1">
               <span>Email Notifications</span>
                <span className="font-normal leading-snug text-muted-foreground">
-                Receive updates via email for critical alerts.
+                Receive critical alerts via email.
               </span>
             </Label>
             <Switch id="email-notifications" defaultChecked disabled />
@@ -162,16 +159,16 @@ export function SettingsForm() {
           <Separator />
           <div className="flex items-center justify-between space-x-2 py-2">
             <Label htmlFor="in-app-notifications" className="flex flex-col space-y-1">
-              <span>In-App Push Notifications</span>
+              <span>Push Notifications</span>
               <span className="font-normal leading-snug text-muted-foreground">
-                Get real-time push notifications within the app.
+                Get notifications within the app.
               </span>
             </Label>
             <Switch id="in-app-notifications" defaultChecked disabled />
           </div>
            <div className="mt-4 p-3 bg-muted/50 border border-dashed border-border rounded-md text-center">
               <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                <ShieldAlert className="h-4 w-4" /> More notification settings coming soon!
+                <ShieldAlert className="h-4 w-4" /> More settings coming soon.
               </p>
             </div>
         </CardContent>
@@ -183,7 +180,7 @@ export function SettingsForm() {
           <CardTitle className="font-headline text-xl flex items-center gap-2 text-destructive">
             <ShieldAlert className="text-destructive" /> Danger Zone
           </CardTitle>
-          <CardDescription>Manage critical account actions.</CardDescription>
+          <CardDescription>Critical account actions.</CardDescription>
         </CardHeader>
         <CardContent>
            <div>
@@ -191,15 +188,14 @@ export function SettingsForm() {
              <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="mt-2 w-full sm:w-auto">
-                  <Trash2 className="mr-2 h-4 w-4" /> Permanently Delete Account
+                  <Trash2 className="mr-2 h-4 w-4" /> Delete Account
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your
-                    account and remove your data from our servers.
+                    This action cannot be undone. This will permanently delete your account and all associated data.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -211,7 +207,7 @@ export function SettingsForm() {
               </AlertDialogContent>
             </AlertDialog>
             <p className="text-xs text-muted-foreground mt-1">
-              Permanently remove your account and all associated data. This action is irreversible.
+              This action is irreversible.
             </p>
           </div>
         </CardContent>

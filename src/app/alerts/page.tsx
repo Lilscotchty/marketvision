@@ -42,7 +42,6 @@ export default function AlertsPage() {
       );
       toast({
         title: `Alert "${alert.name}" ${!alert.isActive ? "Activated" : "Deactivated"}`,
-        description: `This alert will ${!alert.isActive ? "now send" : "no longer send"} notifications.`,
       });
     }
   };
@@ -67,14 +66,14 @@ export default function AlertsPage() {
       if (!user?.email) {
         toast({
           title: "Email Not Found",
-          description: "Could not find your email address to send the notification.",
+          description: "Could not find your email address.",
           variant: "destructive",
         });
         return;
       }
       try {
-        const subject = `FinSight AI Alert Triggered: ${alert.name}`;
-        const body = `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
+        const subject = `FinSight AI Alert: ${alert.name}`;
+        const body = `Your alert for ${alert.asset} met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
         
         await sendEmailNotification({
           to: user.email,
@@ -84,13 +83,12 @@ export default function AlertsPage() {
 
         toast({
           title: "Email Alert Simulated",
-          description: `An email notification for "${alert.name}" has been sent to ${user.email}.`,
+          description: `An email has been sent to ${user.email}.`,
         });
       } catch (error) {
          console.error("Failed to send email notification:", error);
          toast({
           title: "Email Simulation Failed",
-          description: "Could not simulate sending the email alert. See console for details.",
           variant: "destructive",
         });
       }
@@ -98,14 +96,14 @@ export default function AlertsPage() {
     } else { // 'in-app'
       addNotification({
         title: `Alert Triggered: ${alert.name}`,
-        message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
+        message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (Simulated)`,
         type: 'alert_trigger',
         iconName: 'BellRing',
         relatedLink: `/alerts#${alert.id}`
       });
       toast({
           title: "Alert Trigger Simulated",
-          description: `An in-app notification for alert "${alert.name}" has been sent to your Notification Center.`,
+          description: `An in-app notification for "${alert.name}" has been sent.`,
       });
     }
   };
@@ -117,7 +115,7 @@ export default function AlertsPage() {
           Alert <span className="text-accent">System</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-          Stay informed about market changes and prediction updates with customizable alerts.
+          Create and manage custom market alerts.
         </p>
       </header>
 

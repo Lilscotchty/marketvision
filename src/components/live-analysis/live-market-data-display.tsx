@@ -36,7 +36,7 @@ const LocalTimeframeEnum = z.enum(availableTimeframes).optional();
 
 const marketDataFormSchema = z.object({
   symbolToFetch: z.string().optional(), 
-  assetSymbol: z.string().min(1, "Asset symbol is required.").describe("The trading symbol, e.g., BTC/USD, AAPL"),
+  assetSymbol: z.string().min(1, "Asset symbol is required."),
   currentPrice: z.number({ required_error: "Current price is required.", invalid_type_error: "Current price must be a number."}),
   recentHigh: z.number({ required_error: "Recent high is required.", invalid_type_error: "Recent high must be a number."}),
   recentLow: z.number({ required_error: "Recent low is required.", invalid_type_error: "Recent low must be a number."}),
@@ -80,8 +80,8 @@ export function LiveMarketDataDisplay() {
       currentPrice: 0,
       recentHigh: 0,
       recentLow: 0,
-      marketTrendDescription: "Currently in a short-term uptrend, approaching recent highs after a small pullback.",
-      keyLevelsDescription: "Potential resistance at recent highs. Bullish order block visible around prior lows.",
+      marketTrendDescription: "Short-term uptrend, approaching recent highs.",
+      keyLevelsDescription: "Resistance at recent highs. Bullish order block near prior lows.",
       activeTradingSession: "None/Overlap",
       selectedTimeframe: "15min", 
     },
@@ -89,7 +89,7 @@ export function LiveMarketDataDisplay() {
 
   const handleFetchData = async () => {
     if (!isFullyAuthenticated || !hasSubscription) {
-        toast({ title: "Premium Feature", description: "Fetching live quotes requires an active subscription.", variant: "default" });
+        toast({ title: "Premium Feature", description: "Live quotes require a subscription.", variant: "default" });
         setIsSubscriptionModalOpen(true);
         return;
     }
@@ -117,15 +117,15 @@ export function LiveMarketDataDisplay() {
         form.setValue("recentLow", fetchedData.low);
         toast({
           title: "Data Fetched",
-          description: `Successfully fetched quote for ${fetchedData.symbol}${result.assetType ? ` (${result.assetType})` : ''}.`,
+          description: `Quote for ${fetchedData.symbol} loaded.`,
         });
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during fetch.";
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       setFetchDataError(errorMessage);
       toast({
         title: "Fetch Error",
-        description: `Quote service error: ${errorMessage}`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -135,7 +135,7 @@ export function LiveMarketDataDisplay() {
 
   const onSubmitAnalysis = async (values: z.infer<typeof marketDataFormSchema>) => {
     if (!isFullyAuthenticated || !hasSubscription) {
-        toast({ title: "Premium Feature", description: "Live market analysis requires an active subscription.", variant: "default" });
+        toast({ title: "Premium Feature", description: "Live analysis requires a subscription.", variant: "default" });
         setIsSubscriptionModalOpen(true);
         return;
     }
@@ -148,7 +148,7 @@ export function LiveMarketDataDisplay() {
       setAnalysisResult(result);
       toast({
         title: "Analysis Complete",
-        description: "Conceptual market analysis has been generated.",
+        description: "Conceptual analysis has been generated.",
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
@@ -167,7 +167,7 @@ export function LiveMarketDataDisplay() {
     return (
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Loading Analysis Tools...</CardTitle>
+          <CardTitle className="font-headline text-xl">Loading Tools...</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-40 animate-pulse bg-muted rounded-md flex items-center justify-center">
@@ -195,7 +195,7 @@ export function LiveMarketDataDisplay() {
             <Link href="/signup" className="font-semibold text-accent hover:underline">
               sign up
             </Link>{' '}
-            to access live market analysis.
+            to access live analysis.
           </p>
         </CardContent>
       </Card>
@@ -211,10 +211,10 @@ export function LiveMarketDataDisplay() {
         </CardHeader>
         <CardContent>
           <p className="mb-4">
-            To access in-depth conceptual analysis based on your observations, an active subscription is required.
+            An active subscription is required to access this feature.
           </p>
           <Button onClick={() => setIsSubscriptionModalOpen(true)} className="bg-primary hover:bg-primary/80">
-            Subscribe to FinSight AI Pro
+            Subscribe Now
           </Button>
         </CardContent>
          <SubscriptionModal
@@ -222,7 +222,7 @@ export function LiveMarketDataDisplay() {
             onClose={() => setIsSubscriptionModalOpen(false)}
             onSimulateSuccess={() => {
               activateSubscription();
-              toast({ title: "Subscription Activated (Simulated)", description: "You now have premium access!" });
+              toast({ title: "Subscription Activated", description: "You now have premium access!" });
             }}
             paymentLink={KORAPAY_TEST_PAYMENT_LINK}
          />
@@ -236,7 +236,7 @@ export function LiveMarketDataDisplay() {
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2"><Activity className="text-accent" />Market Data & Observations</CardTitle>
           <CardDescription>
-            Observe the TradingView chart. Optionally, fetch a quote by entering a symbol (e.g., AAPL, EUR/USD, BTCUSD). Then, manually refine data, select your analysis timeframe, and add your observations for AI-powered conceptual analysis.
+            Fetch a live quote or manually enter data for AI analysis.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -266,7 +266,7 @@ export function LiveMarketDataDisplay() {
                         </Button>
                       </div>
                       <ShadcnFormDescription>
-                         Enter Stock (e.g. AAPL), Forex (e.g. EUR/USD or EURUSD), or Crypto (e.g. BTC/USD or BTCUSD) symbol. Data from the quote service pre-fills fields below. Fetching requires subscription.
+                         Enter a Stock, Forex, or Crypto symbol.
                       </ShadcnFormDescription>
                       <FormMessage />
                     </FormItem>
@@ -278,8 +278,6 @@ export function LiveMarketDataDisplay() {
                     <ShadcnAlertTitle>Data Fetch Error</ShadcnAlertTitle>
                     <ShadcnAlertDescription>
                       {fetchDataError}
-                      <br />
-                      Ensure the symbol format is correct. The quote service may have limitations or require specific symbol formats. For complex assets or if issues persist, please enter data manually. Also, check your API key for the service and its rate limits.
                     </ShadcnAlertDescription>
                   </Alert>
                 )}
@@ -295,7 +293,7 @@ export function LiveMarketDataDisplay() {
                       <Select onValueChange={field.onChange} value={field.value || "15min"}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select analysis timeframe" />
+                            <SelectValue placeholder="Select timeframe" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -304,7 +302,6 @@ export function LiveMarketDataDisplay() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <ShadcnFormDescription>The primary chart timeframe for this analysis.</ShadcnFormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -318,7 +315,7 @@ export function LiveMarketDataDisplay() {
                       <Select onValueChange={field.onChange} value={field.value || "None/Overlap"}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select current session (optional)" />
+                            <SelectValue placeholder="Select session" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -327,7 +324,6 @@ export function LiveMarketDataDisplay() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <ShadcnFormDescription>Helps contextualize session-specific patterns.</ShadcnFormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -339,11 +335,10 @@ export function LiveMarketDataDisplay() {
                 name="assetSymbol"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asset Symbol for Analysis (e.g., NASDAQ:AAPL, BTC/USD, EUR/USD)</FormLabel>
+                    <FormLabel>Asset Symbol</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter asset symbol observed in chart" />
+                      <Input {...field} placeholder="e.g., NASDAQ:AAPL, BTC/USD" />
                     </FormControl>
-                    <ShadcnFormDescription>This symbol provides context for the AI. Can be auto-filled or entered manually.</ShadcnFormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -367,7 +362,7 @@ export function LiveMarketDataDisplay() {
                   name="recentHigh"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recent Significant High</FormLabel>
+                      <FormLabel>Recent High</FormLabel>
                       <FormControl>
                         <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                       </FormControl>
@@ -380,7 +375,7 @@ export function LiveMarketDataDisplay() {
                   name="recentLow"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Recent Significant Low</FormLabel>
+                      <FormLabel>Recent Low</FormLabel>
                       <FormControl>
                         <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                       </FormControl>
@@ -394,11 +389,10 @@ export function LiveMarketDataDisplay() {
                 name="marketTrendDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Market Trend Description</FormLabel>
+                    <FormLabel>Your Trend Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., 'Strong uptrend after breaking resistance, now consolidating.'" {...field} rows={3} />
+                      <Textarea placeholder="e.g., 'Strong uptrend, consolidating.'" {...field} rows={3} />
                     </FormControl>
-                    <ShadcnFormDescription>Describe the trend you observe in the chart.</ShadcnFormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -408,11 +402,10 @@ export function LiveMarketDataDisplay() {
                 name="keyLevelsDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Key Levels Description (Optional)</FormLabel>
+                    <FormLabel>Your Key Levels (Optional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., 'Approaching daily order block at 50000. FVG present between 48000-48200.'" {...field} rows={3} />
+                      <Textarea placeholder="e.g., 'Approaching daily order block.'" {...field} rows={3} />
                     </FormControl>
-                     <ShadcnFormDescription>Describe any important S/R, OBs, FVGs you see.</ShadcnFormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -423,7 +416,7 @@ export function LiveMarketDataDisplay() {
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing Data...
+                    Analyzing...
                   </>
                 ) : (
                   <>
@@ -451,14 +444,14 @@ export function LiveMarketDataDisplay() {
           <Card className="shadow-lg border-accent">
             <CardHeader>
               <CardTitle className="font-headline text-xl flex items-center gap-2"><Lightbulb className="text-accent" /> Simplified Conceptual Guidance</CardTitle>
-              <CardDescription>AI-generated conceptual guidance and signals for educational purposes. NOT FINANCIAL ADVICE.</CardDescription>
+              <CardDescription>AI-generated signals for educational purposes. Not financial advice.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md">
                   <div className="flex items-start">
                     <ShieldAlert className="h-5 w-5 text-destructive mr-2 mt-0.5" />
                     <p className="text-sm text-destructive-foreground">
-                      <strong>Important Notice:</strong> FinSight AI provides conceptual trading signals and market analysis for informational purposes. While we aim to offer helpful insights, these signals are not financial advice and do not 100% guarantee profits. 
+                      <strong>Disclaimer:</strong> These signals are for informational purposes only and are not financial advice.
                     </p>
                   </div>
               </div>
@@ -469,7 +462,7 @@ export function LiveMarketDataDisplay() {
                    analysisResult.suggestedActionDirection === "Sell" ? <TrendingDown className="h-4 w-4 text-red-500"/> :
                    <CircleDot className="h-4 w-4 text-yellow-500"/> 
                   }
-                  Suggested Conceptual Direction
+                  Suggested Direction
                 </Label>
                 <p className="text-lg font-semibold">{analysisResult.suggestedActionDirection}</p>
               </div>
@@ -484,13 +477,13 @@ export function LiveMarketDataDisplay() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {analysisResult.potentialTakeProfitZone && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4 text-green-500"/>Conceptual Take Profit Zone</Label>
+                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4 text-green-500"/>Conceptual Take Profit</Label>
                     <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialTakeProfitZone}</p>
                   </div>
                 )}
                 {analysisResult.potentialStopLossLevel && (
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><StopCircle className="h-4 w-4 text-red-500"/>Conceptual Stop Loss Level</Label>
+                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><StopCircle className="h-4 w-4 text-red-500"/>Conceptual Stop Loss</Label>
                     <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialStopLossLevel}</p>
                   </div>
                 )}
@@ -513,8 +506,8 @@ export function LiveMarketDataDisplay() {
           {/* ICT-Specific Analysis Section */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="font-headline text-xl flex items-center gap-2"><Brain className="text-primary"/>ICT-Specific Conceptual Analysis</CardTitle>
-              <CardDescription>Detailed conceptual insights for those familiar with ICT methods.</CardDescription>
+              <CardTitle className="font-headline text-xl flex items-center gap-2"><Brain className="text-primary"/>ICT-Specific Analysis</CardTitle>
+              <CardDescription>Detailed conceptual insights for ICT traders.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -522,7 +515,7 @@ export function LiveMarketDataDisplay() {
                 <p className="text-lg font-semibold">{analysisResult.potentialBias} (Confidence: {analysisResult.confidence})</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Key Observations (ICT)</Label>
+                <Label className="text-sm font-medium text-muted-foreground">Key Observations</Label>
                 <ul className="list-disc pl-5 space-y-1 mt-1">
                   {analysisResult.keyObservations.map((obs, index) => (
                     <li key={index} className="text-sm">{obs}</li>
@@ -530,7 +523,7 @@ export function LiveMarketDataDisplay() {
                 </ul>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Suggested Focus (ICT)</Label>
+                <Label className="text-sm font-medium text-muted-foreground">Suggested Focus</Label>
                 <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">{analysisResult.suggestedFocusICT}</p>
               </div>
             </CardContent>
@@ -542,7 +535,7 @@ export function LiveMarketDataDisplay() {
         onClose={() => setIsSubscriptionModalOpen(false)}
         onSimulateSuccess={() => {
           activateSubscription();
-          toast({ title: "Subscription Activated (Simulated)", description: "You now have premium access!" });
+          toast({ title: "Subscription Activated", description: "You now have premium access!" });
         }}
         paymentLink={KORAPAY_TEST_PAYMENT_LINK}
       />

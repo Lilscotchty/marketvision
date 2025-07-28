@@ -27,7 +27,7 @@ export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimul
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <BellOff className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2 text-foreground">No Alerts Configured</h3>
-            <p className="text-muted-foreground">Use the form above to create your first alert.</p>
+            <p className="text-muted-foreground">Create an alert to get started.</p>
           </div>
         </CardContent>
       </Card>
@@ -38,7 +38,7 @@ export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimul
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline text-xl">Configured Alerts</CardTitle>
-        <CardDescription>Manage your existing market alerts and simulate triggers.</CardDescription>
+        <CardDescription>Manage your existing market alerts.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

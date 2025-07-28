@@ -37,7 +37,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
   const handleFeedback = (feedbackType: 'positive' | 'negative') => {
     toast({
       title: "Feedback Received",
-      description: "Thank you for your feedback! We appreciate your input.",
+      description: "Thank you for your input!",
       duration: 3000, 
     });
   };
@@ -71,7 +71,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
           <CardTitle className="font-headline text-xl flex items-center gap-2">
              <BarChart2 className="text-accent"/> Market Prediction
           </CardTitle>
-          <CardDescription>Generated insights based on the chart analysis.</CardDescription>
+          <CardDescription>Generated insights based on the analysis.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -99,7 +99,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
             <p className="text-lg font-semibold text-foreground">{prediction.stopLossLevel.toLocaleString()}</p>
           </div>
           <div>
-            <Label className="text-sm font-medium">Confidence Level ({Math.round(prediction.confidenceLevel * 100)}%)</Label>
+            <Label className="text-sm font-medium">Confidence ({Math.round(prediction.confidenceLevel * 100)}%)</Label>
             <Progress value={prediction.confidenceLevel * 100} className="w-full mt-1 [&>div]:bg-accent" />
           </div>
            <div>
@@ -112,26 +112,26 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <Lightbulb className="text-accent"/> Chart Analysis Details
+            <Lightbulb className="text-accent"/> Chart Analysis
           </CardTitle>
-          <CardDescription>Key findings from the candlestick chart image, including Daily Bias and ICT insights.</CardDescription>
+          <CardDescription>Key findings from the chart image.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-sm font-medium">Identified Trend</Label>
+            <Label className="text-sm font-medium">Trend</Label>
             <p className="text-lg font-semibold text-foreground">{analysis.trend}</p>
           </div>
 
           {analysis.inferredDailyBias && (
             <div>
-              <Label className="text-sm font-medium flex items-center gap-1"><Compass className="h-4 w-4 text-accent" /> Inferred Daily Bias (Visual)</Label>
+              <Label className="text-sm font-medium flex items-center gap-1"><Compass className="h-4 w-4 text-accent" /> Inferred Daily Bias</Label>
               <p className="text-lg font-semibold text-foreground">{analysis.inferredDailyBias}</p>
             </div>
           )}
 
           {(dailyBiasReasoning?.drawOnLiquidityAnalysis || dailyBiasReasoning?.timeBasedLiquidityAnalysis || dailyBiasReasoning?.ltfConfirmationOutlook || dailyBiasReasoning?.openingPriceConfluence) && (
             <div>
-              <Label className="text-sm font-medium mb-2 flex items-center gap-1"><BookOpen className="h-4 w-4 text-accent"/> Daily Bias Reasoning (Visual Interpretation)</Label>
+              <Label className="text-sm font-medium mb-2 flex items-center gap-1"><BookOpen className="h-4 w-4 text-accent"/> Daily Bias Reasoning</Label>
               <Accordion type="single" collapsible className="w-full">
                 {dailyBiasReasoning.drawOnLiquidityAnalysis && (
                   <AccordionItem value="item-1">
@@ -178,7 +178,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
           )}
 
           <div>
-            <Label className="text-sm font-medium">Detected Patterns</Label>
+            <Label className="text-sm font-medium">Patterns</Label>
             {analysis.patterns && analysis.patterns.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-1">
                 {analysis.patterns.map((pattern, index) => (
@@ -186,12 +186,12 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground mt-1">No specific patterns identified.</p>
+              <p className="text-sm text-muted-foreground mt-1">No patterns identified.</p>
             )}
           </div>
            {analysis.ictElements && analysis.ictElements.length > 0 && (
             <div>
-              <Label className="text-sm font-medium flex items-center gap-1"><Zap className="h-4 w-4 text-accent" /> ICT Elements Identified</Label>
+              <Label className="text-sm font-medium flex items-center gap-1"><Zap className="h-4 w-4 text-accent" /> ICT Elements</Label>
               <ul className="mt-2 list-none space-y-2">
                 {analysis.ictElements.map((element, index) => (
                   <li key={index} className="p-2 border rounded-md bg-muted/30 text-xs">
@@ -204,7 +204,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
           )}
           {analysis.marketStructureAnalysis && (
             <div>
-              <Label className="text-sm font-medium flex items-center gap-1"><Workflow className="h-4 w-4 text-accent" /> Market Structure Analysis</Label>
+              <Label className="text-sm font-medium flex items-center gap-1"><Workflow className="h-4 w-4 text-accent" /> Market Structure</Label>
               <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap p-2 border rounded-md bg-muted/30">
                 {analysis.marketStructureAnalysis}
               </p>
@@ -213,7 +213,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
           {analysis.potentialAMDCycle && (analysis.potentialAMDCycle.phase || analysis.potentialAMDCycle.reasoning) && (
             <div>
               <Label className="text-sm font-medium flex items-center gap-1">
-                <Layers3 className="h-4 w-4 text-accent" /> Potential AMD Cycle Observation
+                <Layers3 className="h-4 w-4 text-accent" /> AMD Cycle
               </Label>
               <div className="mt-1 p-3 border rounded-md bg-muted/30 space-y-1 text-xs">
                 {analysis.potentialAMDCycle.phase && (
@@ -227,23 +227,23 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
                     </p>
                 )}
                 {(analysis.potentialAMDCycle.phase === "Unclear" && !analysis.potentialAMDCycle.reasoning) && (
-                    <p className="text-muted-foreground">No clear AMD cycle phase apparent from the visual information.</p>
+                    <p className="text-muted-foreground">No clear AMD cycle phase apparent.</p>
                 )}
               </div>
             </div>
           )}
           <div>
-            <Label className="text-sm font-medium">Analysis Summary</Label>
+            <Label className="text-sm font-medium">Summary</Label>
             <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{analysis.summary}</p>
           </div>
           <div className="mt-6 pt-4 border-t border-border">
-            <Label className="text-sm font-medium text-muted-foreground">Was this analysis helpful?</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Helpful?</Label>
             <div className="flex space-x-2 mt-2">
               <Button variant="outline" size="sm" onClick={() => handleFeedback('positive')}>
-                <ThumbsUp className="mr-2 h-4 w-4" /> Helpful
+                <ThumbsUp className="mr-2 h-4 w-4" /> Yes
               </Button>
               <Button variant="outline" size="sm" onClick={() => handleFeedback('negative')}>
-                <ThumbsDown className="mr-2 h-4 w-4" /> Not Helpful
+                <ThumbsDown className="mr-2 h-4 w-4" /> No
               </Button>
             </div>
           </div>

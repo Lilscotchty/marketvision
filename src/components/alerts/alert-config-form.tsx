@@ -55,7 +55,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
       onAddAlert(newAlert);
       form.reset();
       toast({
-        title: "Alert Created Successfully",
+        title: "Alert Created",
         description: `Your new alert "${newAlert.name}" is now set up.`,
       });
       setIsSubmitting(false);
@@ -66,7 +66,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline text-xl">Configure New Alert</CardTitle>
-        <CardDescription>Set up notifications for specific market events or AI predictions.</CardDescription>
+        <CardDescription>Set up a new market event notification.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -78,7 +78,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
                 <FormItem>
                   <FormLabel>Alert Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., BTC Price Target Hit" {...field} />
+                    <Input placeholder="e.g., BTC Price Target" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,7 +91,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
                 <FormItem>
                   <FormLabel>Asset/Pair</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., BTC/USD, ETH/USD" {...field} />
+                    <Input placeholder="e.g., BTC/USD" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,11 +102,11 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
               name="conditionType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Condition Type</FormLabel>
+                  <FormLabel>Condition</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a condition type" />
+                        <SelectValue placeholder="Select a condition" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -124,13 +124,10 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
               name="value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Value / Threshold</FormLabel>
+                  <FormLabel>Value</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 50000, 0.8, Bullish Engulfing" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    Enter target price, confidence (0-1), or pattern name.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -140,11 +137,11 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
               name="notificationMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notification Method</FormLabel>
+                  <FormLabel>Method</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select notification method" />
+                        <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -163,9 +160,9 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Activate Alert</FormLabel>
+                    <FormLabel className="text-base">Activate</FormLabel>
                     <FormDescription>
-                      Enable this alert to receive notifications.
+                      Enable this alert.
                     </FormDescription>
                   </div>
                   <FormControl>

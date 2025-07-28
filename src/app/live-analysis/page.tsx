@@ -18,13 +18,13 @@ export default function LiveAnalysisPage() {
           In-depth <span className="text-accent">Analysis</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Observe the live market with the TradingView chart, then use the form below to input key data points and your observations for a conceptual AI-powered ICT analysis.
+          Input market data for a conceptual AI-powered analysis.
         </p>
       </header>
       
       <section id="live-trading-chart">
         <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
-        <div className="h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden shadow-xl border border-border">
+        <div className="h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden shadow-xl border-border">
           <TradingViewAdvancedChartWidget />
         </div>
       </section>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -74,7 +75,7 @@ export default function NotificationsPage() {
           Notification <span className="text-accent">Center</span>
         </h1>
         <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-          View your recent notifications and manage your notification preferences here.
+          Manage your recent notifications.
         </p>
       </header>
       
@@ -104,7 +105,7 @@ export default function NotificationsPage() {
             <div className="text-center py-16">
               <BellOff className="h-20 w-20 text-muted-foreground/50 mx-auto mb-6" />
               <p className="text-xl font-semibold text-muted-foreground mb-2">It's quiet in here...</p>
-              <p className="text-muted-foreground">You have no notifications at the moment.</p>
+              <p className="text-muted-foreground">You have no notifications.</p>
             </div>
           ) : (
             <ScrollArea className="h-[calc(100vh-20rem)] max-h-[500px] pr-4">
@@ -176,13 +177,6 @@ export default function NotificationsPage() {
             </ScrollArea>
           )}
         </CardContent>
-         {notifications.length > 0 && (
-            <CardFooter className="pt-4 border-t">
-                <p className="text-xs text-muted-foreground">
-                    Manage your notification preferences in <a href="/settings" className="underline hover:text-accent">Settings</a>.
-                </p>
-            </CardFooter>
-        )}
       </Card>
     </div>
   );

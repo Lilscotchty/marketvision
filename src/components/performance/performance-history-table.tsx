@@ -50,7 +50,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
            <div className="flex flex-col items-center justify-center py-12 text-center">
             <HelpCircle className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2 text-foreground">No Prediction History</h3>
-            <p className="text-muted-foreground">Your analyzed predictions will appear here once you use the dashboard.</p>
+            <p className="text-muted-foreground">Your analyzed predictions will appear here.</p>
           </div>
         </CardContent>
       </Card>
@@ -61,7 +61,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline text-xl">Prediction Performance</CardTitle>
-        <CardDescription>Review past AI predictions and manually flag their outcomes.</CardDescription>
+        <CardDescription>Review past predictions and flag their outcomes.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -95,16 +95,16 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
                     </DialogTrigger>
                     <DialogContent className="max-w-3xl">
                       <DialogHeader>
-                        <DialogTitle>Prediction Details - {new Date(pred.date).toLocaleString()}</DialogTitle>
+                        <DialogTitle>Prediction Details</DialogTitle>
                         <DialogDescription>
-                          Detailed view of the AI analysis and prediction for this chart.
+                          Analysis from {new Date(pred.date).toLocaleString()}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="py-4 max-h-[70vh] overflow-y-auto">
                         {pred.analysis ? (
                            <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrl={pred.imagePreviewUrl} />
                         ) : (
-                          <p>Full analysis details not available for this prediction.</p>
+                          <p>Full analysis details not available.</p>
                         )}
                       </div>
                     </DialogContent>

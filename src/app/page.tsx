@@ -18,7 +18,7 @@ export default function DashboardPage() {
               Chart Analysis <span className="text-accent">Tool</span>
             </h2>
             <p className="mt-2 text-md md:text-lg text-muted-foreground max-w-lg mx-auto">
-              Upload your candlestick chart images to receive AI-powered insights.
+              Upload a chart image for AI-powered analysis.
             </p>
           </header>
           
@@ -37,9 +37,6 @@ export default function DashboardPage() {
                 <TrendingUp className="mr-3 h-8 w-8 text-primary"/>
                 Global <span className="text-accent">Markets</span>
             </h2>
-            <p className="mt-2 text-md md:text-lg text-muted-foreground max-w-lg mx-auto">
-                Live market data from TradingView.
-            </p>
           </header>
           <TradingViewMarketOverview />
         </section>
