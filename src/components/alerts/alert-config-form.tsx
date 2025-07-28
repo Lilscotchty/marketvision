@@ -19,7 +19,7 @@ const alertSchema = z.object({
   name: z.string().min(3, "Alert name must be at least 3 characters"),
   asset: z.string().min(2, "Asset symbol is required (e.g., BTC/USD)"),
   conditionType: z.enum(["price_target", "confidence_change", "pattern_detected"]),
-  value: z.string().min(1, "Value is required"), // Could be number or string depending on conditionType
+  value: z.string().min(1, "Value is required"),
   notificationMethod: z.enum(["email", "sms", "in-app"]),
   isActive: z.boolean().default(true),
 });
@@ -46,10 +46,9 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
 
   function onSubmit(values: z.infer<typeof alertSchema>) {
     setIsSubmitting(true);
-    // Simulate API call
     setTimeout(() => {
       const newAlert: AlertConfig = {
-        id: Date.now().toString(), // Simple ID generation
+        id: Date.now().toString(),
         ...values,
       };
       onAddAlert(newAlert);
