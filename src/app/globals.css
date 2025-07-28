@@ -54,50 +54,50 @@
   }
 
   .dark {
-    --background: 0 0% 0%; /* Black */
-    --foreground: 210 40% 98%; /* Almost White, slight cool tint */
+    --background: 240 2% 8%; /* Very dark gray, almost black from image */
+    --foreground: 0 0% 98%; /* Almost White */
 
-    --card: 220 20% 5%; /* Slightly lighter than background for cards */
-    --card-foreground: 210 40% 98%;
+    --card: 240 2% 11%; /* Dark gray for containers from image */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 20% 5%; /* Even darker for popovers */
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 2% 9%; /* Even darker for popovers */
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 260 75% 60%; /* Deep Indigo/Purple - Refined for Pro */
-    --primary-foreground: 210 40% 98%; 
+    --primary: 260 85% 65%; /* Adjusted vibrant purple for pop */
+    --primary-foreground: 0 0% 98%; 
 
-    --secondary: 220 15% 15%; /* Muted Dark Blue/Gray for secondary elements */
-    --secondary-foreground: 210 40% 90%;
+    --secondary: 240 2% 15%; /* Muted Dark Gray for secondary elements */
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 15% 12%; /* Darker muted background */
-    --muted-foreground: 220 10% 60%; /* Subtle muted text */
+    --muted: 240 2% 12%; /* Darker muted background */
+    --muted-foreground: 0 0% 60%; /* Subtle muted text */
 
-    --accent: 300 90% 65%; /* Vibrant Magenta/Pinkish-Purple - Refined for Pro */
+    --accent: 280 90% 65%; /* Vibrant Magenta/Purple for accents */
     --accent-foreground: 0 0% 100%; /* White on accent */
 
     --destructive: 0 70% 55%; /* Slightly desaturated red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 20% 5%; /* Same as card background to make borders disappear */
-    --input: 220 15% 15%; /* Dark input fields */
-    --ring: 300 80% 70%; /* Ring color, related to new accent */
+    --border: 240 2% 15%; /* Border to match secondary elements */
+    --input: 240 2% 15%; /* Dark input fields */
+    --ring: 280 80% 70%; /* Ring color, related to new accent */
     
     /* Chart colors - can be adjusted for better visibility on dark theme */
-    --chart-1: 300 80% 70%; /* Lighter version of new accent */
-    --chart-2: 260 70% 65%; /* Lighter version of new primary */
-    --chart-3: 210 80% 65%; /* A contrasting blue */
-    --chart-4: 30 80% 60%;  /* A contrasting orange */
-    --chart-5: 120 50% 55%; /* A contrasting green */
+    --chart-1: 280 80% 70%;
+    --chart-2: 260 70% 65%;
+    --chart-3: 210 80% 65%;
+    --chart-4: 30 80% 60%;
+    --chart-5: 120 50% 55%;
     
     /* Sidebar Colors for Pro Dark Theme */
-    --sidebar-background: 220 20% 4%; /* Even deeper dark for sidebar */
-    --sidebar-foreground: 210 30% 88%; /* Slightly brighter foreground for clarity */
-    --sidebar-primary: 300 90% 65%; /* Use new accent for active sidebar items */
+    --sidebar-background: 240 2% 6%; /* Even deeper dark for sidebar */
+    --sidebar-foreground: 0 0% 88%; 
+    --sidebar-primary: 280 90% 65%; /* Use new accent for active sidebar items */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 9%; /* Darker, more subtle hover for sidebar items */
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 220 15% 10%; /* More subtle sidebar border */
-    --sidebar-ring: 300 90% 70%; 
+    --sidebar-accent: 240 2% 13%; /* Darker, more subtle hover */
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 240 2% 12%; /* More subtle sidebar border */
+    --sidebar-ring: 280 90% 70%; 
   }
 }
 
