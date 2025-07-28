@@ -7,6 +7,8 @@ import { AlertListDisplay } from "@/components/alerts/alert-list-display";
 import type { AlertConfig } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNotificationCenter } from "@/contexts/notification-context";
+import { useAuth } from "@/contexts/auth-context";
+import { sendEmailNotification } from "@/ai/flows/send-email-flow";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -18,6 +20,7 @@ export default function AlertsPage() {
   });
   const { toast } = useToast();
   const { addNotification } = useNotificationCenter();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (IS_BROWSER) {
@@ -56,9 +59,43 @@ export default function AlertsPage() {
     }
   };
 
-  const handleSimulateTrigger = (alertId: string) => {
+  const handleSimulateTrigger = async (alertId: string) => {
     const alert = alerts.find(a => a.id === alertId);
-    if (alert) {
+    if (!alert) return;
+
+    if (alert.notificationMethod === 'email') {
+      if (!user?.email) {
+        toast({
+          title: "Email Not Found",
+          description: "Could not find your email address to send the notification.",
+          variant: "destructive",
+        });
+        return;
+      }
+      try {
+        const subject = `FinSight AI Alert Triggered: ${alert.name}`;
+        const body = `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
+        
+        await sendEmailNotification({
+          to: user.email,
+          subject,
+          body,
+        });
+
+        toast({
+          title: "Email Alert Simulated",
+          description: `An email notification for "${alert.name}" has been sent to ${user.email}.`,
+        });
+      } catch (error) {
+         console.error("Failed to send email notification:", error);
+         toast({
+          title: "Email Simulation Failed",
+          description: "Could not simulate sending the email alert. See console for details.",
+          variant: "destructive",
+        });
+      }
+
+    } else { // 'in-app'
       addNotification({
         title: `Alert Triggered: ${alert.name}`,
         message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
@@ -68,7 +105,7 @@ export default function AlertsPage() {
       });
       toast({
           title: "Alert Trigger Simulated",
-          description: `A notification for alert "${alert.name}" has been sent to your Notification Center.`,
+          description: `An in-app notification for alert "${alert.name}" has been sent to your Notification Center.`,
       });
     }
   };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -45,6 +46,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
 
   function onSubmit(values: z.infer<typeof alertSchema>) {
     setIsSubmitting(true);
+    // Simulate network delay
     setTimeout(() => {
       const newAlert: AlertConfig = {
         id: Date.now().toString(),
@@ -55,10 +57,9 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
       toast({
         title: "Alert Created Successfully",
         description: `Your new alert "${newAlert.name}" is now set up.`,
-        variant: "default",
       });
       setIsSubmitting(false);
-    }, 1000);
+    }, 500);
   }
 
   return (
@@ -144,12 +145,12 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select notification method" />
-                      </Trigger>
+                      </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="in-app">In-App (Mock)</SelectItem>
-                      <SelectItem value="email">Email (Mock)</SelectItem>
-                      <SelectItem value="sms">SMS (Mock)</SelectItem>
+                      <SelectItem value="in-app">In-App Notification</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="sms">SMS (Coming Soon)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -165,7 +166,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
                     <FormLabel className="text-base">Activate Alert</FormLabel>
                     <FormDescription>
                       Enable this alert to receive notifications.
-                    </Form.Description>
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <Switch
