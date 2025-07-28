@@ -6,7 +6,7 @@ import { AlertConfigForm } from "@/components/alerts/alert-config-form";
 import { AlertListDisplay } from "@/components/alerts/alert-list-display";
 import type { AlertConfig } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useNotificationCenter } from "@/contexts/notification-context"; // Import notification context
+import { useNotificationCenter } from "@/contexts/notification-context";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -17,7 +17,7 @@ export default function AlertsPage() {
     return savedAlerts ? JSON.parse(savedAlerts) : [];
   });
   const { toast } = useToast();
-  const { addNotification } = useNotificationCenter(); // Get addNotification function
+  const { addNotification } = useNotificationCenter();
 
   useEffect(() => {
     if (IS_BROWSER) {
@@ -56,18 +56,21 @@ export default function AlertsPage() {
     }
   };
 
-  const handleSimulateTrigger = (alert: AlertConfig) => {
-    addNotification({
-      title: `Alert Triggered: ${alert.name}`,
-      message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
-      type: 'alert_trigger',
-      iconName: 'BellRing',
-      relatedLink: `/alerts#${alert.id}` // Example link
-    });
-    toast({
-        title: "Alert Trigger Simulated",
-        description: `A notification for alert "${alert.name}" has been sent to your Notification Center.`,
-    });
+  const handleSimulateTrigger = (alertId: string) => {
+    const alert = alerts.find(a => a.id === alertId);
+    if (alert) {
+      addNotification({
+        title: `Alert Triggered: ${alert.name}`,
+        message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (This is a simulated trigger)`,
+        type: 'alert_trigger',
+        iconName: 'BellRing',
+        relatedLink: `/alerts#${alert.id}`
+      });
+      toast({
+          title: "Alert Trigger Simulated",
+          description: `A notification for alert "${alert.name}" has been sent to your Notification Center.`,
+      });
+    }
   };
 
   return (
@@ -90,7 +93,7 @@ export default function AlertsPage() {
           alerts={alerts}
           onToggleAlert={handleToggleAlert}
           onDeleteAlert={handleDeleteAlert}
-          onSimulateTrigger={handleSimulateTrigger} // Pass the new handler
+          onSimulateTrigger={handleSimulateTrigger}
         />
       </section>
     </div>

@@ -7,13 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AlertConfig } from "@/types";
-import { BellOff, Trash2, BellRing, Zap } from "lucide-react"; // Added Zap for trigger
+import { BellOff, Trash2, BellRing, Zap } from "lucide-react";
 
 interface AlertListDisplayProps {
   alerts: AlertConfig[];
   onToggleAlert: (alertId: string) => void;
   onDeleteAlert: (alertId: string) => void;
-  onSimulateTrigger: (alert: AlertConfig) => void; // Updated to pass full alert
+  onSimulateTrigger: (alertId: string) => void;
 }
 
 export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimulateTrigger }: AlertListDisplayProps) {
@@ -69,7 +69,7 @@ export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimul
                   </TableCell>
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
                     {alert.isActive && (
-                      <Button variant="ghost" size="icon" onClick={() => onSimulateTrigger(alert)} title="Simulate Trigger">
+                      <Button variant="ghost" size="icon" onClick={() => onSimulateTrigger(alert.id)} title="Simulate Trigger">
                         <Zap className="h-4 w-4 text-yellow-500" />
                       </Button>
                     )}
