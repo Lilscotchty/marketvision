@@ -3,6 +3,7 @@ import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import { CandlestickChart, TrendingUp } from "lucide-react";
 import { TradingViewMarketOverview } from "@/components/dashboard/tradingview-market-overview";
 import { Separator } from "@/components/ui/separator";
+import { PromotionalImageTray } from "@/components/dashboard/promotional-image-tray"; // Import the new component
 
 export default function DashboardPage() {
   return (
@@ -20,6 +21,11 @@ export default function DashboardPage() {
               Upload your candlestick chart images to receive AI-powered insights.
             </p>
           </header>
+          
+          <div className="my-6">
+            <PromotionalImageTray />
+          </div>
+
           <ImageUploadForm />
         </section>
 
