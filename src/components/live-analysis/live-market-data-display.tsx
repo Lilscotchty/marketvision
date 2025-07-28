@@ -21,7 +21,7 @@ import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as Shadcn
 import type { TradingSession, AlphaVantageGlobalQuote, AnalyzeMarketDataInput, Timeframe } from "@/types"; 
 import { availableTimeframes } from "@/types"; 
 import { useAuth } from "@/contexts/auth-context";
-import { SubscriptionModal } from "@/components/billing/subscription-modal"; // New import
+import { SubscriptionModal } from "@/components/billing/subscription-modal";
 
 const LocalTradingSessionEnum = z.enum([
   "None/Overlap",
@@ -521,35 +521,6 @@ export function LiveMarketDataDisplay() {
                 <Label className="text-sm font-medium text-muted-foreground">Potential Bias</Label>
                 <p className="text-lg font-semibold">{analysisResult.potentialBias} (Confidence: {analysisResult.confidence})</p>
               </div>
-               {analysisResult.dailyBiasReasoning && (
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-muted-foreground">Daily Bias Reasoning (HTF Conceptual)</Label>
-                  {analysisResult.dailyBiasReasoning.drawOnLiquidityAnalysis && (
-                    <div>
-                      <h4 className="text-xs font-semibold text-foreground">Draw on Liquidity (IRL/ERL):</h4>
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{analysisResult.dailyBiasReasoning.drawOnLiquidityAnalysis}</p>
-                    </div>
-                  )}
-                  {analysisResult.dailyBiasReasoning.timeBasedLiquidityAnalysis && (
-                    <div>
-                      <h4 className="text-xs font-semibold text-foreground">Time-Based Liquidity (Prev D/W):</h4>
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{analysisResult.dailyBiasReasoning.timeBasedLiquidityAnalysis}</p>
-                    </div>
-                  )}
-                  {analysisResult.dailyBiasReasoning.ltfConfirmationOutlook && (
-                     <div>
-                      <h4 className="text-xs font-semibold text-foreground">LTF Confirmation Outlook ({{selectedTimeframe: form.getValues("selectedTimeframe") || "Selected TF"}}):</h4>
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{analysisResult.dailyBiasReasoning.ltfConfirmationOutlook}</p>
-                    </div>
-                  )}
-                  {analysisResult.dailyBiasReasoning.openingPriceConfluence && (
-                     <div>
-                      <h4 className="text-xs font-semibold text-foreground">Opening Price Confluence (Optional):</h4>
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{analysisResult.dailyBiasReasoning.openingPriceConfluence}</p>
-                    </div>
-                  )}
-                </div>
-              )}
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Key Observations (ICT)</Label>
                 <ul className="list-disc pl-5 space-y-1 mt-1">
