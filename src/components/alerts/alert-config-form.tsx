@@ -167,7 +167,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
                     <FormLabel className="text-base">Activate Alert</FormLabel>
                     <FormDescription>
                       Enable this alert to receive notifications.
-                    </FormDescription>
+                    </Form.Description>
                   </div>
                   <FormControl>
                     <Switch
