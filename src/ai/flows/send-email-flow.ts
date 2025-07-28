@@ -5,25 +5,12 @@
  * @fileOverview A flow to simulate sending an email notification.
  *
  * - sendEmailNotification - Simulates sending an email.
- * - SendEmailInput - The input type for the sendEmailNotification function.
- * - SendEmailOutput - The return type for the sendEmailNotification function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import type { SendEmailInput, SendEmailOutput } from '@/types';
+import { SendEmailInputSchema, SendEmailOutputSchema } from '@/types';
 
-export const SendEmailInputSchema = z.object({
-  to: z.string().email().describe('The email address of the recipient.'),
-  subject: z.string().describe('The subject of the email.'),
-  body: z.string().describe('The HTML body of the email.'),
-});
-export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
-
-export const SendEmailOutputSchema = z.object({
-  success: z.boolean().describe('Whether the email was sent successfully.'),
-  message: z.string().describe('A confirmation message.'),
-});
-export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
 
 export async function sendEmailNotification(
   input: SendEmailInput

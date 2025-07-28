@@ -6,6 +6,7 @@ import type {
   AnalyzeMarketDataInput as FlowAnalyzeMarketDataInput, 
   AnalyzeMarketDataOutput as FlowAnalyzeMarketDataOutput 
 } from '@/ai/flows/analyze-market-data-flow';
+import { z } from 'zod';
 
 
 export interface UploadedImageAnalysis {
@@ -89,3 +90,17 @@ export interface UserAppData {
   hasActiveSubscription: boolean;
   // Future: notificationPreferences, etc.
 }
+
+// --- Email Flow Types ---
+export const SendEmailInputSchema = z.object({
+  to: z.string().email().describe('The email address of the recipient.'),
+  subject: z.string().describe('The subject of the email.'),
+  body: z.string().describe('The HTML body of the email.'),
+});
+export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
+
+export const SendEmailOutputSchema = z.object({
+  success: z.boolean().describe('Whether the email was sent successfully.'),
+  message: z.string().describe('A confirmation message.'),
+});
+export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
