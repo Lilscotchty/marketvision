@@ -54,10 +54,10 @@
   }
 
   .dark {
-    --background: 220 20% 7%; /* Very Dark Desaturated Blue */
+    --background: 0 0% 0%; /* Black */
     --foreground: 210 40% 98%; /* Almost White, slight cool tint */
 
-    --card: 220 20% 10%; /* Slightly lighter than background for cards */
+    --card: 220 20% 5%; /* Slightly lighter than background for cards */
     --card-foreground: 210 40% 98%;
 
     --popover: 220 20% 5%; /* Even darker for popovers */
@@ -66,10 +66,10 @@
     --primary: 260 75% 60%; /* Deep Indigo/Purple - Refined for Pro */
     --primary-foreground: 210 40% 98%; 
 
-    --secondary: 220 15% 25%; /* Muted Dark Blue/Gray for secondary elements */
+    --secondary: 220 15% 15%; /* Muted Dark Blue/Gray for secondary elements */
     --secondary-foreground: 210 40% 90%;
 
-    --muted: 220 15% 18%; /* Darker muted background */
+    --muted: 220 15% 12%; /* Darker muted background */
     --muted-foreground: 220 10% 60%; /* Subtle muted text */
 
     --accent: 300 90% 65%; /* Vibrant Magenta/Pinkish-Purple - Refined for Pro */
@@ -78,7 +78,7 @@
     --destructive: 0 70% 55%; /* Slightly desaturated red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 20%; /* Subtle border, darker */
+    --border: 220 20% 5%; /* Same as card background to make borders disappear */
     --input: 220 15% 15%; /* Dark input fields */
     --ring: 300 80% 70%; /* Ring color, related to new accent */
     
