@@ -3,7 +3,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -25,10 +25,10 @@ jobs:
       - name: Build Project
         run: npm run build
         env:
-          # These are placeholder secrets. You will need to add the actual
-          # values in your GitHub repository's secrets settings for the
-          # build to succeed if they are required at build time.
+          # IMPORTANT: You must add these values to your GitHub repository's secrets.
           # Go to Your Repo > Settings > Secrets and variables > Actions > New repository secret
+          # Add a secret for each of the following environment variables.
+          # The values should match what you have in a local .env.local file.
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
@@ -43,4 +43,3 @@ jobs:
       # App Hosting can build and deploy automatically when connected to your GitHub repo.
       # If you need to deploy manually via this action, you would add a "Deploy to Firebase" step here.
       # For now, this workflow just ensures your project builds correctly.
-
