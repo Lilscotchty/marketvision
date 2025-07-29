@@ -6,11 +6,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode, useCall
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import type { UserAppData } from '@/types'; // Assuming UserAppData is defined in types
+import type { UserAppData } from '@/types';
 
 // List of developer emails with full access
 const DEVELOPER_EMAILS = ['pb7552212@gmail.com'];
-const INITIAL_TRIAL_POINTS = 5; // Updated from previous value
+const INITIAL_TRIAL_POINTS = 5;
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -30,59 +30,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const initializeOrUpdateUserData = useCallback((firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-      // Check if the current user is a developer
-      if (DEVELOPER_EMAILS.includes(firebaseUser.email || '')) {
-        setUserData({
+    if (!firebaseUser) {
+      setUserData(null);
+      return;
+    }
+
+    // Handle developer accounts with special privileges
+    if (DEVELOPER_EMAILS.includes(firebaseUser.email || '')) {
+      setUserData({
+        userId: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        chartAnalysisTrialPoints: 9999, // Unlimited trials
+        hasActiveSubscription: true,    // Always active subscription
+      });
+      return;
+    }
+
+    // Handle regular users, simulating data fetch from localStorage
+    try {
+      const storedUserDataString = localStorage.getItem(`userData-${firebaseUser.uid}`);
+      if (storedUserDataString) {
+        const storedUserData = JSON.parse(storedUserDataString) as UserAppData;
+        // Ensure data integrity from older versions
+        if (typeof storedUserData.chartAnalysisTrialPoints === 'undefined') {
+          storedUserData.chartAnalysisTrialPoints = INITIAL_TRIAL_POINTS;
+        }
+        if (storedUserData.chartAnalysisTrialPoints < 0) {
+          storedUserData.chartAnalysisTrialPoints = 0;
+        }
+        if (typeof storedUserData.hasActiveSubscription === 'undefined') {
+          storedUserData.hasActiveSubscription = false;
+        }
+        setUserData(storedUserData);
+      } else {
+        // Default for new non-developer users
+        const newUser: UserAppData = {
           userId: firebaseUser.uid,
           email: firebaseUser.email || '',
-          chartAnalysisTrialPoints: 9999, // Effectively unlimited trials
-          hasActiveSubscription: true,    // Always active subscription
-        });
-      } else {
-        // Simulate fetching or initializing data for regular users
-        // In a real app, this would come from Firestore
-        // For now, if no specific data, assume new user or load from localStorage mockup
-        const storedUserDataString = localStorage.getItem(`userData-${firebaseUser.uid}`);
-        if (storedUserDataString) {
-          try {
-            const storedUserData = JSON.parse(storedUserDataString) as UserAppData;
-             // Ensure trial points don't go below 0 from old stored data
-            if (storedUserData.chartAnalysisTrialPoints < 0) {
-                storedUserData.chartAnalysisTrialPoints = 0;
-            }
-            // If existing user data doesn't have trial points or it's lower than new default for some reason, reset to default (e.g. after a policy change)
-            // This part is a bit tricky with localStorage simulation. In Firestore, you'd manage this during user creation or through migrations.
-            // For now, we'll mostly honor stored value unless it's missing or problematic.
-            if (typeof storedUserData.chartAnalysisTrialPoints === 'undefined') {
-                 storedUserData.chartAnalysisTrialPoints = INITIAL_TRIAL_POINTS;
-            }
-            setUserData(storedUserData);
-          } catch (e) {
-            console.error("Failed to parse stored user data", e);
-            // Initialize with defaults if parsing fails
-             setUserData({
-              userId: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
-              hasActiveSubscription: false,
-            });
-          }
-        } else {
-          // Default for new users (not developers)
-          setUserData({
-            userId: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
-            hasActiveSubscription: false,
-          });
-        }
+          chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
+          hasActiveSubscription: false,
+        };
+        setUserData(newUser);
+        localStorage.setItem(`userData-${firebaseUser.uid}`, JSON.stringify(newUser));
       }
-    } else {
-      setUserData(null); // No user, no user data
+    } catch (e) {
+      console.error("Failed to parse or set user data from localStorage", e);
+      // Fallback to default if there's an error
+      setUserData({
+        userId: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
+        hasActiveSubscription: false,
+      });
     }
   }, []);
-
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [initializeOrUpdateUserData]);
 
-  // Persist userData to localStorage when it changes (for simulation)
+  // Persist non-developer userData to localStorage when it changes
   useEffect(() => {
     if (userData && user && !DEVELOPER_EMAILS.includes(user.email || '')) {
       localStorage.setItem(`userData-${user.uid}`, JSON.stringify(userData));
@@ -105,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth);
       setUser(null);
-      setUserData(null); // Clear user-specific data on logout
+      setUserData(null);
       router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -115,24 +116,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const decrementTrialPoint = useCallback(() => {
-    if (user && userData && !DEVELOPER_EMAILS.includes(user.email || '') && !userData.hasActiveSubscription && userData.chartAnalysisTrialPoints > 0) {
+    if (userData && !userData.hasActiveSubscription && userData.chartAnalysisTrialPoints > 0) {
       setUserData(prev => {
         if (!prev) return null;
         const newPoints = Math.max(0, prev.chartAnalysisTrialPoints - 1);
         return { ...prev, chartAnalysisTrialPoints: newPoints };
       });
     }
-  }, [user, userData]);
+  }, [userData]);
 
   const activateSubscription = useCallback(() => {
-     if (user && userData && !DEVELOPER_EMAILS.includes(user.email || '')) {
+    if (userData) {
       setUserData(prev => {
         if (!prev) return null;
         return { ...prev, hasActiveSubscription: true };
       });
     }
-    // For developers, subscription is already effectively active.
-  }, [user, userData]);
+  }, [userData]);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, userData, decrementTrialPoint, activateSubscription }}>
@@ -148,5 +148,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

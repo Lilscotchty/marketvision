@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
@@ -16,7 +16,8 @@ import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { SubscriptionModal } from "@/components/billing/subscription-modal"; // New import
+import { SubscriptionModal } from "@/components/billing/subscription-modal";
+import type { HistoricalPrediction } from "@/types";
 
 interface SubmitButtonProps {
   isAuthDisabled: boolean;
@@ -42,6 +43,7 @@ function SubmitButton({ isAuthDisabled }: SubmitButtonProps) {
 }
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
+const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictions';
 
 export function ImageUploadForm() {
   const initialState: AnalysisResult | undefined = undefined;
@@ -51,6 +53,28 @@ export function ImageUploadForm() {
   const { user, loading: authLoading, userData, decrementTrialPoint, activateSubscription } = useAuth();
   const { toast } = useToast();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
+  useEffect(() => {
+    // This effect runs on the client after the server action completes and `state` is updated.
+    // It's responsible for persisting the new prediction to localStorage for the performance page.
+    if (state?.prediction && state.analysis && state.imagePreviewUrl) {
+      if (typeof window !== 'undefined') {
+        const newPredictionEntry: HistoricalPrediction = {
+          id: `pred_${new Date().getTime()}`,
+          date: new Date().toISOString(),
+          imagePreviewUrl: state.imagePreviewUrl,
+          prediction: state.prediction,
+          analysis: state.analysis,
+          manualFlag: undefined,
+        };
+
+        // We use a temporary key to notify the performance page via a storage event.
+        localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, JSON.stringify([newPredictionEntry]));
+      }
+      // Decrement trial point only after a successful analysis.
+      decrementTrialPoint();
+    }
+  }, [state, decrementTrialPoint]);
 
   const isFullyAuthenticated = !authLoading && user;
   const hasSubscription = userData?.hasActiveSubscription;
@@ -103,6 +127,7 @@ export function ImageUploadForm() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    // Also reset the state if needed, though useActionState doesn't have a built-in reset
   };
 
   const getHelperText = () => {
@@ -140,7 +165,7 @@ export function ImageUploadForm() {
             </div>
 
             {previewUrl && (
-              <div className="mt-4 border border-dashed border-border rounded-lg p-4 flex justify-center items-center bg-muted/20">
+              <div className="mt-4 border-dashed rounded-lg p-4 flex justify-center items-center bg-muted/20">
                 <Image
                   src={previewUrl}
                   alt="Chart preview"

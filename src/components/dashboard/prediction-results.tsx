@@ -10,6 +10,7 @@ import type { PredictionOutput, AnalysisOutput } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Label } from "@/components/ui/label"; // Import the Label component
 
 
 interface PredictionResultsProps {
@@ -236,7 +237,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
             <Label className="text-sm font-medium">Summary</Label>
             <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{analysis.summary}</p>
           </div>
-          <div className="mt-6 pt-4 border-t border-border">
+          <div className="mt-6 pt-4 border-t">
             <Label className="text-sm font-medium text-muted-foreground">Helpful?</Label>
             <div className="flex space-x-2 mt-2">
               <Button variant="outline" size="sm" onClick={() => handleFeedback('positive')}>
@@ -252,10 +253,3 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
     </div>
   );
 }
-
-// Helper Label component if not globally available or for specific styling
-const Label = ({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & { children: React.ReactNode }) => (
-  <div className={`block text-sm font-medium text-muted-foreground ${className}`} {...props}>
-    {children}
-  </div>
-);

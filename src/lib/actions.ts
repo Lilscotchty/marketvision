@@ -12,6 +12,7 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 const formSchema = z.object({
   chartImage: z
     .instanceof(File)
+    .refine((file) => file.size > 0, 'Please select an image.')
     .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
     .refine(
       (file) => ALLOWED_FILE_TYPES.includes(file.type),
@@ -51,11 +52,13 @@ export async function handleImageAnalysisAction(
   try {
     const chartDataUri = await fileToDataUri(chartImage);
     
+    // Run AI flows in parallel for efficiency
     const [predictionResult, analysisResult] = await Promise.all([
       predictMarketMovement({ candlestickChartDataUri: chartDataUri }),
       analyzeCandlestickChart({ chartDataUri: chartDataUri })
     ]);
 
+    // The server action returns the result. The client component will handle state updates and storage.
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
@@ -63,6 +66,7 @@ export async function handleImageAnalysisAction(
     };
   } catch (error) {
     console.error('AI analysis failed:', error);
+    // Return a structured error to the client
     return {
       error: error instanceof Error ? error.message : 'An unexpected error occurred during AI analysis.',
     };
@@ -80,21 +84,19 @@ interface AssetInfo {
 
 function determineAssetType(symbol: string): AssetInfo {
   const upperSymbol = symbol.toUpperCase().trim();
-  const originalSymbol = symbol; // Preserve original casing for display if needed
+  const originalSymbol = symbol;
 
-  // Try Forex: EUR/USD, EURUSD
-  if (upperSymbol.includes('/') && upperSymbol.length === 7) { // EUR/USD
+  if (upperSymbol.includes('/') && upperSymbol.length === 7) {
     const parts = upperSymbol.split('/');
     if (parts.length === 2 && parts[0].length === 3 && parts[1].length === 3 && /^[A-Z]{3}$/.test(parts[0]) && /^[A-Z]{3}$/.test(parts[1])) {
       return { type: 'forex', fromCurrency: parts[0], toCurrency: parts[1], apiSymbol: '', originalSymbol: `${parts[0]}/${parts[1]}` };
     }
-  } else if (upperSymbol.length === 6 && !upperSymbol.includes('/') && /^[A-Z]{6}$/.test(upperSymbol)) { // EURUSD
+  } else if (upperSymbol.length === 6 && !upperSymbol.includes('/') && /^[A-Z]{6}$/.test(upperSymbol)) {
     const from = upperSymbol.substring(0, 3);
     const to = upperSymbol.substring(3, 6);
     return { type: 'forex', fromCurrency: from, toCurrency: to, apiSymbol: '', originalSymbol: `${from}/${to}` };
   }
 
-  // Try Crypto: BTC/USD, BTCUSD, ETH/EUR, ETHGBP
   const commonFiats = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CNY', 'INR', 'USDT', 'USDC', 'BUSD'];
   let match;
 
@@ -108,13 +110,11 @@ function determineAssetType(symbol: string): AssetInfo {
           }
       }
   } else {
-      // Attempt to match patterns like BTCUSD, ETHGBP
-      // This is trickier as stock symbols can be 3-4 letters. We check if the latter part is a common fiat.
-      if (upperSymbol.length > 3 && upperSymbol.length <= 8) { // e.g. BTCUSD (6), ETHUSDT (7), SOLGBP (6)
+      if (upperSymbol.length > 3 && upperSymbol.length <= 8) {
         for (const fiat of commonFiats) {
             if (upperSymbol.endsWith(fiat)) {
                 const crypto = upperSymbol.substring(0, upperSymbol.length - fiat.length);
-                if (crypto.length >= 2 && crypto.length <=5 && /^[A-Z0-9]+$/.test(crypto)) { // Ensure crypto part is valid
+                if (crypto.length >= 2 && crypto.length <=5 && /^[A-Z0-9]+$/.test(crypto)) {
                      return { type: 'crypto', apiSymbol: crypto, market: fiat, originalSymbol: `${crypto}/${fiat}` };
                 }
             }
@@ -122,12 +122,9 @@ function determineAssetType(symbol: string): AssetInfo {
       }
   }
   
-  // Default to stock for symbols like AAPL, MSFT.
-  // Avoids classifying parts of crypto or forex as stocks if they are short.
   if (!upperSymbol.includes('/') && upperSymbol.length <= 5 && /^[A-Z0-9\.]+$/.test(upperSymbol) && !commonFiats.includes(upperSymbol)) {
      return { type: 'stock', apiSymbol: upperSymbol, originalSymbol: upperSymbol };
   }
-
 
   return { type: 'unknown', apiSymbol: upperSymbol, originalSymbol: symbol };
 }
@@ -142,14 +139,15 @@ export interface FetchMarketDataResult {
 export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarketDataResult> {
   const apiKey = process.env.ALPHAVANTAGE_API_KEY;
   if (!apiKey) {
-    return { error: 'API key for the quote service is not configured.' };
+    console.warn("AlphaVantage API key is not configured. Live quote fetching is disabled.");
+    return { error: 'Quote service API key is not configured.' };
   }
 
   const assetInfo = determineAssetType(symbol);
   let url = '';
 
   if (assetInfo.type === 'unknown') {
-    return { error: `Symbol format "${symbol}" not recognized or supported for automatic fetching. Please try formats like AAPL, EUR/USD, or BTC/USD.`, assetType: 'unknown' };
+    return { error: `Symbol format "${symbol}" not recognized. Try formats like AAPL, EUR/USD, or BTC/USD.`, assetType: 'unknown' };
   }
   
   try {
@@ -162,7 +160,7 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
       const data = await response.json();
       
       if (data['Error Message']) {
-        return { error: `Quote service API error (Stock): ${data['Error Message']}`, assetType: 'stock' };
+        return { error: `Quote service (Stock): ${data['Error Message']}`, assetType: 'stock' };
       }
       if (data['Note']) {
           console.warn('Quote service API Note (Stock):', data['Note']);
@@ -170,7 +168,7 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
       
       const globalQuote = data['Global Quote'];
       if (!globalQuote || Object.keys(globalQuote).length === 0) {
-          return { error: `No stock data returned for symbol "${assetInfo.apiSymbol}". It might be an unsupported symbol or a non-stock asset. Try formats like EUR/USD or BTC/USD for Forex/Crypto.`, assetType: 'stock' };
+          return { error: `No stock data for "${assetInfo.apiSymbol}". It may be unsupported or not a stock.`, assetType: 'stock' };
       }
 
       return {
@@ -196,7 +194,7 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
       const exchangeRateData = data['Realtime Currency Exchange Rate'];
       
       if (data['Error Message'] || !exchangeRateData) {
-        return { error: data['Error Message'] || `No Forex data returned for ${assetInfo.fromCurrency}/${assetInfo.toCurrency}.`, assetType: 'forex' };
+        return { error: data['Error Message'] || `No Forex data for ${assetInfo.fromCurrency}/${assetInfo.toCurrency}.`, assetType: 'forex' };
       }
       if (data['Note']) {
         console.warn('Quote service API Note (Forex):', data['Note']);
@@ -237,24 +235,22 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
       const timeSeries = data[timeSeriesKey];
 
       if (!timeSeries) {
-        return { error: `No Crypto time series data for ${assetInfo.apiSymbol} in ${assetInfo.market}.`, assetType: 'crypto' };
+        return { error: `No Crypto time series data for ${assetInfo.apiSymbol}/${assetInfo.market}.`, assetType: 'crypto' };
       }
       const latestDate = Object.keys(timeSeries)[0]; 
-      if (!latestDate) return { error: 'No latest date found in crypto time series.', assetType: 'crypto' };
+      if (!latestDate) return { error: 'No latest date in crypto time series.', assetType: 'crypto' };
       
       const latestDayData = timeSeries[latestDate];
       const openKey = `1a. open (${assetInfo.market})`;
       const highKey = `2a. high (${assetInfo.market})`;
       const lowKey = `3a. low (${assetInfo.market})`;
       const closeKey = `4a. close (${assetInfo.market})`;
-      const volumeKey = `5. volume`; // Volume is in base crypto asset
-
-      // Quote service sometimes returns keys like "1. open" instead of "1a. open (USD)"
+      const volumeKey = `5. volume`;
+      
       const altOpenKey = `1. open`;
       const altHighKey = `2. high`;
       const altLowKey = `3. low`;
       const altCloseKey = `4. close`;
-
 
       return {
         data: {
@@ -272,14 +268,13 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
         assetType: 'crypto',
       };
     } else {
-      // This case should ideally be caught by assetInfo.type === 'unknown' earlier
-      return { error: `Unsupported asset type or symbol format for fetching: ${symbol}`, assetType: assetInfo.type };
+      return { error: `Unsupported asset type or format for fetching: ${symbol}`, assetType: assetInfo.type };
     }
 
   } catch (error) {
     console.error(`Failed to fetch market data for symbol "${symbol}" (type: ${assetInfo.type}):`, error);
     return { 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred while fetching market data.',
+        error: error instanceof Error ? error.message : 'An unexpected error occurred while fetching data.',
         assetType: assetInfo.type
     };
   }

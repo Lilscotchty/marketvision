@@ -71,6 +71,7 @@ export function LiveMarketDataDisplay() {
 
   const isFullyAuthenticated = !authLoading && user;
   const hasSubscription = userData?.hasActiveSubscription;
+  const hasApiKey = !!process.env.NEXT_PUBLIC_ALPHAVANTAGE_API_KEY;
 
   const form = useForm<z.infer<typeof marketDataFormSchema>>({
     resolver: zodResolver(marketDataFormSchema),
@@ -88,6 +89,11 @@ export function LiveMarketDataDisplay() {
   });
 
   const handleFetchData = async () => {
+    if (!hasApiKey) {
+      setFetchDataError("The live quote service is currently unavailable. Please enter data manually.");
+      toast({ title: "Service Unavailable", description: "The live quote service is not configured.", variant: "destructive" });
+      return;
+    }
     if (!isFullyAuthenticated || !hasSubscription) {
         toast({ title: "Premium Feature", description: "Live quotes require a subscription.", variant: "default" });
         setIsSubscriptionModalOpen(true);
@@ -254,7 +260,7 @@ export function LiveMarketDataDisplay() {
                         <FormControl>
                           <Input {...field} placeholder="e.g., AAPL, EUR/USD, BTCUSD" />
                         </FormControl>
-                        <Button type="button" onClick={handleFetchData} disabled={isFetchingData} variant="outline" className="shrink-0">
+                        <Button type="button" onClick={handleFetchData} disabled={isFetchingData || !hasApiKey} variant="outline" className="shrink-0">
                           {isFetchingData ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,7 +356,7 @@ export function LiveMarketDataDisplay() {
                   <FormItem>
                     <FormLabel>Current Price</FormLabel>
                     <FormControl>
-                      <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                      <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -364,7 +370,7 @@ export function LiveMarketDataDisplay() {
                     <FormItem>
                       <FormLabel>Recent High</FormLabel>
                       <FormControl>
-                        <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                        <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -377,7 +383,7 @@ export function LiveMarketDataDisplay() {
                     <FormItem>
                       <FormLabel>Recent Low</FormLabel>
                       <FormControl>
-                        <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                        <Input type="number" step="any" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
