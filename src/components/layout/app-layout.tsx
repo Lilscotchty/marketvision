@@ -158,8 +158,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-1 ml-auto">
               {mobileHeaderNavItems.map(item => (
                  <Link href={item.href} key={item.href} passHref>
-                   <Button asChild variant="ghost" size="icon" aria-label={item.label} className="relative">
-                    <>
+                   <Button variant="ghost" size="icon" aria-label={item.label} className="relative">
                      <item.icon className="h-5 w-5" />
                       {item.showBadge && unreadCount > 0 && (
                         <Badge 
@@ -169,7 +168,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                            {unreadCount > 9 ? '9+' : unreadCount}
                         </Badge>
                       )}
-                    </>
                    </Button>
                  </Link>
               ))}
