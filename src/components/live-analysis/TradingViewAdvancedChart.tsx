@@ -4,11 +4,11 @@ import React, { useEffect, useRef, memo } from 'react';
 
 function TradingViewWidget() {
   const container = useRef<HTMLDivElement>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const isScriptAppended = useRef(false);
 
   useEffect(() => {
-    if (!container.current || container.current.querySelector('script')) {
-      return;
+    if (isScriptAppended.current || !container.current) {
+        return;
     }
 
     const script = document.createElement("script");
@@ -44,19 +44,8 @@ function TradingViewWidget() {
     });
     
     container.current.appendChild(script);
-    scriptRef.current = script;
-
-    return () => {
-      if (scriptRef.current && scriptRef.current.parentNode === container.current) {
-        container.current?.removeChild(scriptRef.current);
-        scriptRef.current = null;
-        // Clean up the widget itself
-        const widgetContainer = container.current?.querySelector('.tradingview-widget-container__widget');
-        if (widgetContainer) {
-          widgetContainer.innerHTML = '';
-        }
-      }
-    };
+    isScriptAppended.current = true;
+    
   }, []);
 
   return (
