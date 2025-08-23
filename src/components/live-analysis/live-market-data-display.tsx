@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"; 
@@ -68,10 +68,18 @@ export function LiveMarketDataDisplay() {
   
   const { user, loading: authLoading, userData, activateSubscription } = useAuth();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isApiKeyAvailable, setIsApiKeyAvailable] = useState(true);
+
+  useEffect(() => {
+    // This check should reflect if the API key is available on the server-side,
+    // which is tricky. We'll let the server action handle the check and return an error.
+    // For a better UX, a dedicated endpoint to check configuration could be used,
+    // but for now, we'll assume it's available and let the server action fail gracefully.
+    setIsApiKeyAvailable(true); 
+  }, []);
 
   const isFullyAuthenticated = !authLoading && user;
   const hasSubscription = userData?.hasActiveSubscription;
-  const hasApiKey = !!process.env.NEXT_PUBLIC_ALPHAVANTAGE_API_KEY;
 
   const form = useForm<z.infer<typeof marketDataFormSchema>>({
     resolver: zodResolver(marketDataFormSchema),
@@ -89,11 +97,6 @@ export function LiveMarketDataDisplay() {
   });
 
   const handleFetchData = async () => {
-    if (!hasApiKey) {
-      setFetchDataError("The live quote service is currently unavailable. Please enter data manually.");
-      toast({ title: "Service Unavailable", description: "The live quote service is not configured.", variant: "destructive" });
-      return;
-    }
     if (!isFullyAuthenticated || !hasSubscription) {
         toast({ title: "Premium Feature", description: "Live quotes require a subscription.", variant: "default" });
         setIsSubscriptionModalOpen(true);
@@ -110,6 +113,9 @@ export function LiveMarketDataDisplay() {
       const result: FetchMarketDataResult = await fetchMarketDataFromAV(symbol); 
       if (result.error) {
         setFetchDataError(result.error);
+        if (result.error.includes('API key is not configured')) {
+            setIsApiKeyAvailable(false);
+        }
         toast({
           title: "Fetch Failed",
           description: result.error,
@@ -258,9 +264,9 @@ export function LiveMarketDataDisplay() {
                       <FormLabel className="flex items-center gap-1"><Search className="h-4 w-4" /> Symbol for Quote Fetch (Optional)</FormLabel>
                       <div className="flex gap-2 items-center">
                         <FormControl>
-                          <Input {...field} placeholder="e.g., AAPL, EUR/USD, BTCUSD" />
+                          <Input {...field} placeholder="e.g., AAPL, EUR/USD, BTCUSD" disabled={!isApiKeyAvailable} />
                         </FormControl>
-                        <Button type="button" onClick={handleFetchData} disabled={isFetchingData || !hasApiKey} variant="outline" className="shrink-0">
+                        <Button type="button" onClick={handleFetchData} disabled={isFetchingData || !isApiKeyAvailable} variant="outline" className="shrink-0">
                           {isFetchingData ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -278,7 +284,16 @@ export function LiveMarketDataDisplay() {
                     </FormItem>
                   )}
                 />
-                {fetchDataError && (
+                {!isApiKeyAvailable && (
+                    <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <ShadcnAlertTitle>Service Unavailable</ShadcnAlertTitle>
+                    <ShadcnAlertDescription>
+                      The live quote service is not configured. Please enter data manually.
+                    </ShadcnAlertDescription>
+                  </Alert>
+                )}
+                {fetchDataError && isApiKeyAvailable && (
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <ShadcnAlertTitle>Data Fetch Error</ShadcnAlertTitle>
