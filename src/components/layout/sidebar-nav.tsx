@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -29,7 +28,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { href: "/", label: "Overview", icon: BarChart3, fullLabel: "Market Overview" },
   { href: "/alerts", label: "Alerts", icon: BellRing, fullLabel: "Alerts System", authRequired: true },
-  { href: "/performance", label: "History", icon: History, fullLabel: "Performance History", authRequired: true },
+  { href: "/performance", label: "Trade History", icon: History, fullLabel: "Trade History", authRequired: true },
   { href: "/live-analysis", label: "Live", icon: Activity, fullLabel: "Live Analysis", authRequired: true },
   { href: "/notifications", label: "Notify", icon: Bell, fullLabel: "Notifications", authRequired: true, mobileLocation: 'header', showBadge: true }, 
   { href: "/settings", label: "Settings", icon: Settings, fullLabel: "Settings", authRequired: true, mobileLocation: 'header' }, 
