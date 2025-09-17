@@ -1,16 +1,12 @@
 
 import { LiveMarketDataDisplay } from "@/components/live-analysis/live-market-data-display";
 import TradingViewAdvancedChartWidget from "@/components/live-analysis/TradingViewAdvancedChart";
-import TradingViewTickerTape from "@/components/dashboard/tradingview-ticker-tape";
 import { Separator } from "@/components/ui/separator";
-import { BarChart, TrendingUp } from "lucide-react";
+import { BarChart } from "lucide-react";
 
 export default function LiveAnalysisPage() {
   return (
     <div className="container mx-auto py-4 md:py-8 space-y-8">
-      <section id="ticker-tape">
-        <TradingViewTickerTape />
-      </section>
 
       <header className="text-center">
         <h1 className="text-3xl font-headline font-bold tracking-tight sm:text-4xl flex items-center justify-center">
