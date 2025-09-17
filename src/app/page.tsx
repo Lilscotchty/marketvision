@@ -1,9 +1,7 @@
 
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
-import { CandlestickChart, TrendingUp } from "lucide-react";
-import { TradingViewMarketOverview } from "@/components/dashboard/tradingview-market-overview";
-import { Separator } from "@/components/ui/separator";
-import { PromotionalImageTray } from "@/components/dashboard/promotional-image-tray"; // Import the new component
+import { CandlestickChart } from "lucide-react";
+import { PromotionalImageTray } from "@/components/dashboard/promotional-image-tray"; 
 
 export default function DashboardPage() {
   return (
@@ -29,17 +27,6 @@ export default function DashboardPage() {
           <ImageUploadForm />
         </section>
 
-        <Separator />
-
-        <section id="global-market-data">
-           <header className="mb-6 text-center">
-            <h2 className="text-2xl md:text-3xl font-semibold flex items-center justify-center">
-                <TrendingUp className="mr-3 h-8 w-8 text-primary"/>
-                Global <span className="text-accent">Markets</span>
-            </h2>
-          </header>
-          <TradingViewMarketOverview />
-        </section>
       </main>
     </div>
   );
