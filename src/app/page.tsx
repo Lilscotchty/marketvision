@@ -1,7 +1,9 @@
 
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
-import { CandlestickChart } from "lucide-react";
+import { CandlestickChart, TrendingUp } from "lucide-react";
 import { PromotionalImageTray } from "@/components/dashboard/promotional-image-tray"; 
+import { TradingViewMarketOverview } from "@/components/dashboard/tradingview-market-overview";
+import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
   return (
@@ -15,9 +17,6 @@ export default function DashboardPage() {
               <CandlestickChart className="mr-3 h-8 w-8 text-primary"/>
               Chart Analysis <span className="text-accent">Tool</span>
             </h2>
-            <p className="mt-2 text-md md:text-lg text-muted-foreground max-w-lg mx-auto">
-              Upload a chart image for AI-powered analysis.
-            </p>
           </header>
           
           <div className="my-6">
@@ -25,6 +24,18 @@ export default function DashboardPage() {
           </div>
 
           <ImageUploadForm />
+        </section>
+
+        <Separator className="my-8" />
+
+        <section id="global-market-data">
+           <header className="mb-6 text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold flex items-center justify-center">
+                <TrendingUp className="mr-3 h-8 w-8 text-primary"/>
+                Global <span className="text-accent">Markets</span>
+            </h2>
+          </header>
+          <TradingViewMarketOverview />
         </section>
 
       </main>
