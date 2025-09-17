@@ -1,20 +1,25 @@
-
 "use client";
 
 import React, { useEffect, useRef, memo } from 'react';
+import { useTheme } from '@/contexts/theme-context';
 
 const TradingViewMarketOverviewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scriptAppendedRef = useRef(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
-    if (containerRef.current && !scriptAppendedRef.current) {
+    if (containerRef.current) {
+      // Clear previous widget
+      while (containerRef.current.firstChild) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
+      }
+      
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
       script.type = 'text/javascript';
       script.async = true;
       script.innerHTML = JSON.stringify({
-        "colorTheme": "dark",
+        "colorTheme": theme,
         "dateRange": "12M",
         "showChart": true,
         "locale": "en",
@@ -73,9 +78,8 @@ const TradingViewMarketOverviewWidget = () => {
         ]
       });
       containerRef.current.appendChild(script);
-      scriptAppendedRef.current = true;
     }
-  }, []);
+  }, [theme]);
 
   return (
     <div className="tradingview-widget-container" ref={containerRef}>
