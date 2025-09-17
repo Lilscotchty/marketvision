@@ -15,7 +15,7 @@ const promotionalImages = [
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://picsum.photos/seed/promo2/800/250',
+    src: 'https://i.ibb.co/n6KQrDq/promo2.png',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',
