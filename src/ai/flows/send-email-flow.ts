@@ -8,8 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import type { SendEmailInput, SendEmailOutput } from '@/types';
-import { SendEmailInputSchema, SendEmailOutputSchema } from '@/types';
+import { SendEmailInput, SendEmailOutput, SendEmailInputSchema, SendEmailOutputSchema } from '@/types';
 
 
 export async function sendEmailNotification(

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, memo } from 'react';
@@ -49,8 +50,11 @@ function TradingViewTickerTape() {
           "displayMode": "regular",
           "locale": "en"
         });
-
-        container.current.appendChild(script);
+        
+        // Prevent adding script multiple times
+        if (!container.current.querySelector('script')) {
+            container.current.appendChild(script);
+        }
     }
   }, []);
 

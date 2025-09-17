@@ -8,21 +8,21 @@ import { cn } from '@/lib/utils';
 
 const promotionalImages = [
   {
-    src: 'https://placehold.co/800x250/1A1B20/FFFFFF',
+    src: 'https://picsum.photos/seed/promo1/800/250',
     alt: 'Promotion 1: Advanced AI Analysis',
     dataAiHint: 'modern technology',
     title: 'Unlock Advanced AI Analysis',
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://placehold.co/800x250/1A1B20/FFFFFF',
+    src: 'https://picsum.photos/seed/promo2/800/250',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',
     description: 'Set custom, real-time alerts for price, patterns, and more.',
   },
   {
-    src: 'https://placehold.co/800x250/1A1B20/FFFFFF',
+    src: 'https://picsum.photos/seed/promo3/800/250',
     alt: 'Promotion 3: In-depth Performance Tracking',
     dataAiHint: 'analytics chart',
     title: 'Track Your Performance',
@@ -57,8 +57,8 @@ export function PromotionalImageTray() {
           <Image
             src={currentImage.src}
             alt={currentImage.alt}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{objectFit: 'cover'}}
             className="z-0"
             data-ai-hint={currentImage.dataAiHint}
           />
