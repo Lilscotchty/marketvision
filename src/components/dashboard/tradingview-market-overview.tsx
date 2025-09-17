@@ -3,25 +3,74 @@
 
 import React, { useEffect, useRef, memo } from 'react';
 
-const TradingViewScreenerWidget = () => {
+const TradingViewMarketOverviewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptAppendedRef = useRef(false);
 
   useEffect(() => {
     if (containerRef.current && !scriptAppendedRef.current) {
       const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-screener.js';
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
       script.type = 'text/javascript';
       script.async = true;
       script.innerHTML = JSON.stringify({
-        "width": "100%",
-        "height": 550,
-        "defaultScreen": "general",
-        "market": "forex",
-        "showToolbar": true,
         "colorTheme": "dark",
-        "transparency": true,
-        "locale": "en"
+        "dateRange": "12M",
+        "showChart": true,
+        "locale": "en",
+        "largeChartUrl": "",
+        "isTransparent": true,
+        "showSymbolLogo": true,
+        "showFloatingTooltip": true,
+        "width": "100%",
+        "height": "660",
+        "plotLineColorGrowing": "rgba(41, 98, 255, 1)",
+        "plotLineColorFalling": "rgba(41, 98, 255, 1)",
+        "gridLineColor": "rgba(240, 243, 250, 0)",
+        "scaleFontColor": "rgba(120, 123, 134, 1)",
+        "belowLineFillColorGrowing": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorFalling": "rgba(41, 98, 255, 0.12)",
+        "belowLineFillColorGrowingBottom": "rgba(41, 98, 255, 0)",
+        "belowLineFillColorFallingBottom": "rgba(41, 98, 255, 0)",
+        "symbolActiveColor": "rgba(41, 98, 255, 0.12)",
+        "tabs": [
+          {
+            "title": "Forex",
+            "symbols": [
+              { "s": "FX:EURUSD", "d": "EUR/USD" },
+              { "s": "FX:GBPUSD", "d": "GBP/USD" },
+              { "s": "FX:USDJPY", "d": "USD/JPY" },
+              { "s": "FX:AUDUSD", "d": "AUD/USD" },
+              { "s": "FX:USDCAD", "d": "USD/CAD" },
+              { "s": "FX:USDCHF", "d": "USD/CHF" }
+            ],
+            "originalTitle": "Forex"
+          },
+          {
+            "title": "Indices",
+            "symbols": [
+              { "s": "FOREXCOM:SPXUSD", "d": "S&P 500" },
+              { "s": "FOREXCOM:NSXUSD", "d": "US 100" },
+              { "s": "FOREXCOM:DJI", "d": "Dow 30" },
+              { "s": "INDEX:UKX", "d": "UK 100" },
+              { "s": "INDEX:DAX", "d": "DAX" },
+              { "s": "FOREXCOM:JPN225", "d": "Nikkei 225" }
+            ],
+            "originalTitle": "Indices"
+          },
+          {
+            "title": "Cryptocurrencies",
+            "symbols": [
+              { "s": "BITSTAMP:BTCUSD", "d": "Bitcoin" },
+              { "s": "BITSTAMP:ETHUSD", "d": "Ethereum" },
+              { "s": "BINANCE:SOLUSDT", "d": "Solana" },
+              { "s": "BINANCE:XRPUSDT", "d": "Ripple" },
+              { "s": "BINANCE:DOGEUSDT", "d": "Dogecoin" },
+              { "s": "BINANCE:ADAUSDT", "d": "Cardano" }
+            ],
+            "originalTitle": "Cryptocurrencies"
+          }
+        ]
       });
       containerRef.current.appendChild(script);
       scriptAppendedRef.current = true;
@@ -31,13 +80,8 @@ const TradingViewScreenerWidget = () => {
   return (
     <div className="tradingview-widget-container" ref={containerRef}>
       <div className="tradingview-widget-container__widget"></div>
-      <div className="tradingview-widget-copyright text-center text-xs p-1">
-        <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank" className="text-blue-500 hover:text-blue-400">
-          Track all markets on TradingView
-        </a>
-      </div>
     </div>
   );
 };
 
-export const TradingViewMarketOverview = memo(TradingViewScreenerWidget);
+export const TradingViewMarketOverview = memo(TradingViewMarketOverviewWidget);
