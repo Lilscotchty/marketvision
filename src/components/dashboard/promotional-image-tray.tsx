@@ -15,7 +15,7 @@ const promotionalImages = [
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://i.ibb.co/n6KQrDq/promo2.png',
+    src: 'https://i.ibb.co/6cZQTzxH/Picsart-25-09-17-19-16-17-564.jpg',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',
