@@ -1,9 +1,27 @@
 
+'use client';
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import { CandlestickChart, TrendingUp } from "lucide-react";
-import { PromotionalImageTray } from "@/components/dashboard/promotional-image-tray"; 
-import { TradingViewMarketOverview } from "@/components/dashboard/tradingview-market-overview";
-import { Separator } from "@/components/ui/separator";
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Dynamically import heavy components
+const PromotionalImageTray = dynamic(() => 
+  import('@/components/dashboard/promotional-image-tray').then(mod => mod.PromotionalImageTray),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="h-48 md:h-64 w-full rounded-lg" />
+  }
+);
+
+const TradingViewMarketOverview = dynamic(() =>
+  import('@/components/dashboard/tradingview-market-overview').then(mod => mod.TradingViewMarketOverview),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[660px] w-full" />,
+  }
+);
+const Separator = dynamic(() => import('@/components/ui/separator').then(mod => mod.Separator));
 
 export default function DashboardPage() {
   return (

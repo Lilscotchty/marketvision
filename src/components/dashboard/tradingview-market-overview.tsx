@@ -6,11 +6,12 @@ import { useTheme } from '@/contexts/theme-context';
 
 const TradingViewMarketOverviewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const isWidgetCreated = useRef(false);
   const { theme } = useTheme();
 
-  const createWidget = () => {
-    if (containerRef.current && !scriptRef.current) {
+  useEffect(() => {
+    // Only create widget if it hasn't been created yet
+    if (!isWidgetCreated.current && containerRef.current) {
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
       script.type = 'text/javascript';
@@ -75,31 +76,9 @@ const TradingViewMarketOverviewWidget = () => {
         ]
       });
       containerRef.current.appendChild(script);
-      scriptRef.current = script;
+      isWidgetCreated.current = true;
     }
-  };
-
-  useEffect(() => {
-    createWidget();
-    // Cleanup function to remove script on component unmount
-    return () => {
-      if (scriptRef.current && containerRef.current && containerRef.current.contains(scriptRef.current)) {
-        containerRef.current.removeChild(scriptRef.current);
-        scriptRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    // If the widget has already been created, we need to recreate it for the theme change to take effect
-    if (scriptRef.current) {
-      if (containerRef.current && containerRef.current.contains(scriptRef.current)) {
-        containerRef.current.removeChild(scriptRef.current);
-      }
-      scriptRef.current = null;
-      createWidget();
-    }
-  }, [theme]);
+  }, [theme]); // Re-run if theme changes, though TradingView might handle this internally
 
   return (
     <div className="tradingview-widget-container" ref={containerRef}>

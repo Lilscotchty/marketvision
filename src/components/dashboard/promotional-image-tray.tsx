@@ -8,21 +8,21 @@ import { cn } from '@/lib/utils';
 
 const promotionalImages = [
   {
-    src: 'https://picsum.photos/seed/promo1/800/250',
+    src: 'https://placehold.co/800x250/222328/E8E8E8.png',
     alt: 'Promotion 1: Advanced AI Analysis',
     dataAiHint: 'modern technology',
     title: 'Unlock Advanced AI Analysis',
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://i.ibb.co/ym2dh44q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
+    src: 'https://placehold.co/800x250/343A40/FFFFFF.png',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',
     description: 'Set custom, real-time alerts for price, patterns, and more.',
   },
   {
-    src: 'https://picsum.photos/seed/promo3/800/250',
+    src: 'https://placehold.co/800x250/000000/FFFFFF.png',
     alt: 'Promotion 3: In-depth Performance Tracking',
     dataAiHint: 'analytics chart',
     title: 'Track Your Performance',
