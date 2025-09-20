@@ -114,3 +114,22 @@
     @apply font-headline;
   }
 }
+
+@layer utilities {
+  @keyframes move-bg {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 70px 70px;
+    }
+  }
+
+  .animated-geometric-background {
+    background-color: hsl(var(--muted));
+    background-image:
+      repeating-linear-gradient(45deg, hsl(var(--primary) / 0.05), hsl(var(--primary) / 0.05) 1px, transparent 1px, transparent 35px),
+      repeating-linear-gradient(-45deg, hsl(var(--accent) / 0.05), hsl(var(--accent) / 0.05) 1px, transparent 1px, transparent 35px);
+    animation: move-bg 10s linear infinite;
+  }
+}
