@@ -26,7 +26,6 @@ import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 
-// Dynamically import the TradingViewTickerTape to prevent SSR issues
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
 });
@@ -158,7 +157,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <SidebarProvider>
+     <SidebarProvider>
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <Sidebar collapsible="icon" className="hidden border-r bg-background sm:flex">
           <SidebarHeader className="h-16 flex items-center justify-center">
