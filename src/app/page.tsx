@@ -1,5 +1,4 @@
 
-'use client';
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import { CandlestickChart, TrendingUp } from "lucide-react";
 import dynamic from 'next/dynamic';

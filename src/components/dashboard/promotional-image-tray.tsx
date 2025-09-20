@@ -15,7 +15,7 @@ const promotionalImages = [
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://placehold.co/800x250/343A40/FFFFFF.png',
+    src: 'https://i.ibb.co/ym2dh44/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',

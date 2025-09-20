@@ -28,7 +28,7 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { href: "/", label: "Overview", icon: BarChart3, fullLabel: "Market Overview" },
   { href: "/alerts", label: "Alerts", icon: BellRing, fullLabel: "Alerts System", authRequired: true },
-  { href: "/performance", label: "History", icon: History, fullLabel: "Performance History", authRequired: true },
+  { href: "/performance", label: "Trade History", icon: History, fullLabel: "Performance History", authRequired: true },
   { href: "/live-analysis", label: "Live", icon: Activity, fullLabel: "Live Analysis", authRequired: true },
   { href: "/login", label: "Login", icon: LogIn, fullLabel: "Login", guestOnly: true },
   { href: "/signup", label: "Sign Up", icon: UserPlus, fullLabel: "Sign Up", guestOnly: true },

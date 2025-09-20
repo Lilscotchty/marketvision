@@ -1,8 +1,19 @@
 
+'use client'
+import dynamic from 'next/dynamic';
+import { Skeleton } from "@/components/ui/skeleton";
 import { LiveMarketDataDisplay } from "@/components/live-analysis/live-market-data-display";
-import TradingViewAdvancedChartWidget from "@/components/live-analysis/TradingViewAdvancedChart";
 import { Separator } from "@/components/ui/separator";
 import { BarChart } from "lucide-react";
+
+// Dynamically import the TradingView chart to prevent SSR issues and improve initial load.
+const TradingViewAdvancedChartWidget = dynamic(
+  () => import("@/components/live-analysis/TradingViewAdvancedChart"),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="h-[600px] md:h-[750px] w-full rounded-lg" />
+  }
+);
 
 export default function LiveAnalysisPage() {
   return (

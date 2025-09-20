@@ -22,12 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Remove hardcoded className="dark"
     <html lang="en" suppressHydrationWarning> 
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-body antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            <NotificationProvider> {/* Wrap AppLayout with NotificationProvider */}
+            <NotificationProvider>
               <AppLayout>{children}</AppLayout>
             </NotificationProvider>
           </AuthProvider>
