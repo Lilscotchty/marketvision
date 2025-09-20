@@ -2,14 +2,17 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from 'next/navigation';
 import { PerformanceHistoryTable } from "@/components/performance/performance-history-table";
 import type { HistoricalPrediction } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
-// This is a mock. In a real app, this would come from a global state/context or API
-// after a successful analysis on the dashboard page.
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictions';
 
 export default function PerformancePage() {
@@ -19,6 +22,15 @@ export default function PerformancePage() {
     return savedPredictions ? JSON.parse(savedPredictions) : [];
   });
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const addNewPredictionsFromStorage = useCallback(() => {
     if (!IS_BROWSER) return;
@@ -35,18 +47,18 @@ export default function PerformancePage() {
             }
             return prev;
           });
-          localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); // Clear after processing
+          localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); 
         }
       } catch (error) {
         console.error("Error processing new predictions from storage:", error);
-        localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); // Clear if parsing fails
+        localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); 
       }
     }
   }, []);
 
 
   useEffect(() => {
-    addNewPredictionsFromStorage(); // Check on initial load
+    addNewPredictionsFromStorage(); 
 
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === MOCK_NEW_PREDICTIONS_KEY) {
@@ -79,6 +91,28 @@ export default function PerformancePage() {
       description: `Prediction marked as ${flag}.`,
     });
   };
+
+  if (loading || !user) {
+     return (
+      <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
+        <div className="container mx-auto py-8 space-y-12">
+           <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-muted-foreground">Redirecting to login...</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                 <Skeleton className="h-40 w-full" />
+              </CardContent>
+            </Card>
+        </div>
+      </main>
+    );
+  }
   
   return (
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { AlertConfigForm } from "@/components/alerts/alert-config-form";
 import { AlertListDisplay } from "@/components/alerts/alert-list-display";
 import type { AlertConfig } from "@/types";
@@ -9,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useNotificationCenter } from "@/contexts/notification-context";
 import { useAuth } from "@/contexts/auth-context";
 import { sendEmailNotification } from "@/ai/flows/send-email-flow";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -20,7 +24,15 @@ export default function AlertsPage() {
   });
   const { toast } = useToast();
   const { addNotification } = useNotificationCenter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   useEffect(() => {
     if (IS_BROWSER) {
@@ -107,6 +119,32 @@ export default function AlertsPage() {
       });
     }
   };
+
+  if (loading || !user) {
+    return (
+      <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
+        <div className="container mx-auto py-8 space-y-12">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-muted-foreground">Redirecting to login...</p>
+            </div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                   <Skeleton className="h-10 w-full" />
+                </div>
+              </CardContent>
+            </Card>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
