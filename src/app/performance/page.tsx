@@ -92,13 +92,13 @@ export default function PerformancePage() {
     });
   };
 
-  if (loading || !user) {
+  if (loading) {
      return (
       <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
         <div className="container mx-auto py-8 space-y-12">
            <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">Redirecting to login...</p>
+              <p className="text-muted-foreground">Loading...</p>
             </div>
             <Card>
               <CardHeader>
@@ -114,6 +114,10 @@ export default function PerformancePage() {
     );
   }
   
+  if (!user) {
+    return null; // Return null to prevent rendering while redirecting
+  }
+
   return (
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
       <div className="container mx-auto py-8 space-y-12">
