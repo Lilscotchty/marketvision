@@ -81,19 +81,21 @@ export default function PerformancePage() {
   };
   
   return (
-    <div className="container mx-auto py-8 space-y-12">
-      <header className="text-center">
-        <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl">
-          Performance <span className="text-accent">Metrics</span>
-        </h1>
-        <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-          Track and evaluate prediction history.
-        </p>
-      </header>
+    <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
+      <div className="container mx-auto py-8 space-y-12">
+        <header className="text-center">
+          <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl">
+            Performance <span className="text-accent">Metrics</span>
+          </h1>
+          <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+            Track and evaluate prediction history.
+          </p>
+        </header>
 
-      <section>
-        <PerformanceHistoryTable predictions={predictions} onFlagTrade={handleFlagTrade} />
-      </section>
-    </div>
+        <section>
+          <PerformanceHistoryTable predictions={predictions} onFlagTrade={handleFlagTrade} />
+        </section>
+      </div>
+    </main>
   );
 }
