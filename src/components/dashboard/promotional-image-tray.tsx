@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 const promotionalImages = [
   {
-    src: 'https://placehold.co/800x250/222328/E8E8E8.png',
+    src: 'https://i.ibb.co/ym2dh44q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
     alt: 'Promotion 1: Advanced AI Analysis',
     dataAiHint: 'modern technology',
     title: 'Unlock Advanced AI Analysis',

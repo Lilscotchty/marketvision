@@ -138,6 +138,14 @@ export function ImageUploadForm() {
     return "Your trial has ended. Subscribe to continue.";
   };
 
+  const geometricBackgroundStyle = {
+    backgroundColor: 'hsl(var(--muted))',
+    backgroundImage: `
+      repeating-linear-gradient(45deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.1) 1px, transparent 1px, transparent 35px),
+      repeating-linear-gradient(-45deg, hsl(var(--accent) / 0.1), hsl(var(--accent) / 0.1) 1px, transparent 1px, transparent 35px)
+    `,
+  };
+
   return (
     <div className="space-y-8">
       <Card className="shadow-lg">
@@ -165,13 +173,16 @@ export function ImageUploadForm() {
             </div>
 
             {previewUrl && (
-              <div className="mt-4 border-dashed rounded-lg p-4 flex justify-center items-center bg-muted/20">
+              <div 
+                className="mt-4 border-dashed rounded-lg p-4 flex justify-center items-center"
+                style={geometricBackgroundStyle}
+              >
                 <Image
                   src={previewUrl}
                   alt="Chart preview"
                   width={400}
                   height={300}
-                  className="rounded-md object-contain max-h-[300px]"
+                  className="rounded-md object-contain max-h-[300px] shadow-2xl"
                   data-ai-hint="chart finance"
                 />
               </div>
