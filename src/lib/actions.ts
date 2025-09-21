@@ -52,14 +52,21 @@ export async function handleImageAnalysisAction(
   });
 
   if (!validatedFields.success) {
-    return {
-      error: validatedFields.error.flatten().fieldErrors.chartImage1?.join(', ') || "Invalid input.",
-    };
+    // This handles the case where no images are uploaded, or if a file is invalid
+    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    const errorMessage = 
+      fieldErrors.chartImage1?.join(', ') || 
+      fieldErrors.chartImage2?.join(', ') || 
+      fieldErrors.chartImage3?.join(', ') ||
+      validatedFields.error.flatten().formErrors[0] ||
+      "Invalid input.";
+    return { error: errorMessage };
   }
 
   const { chartImage1, chartImage2, chartImage3 } = validatedFields.data;
   const files = [chartImage1, chartImage2, chartImage3].filter(Boolean) as File[];
 
+  // This check is now redundant because of the .refine() in the schema, but kept as a safeguard.
   if (files.length === 0) {
       return { error: "Please upload at least one chart image." };
   }
