@@ -85,7 +85,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
                   <Dialog>
                     <DialogTrigger asChild>
                        <Image
-                        src={pred.imagePreviewUrl || "https://placehold.co/60x40.png"}
+                        src={pred.imagePreviewUrl || pred.imagePreviewUrls?.[0] || "https://placehold.co/60x40.png"}
                         alt="Chart thumbnail"
                         width={60}
                         height={40}
@@ -102,7 +102,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
                       </DialogHeader>
                       <div className="py-4 max-h-[70vh] overflow-y-auto">
                         {pred.analysis ? (
-                           <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrl={pred.imagePreviewUrl} />
+                           <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrls={pred.imagePreviewUrls} />
                         ) : (
                           <p>Full analysis details not available.</p>
                         )}

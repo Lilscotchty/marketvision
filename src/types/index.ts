@@ -34,7 +34,8 @@ export type AnalysisOutput = AnalyzeCandlestickChartOutput;
 
 export interface HistoricalPrediction {
   id: string;
-  imagePreviewUrl: string; 
+  imagePreviewUrl: string; // Legacy for single image display
+  imagePreviewUrls?: (string | null)[]; // For multi-image display
   date: string;
   asset?: string; 
   prediction: PredictionOutput;

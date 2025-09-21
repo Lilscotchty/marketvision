@@ -9,22 +9,30 @@ import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote } from '
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
+const fileSchema = z
+  .instanceof(File)
+  .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+  .refine(
+    (file) => ALLOWED_FILE_TYPES.includes(file.type),
+    'Only .jpg, .jpeg, .png, .webp, and .gif formats are supported.'
+  );
+
 const formSchema = z.object({
-  chartImage: z
-    .instanceof(File)
-    .refine((file) => file.size > 0, 'Please select an image.')
-    .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
-    .refine(
-      (file) => ALLOWED_FILE_TYPES.includes(file.type),
-      'Only .jpg, .jpeg, .png, .webp, and .gif formats are supported.'
-    ),
+  chartImage1: fileSchema.optional(),
+  chartImage2: fileSchema.optional(),
+  chartImage3: fileSchema.optional(),
+}).refine(data => data.chartImage1 || data.chartImage2 || data.chartImage3, {
+  message: "Please upload at least one chart image.",
+  path: ["chartImage1"], // Arbitrarily assign error to the first field
 });
+
 
 export interface AnalysisResult {
   prediction?: PredictionOutput;
   analysis?: AnalysisOutput;
   error?: string;
-  imagePreviewUrl?: string;
+  imagePreviewUrl?: string; // Legacy support for single image
+  imagePreviewUrls?: (string | null)[]; // New multi-image support
 }
 
 async function fileToDataUri(file: File): Promise<string> {
@@ -38,35 +46,55 @@ export async function handleImageAnalysisAction(
   formData: FormData
 ): Promise<AnalysisResult> {
   const validatedFields = formSchema.safeParse({
-    chartImage: formData.get('chartImage'),
+    chartImage1: formData.get('chartImage1'),
+    chartImage2: formData.get('chartImage2'),
+    chartImage3: formData.get('chartImage3'),
   });
 
   if (!validatedFields.success) {
     return {
-      error: validatedFields.error.flatten().fieldErrors.chartImage?.join(', ') || "Invalid input.",
+      error: validatedFields.error.flatten().fieldErrors.chartImage1?.join(', ') || "Invalid input.",
     };
   }
 
-  const { chartImage } = validatedFields.data;
+  const { chartImage1, chartImage2, chartImage3 } = validatedFields.data;
+  const files = [chartImage1, chartImage2, chartImage3].filter(Boolean) as File[];
+
+  if (files.length === 0) {
+      return { error: "Please upload at least one chart image." };
+  }
 
   try {
-    const chartDataUri = await fileToDataUri(chartImage);
+    const dataUris = await Promise.all(files.map(fileToDataUri));
     
-    // Run AI flows in parallel for efficiency
-    const [predictionResult, analysisResult] = await Promise.all([
-      predictMarketMovement({ candlestickChartDataUri: chartDataUri }),
-      analyzeCandlestickChart({ chartDataUri: chartDataUri })
-    ]);
+    const analysisInput = {
+        chartDataUri1: dataUris[0],
+        chartDataUri2: dataUris[1],
+        chartDataUri3: dataUris[2],
+    };
 
-    // The server action returns the result. The client component will handle state updates and storage.
+    // The prediction flow still only takes one image, so we'll use the first one (HTF)
+    const predictionInput = {
+        candlestickChartDataUri: dataUris[0]
+    };
+    
+    // Run AI flows in parallel
+    const [predictionResult, analysisResult] = await Promise.all([
+      predictMarketMovement(predictionInput),
+      analyzeCandlestickChart(analysisInput)
+    ]);
+    
+    const allImageUrls = await Promise.all(
+        [chartImage1, chartImage2, chartImage3].map(file => file ? fileToDataUri(file) : Promise.resolve(null))
+    );
+
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
-      imagePreviewUrl: chartDataUri,
+      imagePreviewUrls: allImageUrls,
     };
   } catch (error) {
     console.error('AI analysis failed:', error);
-    // Return a structured error to the client
     return {
       error: error instanceof Error ? error.message : 'An unexpected error occurred during AI analysis.',
     };

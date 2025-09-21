@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, CandlestickChart, BarChart2, Lightbulb, Zap, Workflow, Layers3, Info, ThumbsUp, ThumbsDown, Target, Activity, BookOpen, Compass, ShieldCheck, Crosshair, PackageOpen } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, CandlestickChart, BarChart2, Lightbulb, Zap, Workflow, Layers3, Info, ThumbsUp, ThumbsDown, Target, Activity, BookOpen, Compass, ShieldCheck, Crosshair, PackageOpen, GalleryHorizontal } from "lucide-react";
 import type { PredictionOutput, AnalysisOutput } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label"; // Import the Label component
 interface PredictionResultsProps {
   prediction: PredictionOutput;
   analysis: AnalysisOutput;
-  imagePreviewUrl?: string;
+  imagePreviewUrl?: string; // Legacy, single image
+  imagePreviewUrls?: (string | null)[]; // New, multiple images
 }
 
 const MarketDirectionIcon = ({ direction }: { direction: PredictionOutput['marketDirection'] }) => {
@@ -32,8 +33,10 @@ const MarketDirectionIcon = ({ direction }: { direction: PredictionOutput['marke
   }
 };
 
-export function PredictionResults({ prediction, analysis, imagePreviewUrl }: PredictionResultsProps) {
+export function PredictionResults({ prediction, analysis, imagePreviewUrl, imagePreviewUrls }: PredictionResultsProps) {
   const { toast } = useToast();
+  
+  const displayImages = imagePreviewUrls?.filter(Boolean) as string[] || (imagePreviewUrl ? [imagePreviewUrl] : []);
 
   const handleFeedback = (feedbackType: 'positive' | 'negative') => {
     toast({
@@ -48,22 +51,25 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      {imagePreviewUrl && (
+      {displayImages.length > 0 && (
         <Card className="lg:col-span-2 shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <CandlestickChart className="text-accent" /> Analyzed Chart
+              <GalleryHorizontal className="text-accent" /> Analyzed Charts
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex justify-center items-center p-6 bg-muted/20 rounded-b-lg">
-            <Image
-              src={imagePreviewUrl}
-              alt="Analyzed candlestick chart"
-              width={600}
-              height={400}
-              className="rounded-md object-contain max-h-[400px]"
-              data-ai-hint="chart graph"
-            />
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-b-lg">
+            {displayImages.map((url, index) => (
+              <div key={index} className="relative aspect-[4/3] rounded-md overflow-hidden border">
+                <Image
+                  src={url}
+                  alt={`Analyzed candlestick chart ${index + 1}`}
+                  fill
+                  className="object-contain"
+                  data-ai-hint="chart graph"
+                />
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

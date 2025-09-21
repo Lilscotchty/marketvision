@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview Analyzes candlestick chart images to identify patterns, trends, basic ICT elements,
- * and apply a conceptual Daily Bias determination framework based on visual information.
+ * and apply a conceptual Daily Bias determination framework based on visual information from multiple timeframes.
  *
  * - analyzeCandlestickChart - A function that handles the candlestick chart analysis process.
  * - AnalyzeCandlestickChartInput - The input type for the analyzeCandlestickChart function.
@@ -14,10 +14,22 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const AnalyzeCandlestickChartInputSchema = z.object({
-  chartDataUri: z
+  chartDataUri1: z
     .string()
     .describe(
-      "A photo of a candlestick chart, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of a candlestick chart (e.g., Higher Timeframe like 4H or Daily), as a data URI."
+    ),
+  chartDataUri2: z
+    .string()
+    .optional()
+    .describe(
+      "An optional photo of a candlestick chart from a Medium Timeframe (e.g., 1H or 15M), as a data URI."
+    ),
+    chartDataUri3: z
+    .string()
+    .optional()
+    .describe(
+      "An optional photo of a candlestick chart from a Lower Timeframe (e.g., 5M or 1M), as a data URI."
     ),
 });
 export type AnalyzeCandlestickChartInput = z.infer<typeof AnalyzeCandlestickChartInputSchema>;
@@ -84,43 +96,43 @@ const prompt = ai.definePrompt({
   name: 'analyzeCandlestickChartPrompt',
   input: {schema: AnalyzeCandlestickChartInputSchema},
   output: {schema: AnalyzeCandlestickChartOutputSchema},
-  prompt: `You are an expert financial analyst specializing in candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
+  prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-Analyze the provided candlestick chart image. Your goal is to perform a comprehensive analysis, including determining a conceptual Daily Bias.
+Analyze the provided candlestick chart images. The user has provided up to three images, likely representing Higher (HTF), Medium (MTF), and Lower (LTF) timeframes of the same asset. Use all available images to perform a cohesive, multi-timeframe analysis.
 
 **Analysis Steps:**
 
-1.  **Standard Analysis:**
-    *   **Overall Trend:** Determine the prevailing market trend visually (e.g., Uptrend, Downtrend, Sideways).
-    *   **Candlestick Patterns:** Identify any significant candlestick patterns visible (e.g., Hammer, Engulfing, Doji). List them.
-    *   **ICT Elements:** Visually identify and describe key ICT elements. Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
-    *   **Market Structure:** Briefly comment on any visible market structure features like a Break of Structure (BOS) or a Change of Character (CHoCH).
-    *   **Potential AMD Cycle:** Suggest if the chart might be part of an Accumulation, Manipulation, or Distribution phase.
-    *   **Daily Bias Determination (Conceptual):** Apply the visual framework (IRL/ERL draw, time-based liquidity) to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
+1.  **Standard Analysis (Multi-Timeframe Context):**
+    *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., HTF shows uptrend, MTF is pulling back).
+    *   **Candlestick Patterns:** Identify any significant candlestick patterns visible on any of the charts. Note which timeframe they appear on if relevant.
+    *   **ICT Elements:** Visually identify and describe key ICT elements across the charts. Highlight how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
+    *   **Market Structure:** Comment on visible market structure (BOS, CHoCH) on each timeframe and describe the overall structural narrative.
+    *   **Potential AMD Cycle:** Suggest if the charts collectively indicate a phase of Accumulation, Manipulation, or Distribution.
+    *   **Daily Bias Determination (Conceptual):** Apply the visual framework using all charts to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
 
-2.  **Intraday Sniper Entry Strategy Analysis:**
-    *   After your standard analysis, check if the chart visually presents a pattern that resembles the "Intraday Sniper Entry" strategy. The analysis must be conceptual as you only have one image.
-    *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field or indicate that no such setup is apparent.
+2.  **Intraday Sniper Entry Strategy Analysis (Multi-Timeframe):**
+    *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy, using the different images as proxies for the different timeframes mentioned in the strategy.
+    *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
     *   **Strategy Breakdown:**
-        *   **Daily Bias Setup (HTF Filter):**
-            *   **Step 1 (4H):** Conceptually describe if the chart shows a liquidity grab followed by a Market Structure Shift (MSS) on a higher timeframe (like 4H).
-            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this conceptual MSS.
-            *   **Step 2 (1H):** Confirm that the visible, more immediate price action aligns with the bias set by the 4H/1H structure, and state that the BB is the point of interest.
+        *   **Daily Bias Setup (HTF Filter - using Image 1):**
+            *   **Step 1 (4H):** Use the first image (assumed HTF) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
+            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on the HTF chart.
+            *   **Step 2 (1H):** Use the second image (assumed MTF) to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
             *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\`.
-        *   **Intraday Sniper Entry (LTF Mechanic):**
-            *   **Step 3 (15M):** Describe if there's a visual sign of a liquidity grab wick into or near the identified BB (e.g., a long wick sweeping a prior short-term high/low).
-            *   **Step 4 (5M):** Look for a lower-timeframe confirmation, such as a candle body close past a recent small swing high/low, indicating a lower-timeframe MSS.
+        *   **Intraday Sniper Entry (LTF Mechanic - using Image 2 & 3):**
+            *   **Step 3 (15M):** Use the second/third image to describe if there's a visual sign of a liquidity grab wick into the identified BB.
+            *   **Step 4 (5M):** Use the third image (assumed LTF) to look for a lower-timeframe MSS confirmation.
             *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\`.
         *   **Trade Management:**
-            *   **Step 5 (Entry):** Describe the conceptual entry point (e.g., "Entry on retest of the 5M Breaker Block").
-            *   **Step 5 (Stop Loss):** Describe the conceptual Stop Loss placement (e.g., "Stop just beyond the high/low of the 15M sweep wick").
-            *   **Step 5 (Take Profit):** Describe the conceptual Take Profit target (e.g., "Targeting the most recent significant 15M swing high/low").
-            *   Populate \`sniperEntrySetup.tradeManagement\` with entry, stopLoss, and takeProfit details.
+            *   **Step 5 (Entry, SL, TP):** Based on the visual patterns, describe the conceptual entry, stop loss, and take profit points.
+            *   Populate \`sniperEntrySetup.tradeManagement\` with these details.
 
-3.  **Summary:** Provide a concise overall summary of your analysis, integrating findings from all the above points.
+3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
 
-Analyze the following candlestick chart:
-{{media url=chartDataUri}}
+Analyze the following candlestick charts:
+{{#if chartDataUri1}}HTF Chart: {{media url=chartDataUri1}}{{/if}}
+{{#if chartDataUri2}}MTF Chart: {{media url=chartDataUri2}}{{/if}}
+{{#if chartDataUri3}}LTF Chart: {{media url=chartDataUri3}}{{/if}}
 
 Output MUST be in JSON format according to the defined output schema. If specific elements are not clearly discernible, you may omit those fields, return empty arrays/strings, or state "Unclear" or "Not visually apparent".
 `,
