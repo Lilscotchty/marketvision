@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, CandlestickChart, BarChart2, Lightbulb, Zap, Workflow, Layers3, Info, ThumbsUp, ThumbsDown, Target, Activity, BookOpen, Compass } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, CandlestickChart, BarChart2, Lightbulb, Zap, Workflow, Layers3, Info, ThumbsUp, ThumbsDown, Target, Activity, BookOpen, Compass, ShieldCheck, Crosshair, PackageOpen } from "lucide-react";
 import type { PredictionOutput, AnalysisOutput } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +44,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
   };
 
   const dailyBiasReasoning = analysis.dailyBiasReasoning;
+  const sniperEntry = analysis.sniperEntrySetup;
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -250,6 +251,47 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl }: Pre
           </div>
         </CardContent>
       </Card>
+
+      {sniperEntry && (sniperEntry.dailyBiasContext || sniperEntry.entryMechanic || sniperEntry.tradeManagement) && (
+        <Card className="lg:col-span-2 shadow-lg border-primary/50">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl flex items-center gap-2">
+              <Crosshair className="text-primary"/> Conceptual Sniper Entry Setup
+            </CardTitle>
+            <CardDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a signal.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {sniperEntry.dailyBiasContext && (
+              <div className="space-y-3">
+                 <h4 className="font-semibold flex items-center gap-2 text-md"><Compass className="h-5 w-5 text-accent"/>Daily Bias Setup (HTF)</h4>
+                 <div className="p-3 border rounded-md bg-muted/40 space-y-2">
+                    <p className="text-sm"><strong className="text-foreground font-medium">4H/1H Analysis:</strong> {sniperEntry.dailyBiasContext.fourHourAnalysis}</p>
+                    <p className="text-sm"><strong className="text-foreground font-medium">Alignment:</strong> {sniperEntry.dailyBiasContext.alignment}</p>
+                 </div>
+              </div>
+            )}
+             {sniperEntry.entryMechanic && (
+              <div className="space-y-3">
+                 <h4 className="font-semibold flex items-center gap-2 text-md"><PackageOpen className="h-5 w-5 text-accent"/>Entry Mechanic (LTF)</h4>
+                 <div className="p-3 border rounded-md bg-muted/40 space-y-2">
+                    <p className="text-sm"><strong className="text-foreground font-medium">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p>
+                    <p className="text-sm"><strong className="text-foreground font-medium">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p>
+                 </div>
+              </div>
+            )}
+            {sniperEntry.tradeManagement && (
+              <div className="space-y-3">
+                 <h4 className="font-semibold flex items-center gap-2 text-md"><ShieldCheck className="h-5 w-5 text-accent"/>Conceptual Trade Management</h4>
+                 <div className="p-3 border rounded-md bg-muted/40 space-y-2">
+                    <p className="text-sm"><strong className="text-foreground font-medium">Entry:</strong> {sniperEntry.tradeManagement.entry}</p>
+                    <p className="text-sm"><strong className="text-foreground font-medium">Stop Loss:</strong> {sniperEntry.tradeManagement.stopLoss}</p>
+                    <p className="text-sm"><strong className="text-foreground font-medium">Take Profit:</strong> {sniperEntry.tradeManagement.takeProfit}</p>
+                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

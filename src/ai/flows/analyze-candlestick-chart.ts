@@ -11,7 +11,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AnalyzeCandlestickChartInputSchema = z.object({
   chartDataUri: z
@@ -29,7 +29,9 @@ const ICTElementSchema = z.object({
     "Fair Value Gap (Bullish)", 
     "Fair Value Gap (Bearish)", 
     "Liquidity Pool (Buy-side)", 
-    "Liquidity Pool (Sell-side)"
+    "Liquidity Pool (Sell-side)",
+    "Breaker Block (Bullish)",
+    "Breaker Block (Bearish)"
   ]).describe("The type of ICT element identified."),
   location_description: z.string().describe("A textual description of where this element is visually located on the chart, e.g., 'around the recent swing low', 'the large green candle near the top'.")
 });
@@ -40,6 +42,23 @@ const DailyBiasReasoningSchema = z.object({
   ltfConfirmationOutlook: z.string().optional().describe("Conceptual LTF structure to look for that would align with the inferred daily bias. Example: 'If bias is bullish, look for LTF accumulation patterns or a break of structure upwards after a pullback.'"),
   openingPriceConfluence: z.string().optional().describe("Observations about how price is reacting relative to visually apparent opening price levels (if discernible). Example: 'Price is currently trading below what might be the weekly open, aligning with a bullish bias if entries are sought at a discount.'"),
 });
+
+const SniperEntrySetupSchema = z.object({
+  dailyBiasContext: z.object({
+    fourHourAnalysis: z.string().describe("Step 1 & 2: Conceptual analysis of the 4H/1H structure, identifying the likely daily bias, the key MSS, and the untapped Breaker Block that sets the stage."),
+    alignment: z.string().describe("Confirmation that the 1H structure aligns with the 4H bias and the BB is the focus.")
+  }).optional(),
+  entryMechanic: z.object({
+    fifteenMinSetup: z.string().describe("Step 3: Description of the 15M liquidity grab (wick sweep) into or near the Breaker Block."),
+    fiveMinConfirmation: z.string().describe("Step 4: Description of the 5M MSS confirmation after the liquidity grab.")
+  }).optional(),
+  tradeManagement: z.object({
+    entry: z.string().describe("Step 5 (Entry): The ideal entry point, described conceptually (e.g., 'Entry at the retest of the 5M Breaker Block')."),
+    stopLoss: z.string().describe("Step 5 (Stop Loss): The recommended stop loss placement (e.g., 'Stop loss just beyond the 15M wick high/low')."),
+    takeProfit: z.string().describe("Step 5 (Take Profit): The logical take profit target (e.g., 'Targeting the most recent 15M swing high/low for profit-taking').")
+  }).optional()
+}).optional().describe("A conceptual trade setup based on the 'Intraday Sniper Entry' strategy if a similar pattern is visually identifiable on the chart.");
+
 
 const AnalyzeCandlestickChartOutputSchema = z.object({
   trend: z.string().describe('The identified trend in the candlestick chart.'),
@@ -52,7 +71,8 @@ const AnalyzeCandlestickChartOutputSchema = z.object({
     reasoning: z.string().optional().describe("Brief reasoning for the potential AMD phase identification.")
   }).optional().describe("A conceptual observation about a potential Accumulation, Manipulation, Distribution (AMD) cycle phase suggested by the chart's price action."),
   inferredDailyBias: z.enum(["Bullish", "Bearish", "Neutral", "Unclear"]).optional().describe("The overall daily bias inferred from the visual analysis using the structured Daily Bias Determination framework."),
-  dailyBiasReasoning: DailyBiasReasoningSchema.optional().describe("Detailed reasoning for the inferred daily bias based on visual interpretation of the chart according to the Daily Bias Determination steps.")
+  dailyBiasReasoning: DailyBiasReasoningSchema.optional().describe("Detailed reasoning for the inferred daily bias based on visual interpretation of the chart according to the Daily Bias Determination steps."),
+  sniperEntrySetup: SniperEntrySetupSchema.describe("A conceptual trade setup based on the 'Intraday Sniper Entry' strategy if a similar pattern is visually identifiable on the chart.")
 });
 export type AnalyzeCandlestickChartOutput = z.infer<typeof AnalyzeCandlestickChartOutputSchema>;
 
@@ -70,44 +90,39 @@ Analyze the provided candlestick chart image. Your goal is to perform a comprehe
 
 **Analysis Steps:**
 
-1.  **Overall Trend:** Determine the prevailing market trend visually (e.g., Uptrend, Downtrend, Sideways).
-2.  **Candlestick Patterns:** Identify any significant candlestick patterns visible (e.g., Hammer, Engulfing, Doji). List them.
-3.  **ICT Elements:** Visually identify and describe key ICT elements. For each element found, specify its type and provide a brief description of its location. Consider:
-    *   Order Block (Bullish/Bearish)
-    *   Fair Value Gap (Bullish/Bearish)
-    *   Liquidity Pool (Buy-side/Sell-side)
-4.  **Market Structure:** Briefly comment on any visible market structure features like a Break of Structure (BOS) or a Change of Character (CHoCH).
-5.  **Potential AMD Cycle Observation:** Suggest if the chart might be part of an Accumulation, Manipulation, or Distribution (Markup/Markdown) phase. Provide brief reasoning.
+1.  **Standard Analysis:**
+    *   **Overall Trend:** Determine the prevailing market trend visually (e.g., Uptrend, Downtrend, Sideways).
+    *   **Candlestick Patterns:** Identify any significant candlestick patterns visible (e.g., Hammer, Engulfing, Doji). List them.
+    *   **ICT Elements:** Visually identify and describe key ICT elements. Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
+    *   **Market Structure:** Briefly comment on any visible market structure features like a Break of Structure (BOS) or a Change of Character (CHoCH).
+    *   **Potential AMD Cycle:** Suggest if the chart might be part of an Accumulation, Manipulation, or Distribution phase.
+    *   **Daily Bias Determination (Conceptual):** Apply the visual framework (IRL/ERL draw, time-based liquidity) to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
 
-6.  **Daily Bias Determination (Conceptual & Visual):**
-    Apply the following framework based *only on the visual information from the chart image*. Since exact numerical data for previous candles or opening prices is not provided, make conceptual observations.
-    *   **Step 1: Identify IRL/ERL Draw (Visual):**
-        *   Examine the chart. Does price appear to have recently tapped into a visually obvious FVG (IRL) or taken out a significant high/low (ERL)?
-        *   Based on this, what is the next *likely* draw on liquidity visually? (e.g., "Price has cleared a visible swing high (ERL), next draw could be a prominent FVG below (IRL)").
-        *   Populate \`dailyBiasReasoning.drawOnLiquidityAnalysis\`.
-    *   **Step 2: Analyze Time-Based Liquidity (Visual):**
-        *   Focus on what appear to be the most recent significant previous weekly or daily candle(s) visible in the chart.
-        *   Is price showing clear displacement past these visually apparent highs/lows, or is it sweeping them without strong follow-through?
-        *   Example: "The chart shows price strongly breaking above the high of the last large candle, suggesting continuation." or "Price wicked above the prior candle's high and closed lower, indicating a potential sweep and reversal."
-        *   Populate \`dailyBiasReasoning.timeBasedLiquidityAnalysis\`.
-    *   **Step 3: Look for LTF Structure Confirmation (Conceptual Outlook):**
-        *   Based on your inferred HTF bias from steps 1 & 2, what kind of Lower Timeframe (LTF) market structure would conceptually confirm this bias if one were to zoom in (even if the current chart isn't LTF)?
-        *   Example: "If the inferred bias is bearish, one might look for LTF distribution patterns or a break of LTF swing lows."
-        *   Populate \`dailyBiasReasoning.ltfConfirmationOutlook\`.
-    *   **Step 4: Use Opening Prices for Confluence (Visual/Conceptual, Optional):**
-        *   Are there any price levels on the chart that *visually resemble* significant opening prices (e.g., a clear consolidation point from which a new major candle might have started)?
-        *   How is current price reacting relative to these *visually inferred* opening price levels?
-        *   Example: "Price is currently trading above a level that looks like a daily open, which would support a bullish entry if seeking discount."
-        *   If no clear visual cues for opening prices exist, state that.
-        *   Populate \`dailyBiasReasoning.openingPriceConfluence\`.
-    *   **Infer Daily Bias:** Based on the synthesis of all visual information and the daily bias determination steps, state the \`inferredDailyBias\` (Bullish, Bearish, Neutral, or Unclear).
+2.  **Intraday Sniper Entry Strategy Analysis:**
+    *   After your standard analysis, check if the chart visually presents a pattern that resembles the "Intraday Sniper Entry" strategy. The analysis must be conceptual as you only have one image.
+    *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field or indicate that no such setup is apparent.
+    *   **Strategy Breakdown:**
+        *   **Daily Bias Setup (HTF Filter):**
+            *   **Step 1 (4H):** Conceptually describe if the chart shows a liquidity grab followed by a Market Structure Shift (MSS) on a higher timeframe (like 4H).
+            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this conceptual MSS.
+            *   **Step 2 (1H):** Confirm that the visible, more immediate price action aligns with the bias set by the 4H/1H structure, and state that the BB is the point of interest.
+            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\`.
+        *   **Intraday Sniper Entry (LTF Mechanic):**
+            *   **Step 3 (15M):** Describe if there's a visual sign of a liquidity grab wick into or near the identified BB (e.g., a long wick sweeping a prior short-term high/low).
+            *   **Step 4 (5M):** Look for a lower-timeframe confirmation, such as a candle body close past a recent small swing high/low, indicating a lower-timeframe MSS.
+            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\`.
+        *   **Trade Management:**
+            *   **Step 5 (Entry):** Describe the conceptual entry point (e.g., "Entry on retest of the 5M Breaker Block").
+            *   **Step 5 (Stop Loss):** Describe the conceptual Stop Loss placement (e.g., "Stop just beyond the high/low of the 15M sweep wick").
+            *   **Step 5 (Take Profit):** Describe the conceptual Take Profit target (e.g., "Targeting the most recent significant 15M swing high/low").
+            *   Populate \`sniperEntrySetup.tradeManagement\` with entry, stopLoss, and takeProfit details.
 
-7.  **Summary:** Provide a concise overall summary of your analysis, integrating findings from all the above points, especially the inferred daily bias and its reasoning.
+3.  **Summary:** Provide a concise overall summary of your analysis, integrating findings from all the above points.
 
 Analyze the following candlestick chart:
 {{media url=chartDataUri}}
 
-Output MUST be in JSON format according to the defined output schema. If specific elements (ICT, market structure, AMD phase, or parts of daily bias reasoning) are not clearly discernible from the image, you may omit those fields, return empty arrays/strings, or state "Unclear" or "Not visually apparent". For dailyBiasReasoning, provide textual descriptions for each step.
+Output MUST be in JSON format according to the defined output schema. If specific elements are not clearly discernible, you may omit those fields, return empty arrays/strings, or state "Unclear" or "Not visually apparent".
 `,
 });
 
@@ -122,5 +137,3 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
