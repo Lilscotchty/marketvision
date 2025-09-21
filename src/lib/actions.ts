@@ -11,19 +11,20 @@ const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 
 const fileSchema = z
   .instanceof(File)
-  .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+  .optional()
+  .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
   .refine(
-    (file) => ALLOWED_FILE_TYPES.includes(file.type),
+    (file) => !file || ALLOWED_FILE_TYPES.includes(file.type),
     'Only .jpg, .jpeg, .png, .webp, and .gif formats are supported.'
   );
 
 const formSchema = z.object({
-  chartImage1: fileSchema.optional(),
-  chartImage2: fileSchema.optional(),
-  chartImage3: fileSchema.optional(),
+  chartImage1: fileSchema,
+  chartImage2: fileSchema,
+  chartImage3: fileSchema,
 }).refine(data => data.chartImage1 || data.chartImage2 || data.chartImage3, {
   message: "Please upload at least one chart image.",
-  path: ["chartImage1"], // Arbitrarily assign error to the first field
+  path: ["chartImage1"], 
 });
 
 
@@ -46,9 +47,9 @@ export async function handleImageAnalysisAction(
   formData: FormData
 ): Promise<AnalysisResult> {
   const validatedFields = formSchema.safeParse({
-    chartImage1: formData.get('chartImage1'),
-    chartImage2: formData.get('chartImage2'),
-    chartImage3: formData.get('chartImage3'),
+    chartImage1: formData.get('chartImage1') || undefined,
+    chartImage2: formData.get('chartImage2') || undefined,
+    chartImage3: formData.get('chartImage3') || undefined,
   });
 
   if (!validatedFields.success) {
@@ -76,8 +77,8 @@ export async function handleImageAnalysisAction(
     
     const analysisInput = {
         chartDataUri1: dataUris[0],
-        chartDataUri2: dataUris[1],
-        chartDataUri3: dataUris[2],
+        chartDataUri2: dataUris.length > 1 ? dataUris[1] : undefined,
+        chartDataUri3: dataUris.length > 2 ? dataUris[2] : undefined,
     };
 
     // The prediction flow still only takes one image, so we'll use the first one (HTF)
@@ -314,3 +315,5 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
     };
   }
 }
+
+    

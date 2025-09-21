@@ -98,7 +98,7 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeCandlestickChartOutputSchema},
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-Analyze the provided candlestick chart images. The user has provided up to three images, likely representing Higher (HTF), Medium (MTF), and Lower (LTF) timeframes of the same asset. Use all available images to perform a cohesive, multi-timeframe analysis.
+Analyze the provided candlestick chart images. The user has provided up to three images, likely representing Higher (HTF), Medium (MTF), and Lower (LTF) timeframes of the same asset. If only one image is provided, treat it as the primary timeframe and infer where possible. Use all available images to perform a cohesive, multi-timeframe analysis.
 
 **Analysis Steps:**
 
@@ -149,3 +149,5 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
