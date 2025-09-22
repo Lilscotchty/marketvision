@@ -5,8 +5,20 @@ import React, { useMemo } from "react";
 import type { HistoricalPrediction } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, CartesianGrid } from 'recharts';
-import { TrendingUp, CalendarDays, Info } from "lucide-react";
-import { differenceInCalendarDays, parseISO, startOfDay, format } from 'date-fns';
+import { TrendingUp, CalendarDays, Info, Flame } from "lucide-react";
+import { 
+  differenceInCalendarDays, 
+  parseISO, 
+  startOfDay, 
+  format,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isToday,
+  isSameDay,
+} from 'date-fns';
+import { cn } from "@/lib/utils";
+
 
 // Custom tooltip for the chart
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -24,6 +36,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   }
   return null;
 };
+
+interface PerformanceStatsProps {
+  predictions: HistoricalPrediction[];
+}
 
 export function PerformanceStats({ predictions }: PerformanceStatsProps) {
   const { chartData, totalSuccessful, totalUnsuccessful, ...stats } = useMemo(() => {
@@ -52,23 +68,24 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Calculate daily streak
+    // --- Streak and Calendar Calculation ---
     const successfulTradeDates = [...new Set(
       predictions
         .filter(p => p.manualFlag === 'successful')
         .map(p => startOfDay(parseISO(p.date)).toISOString())
-    )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+     .map(d => parseISO(d));
 
     let currentStreak = 0;
     if (successfulTradeDates.length > 0) {
       const today = startOfDay(new Date());
-      const firstDate = startOfDay(parseISO(successfulTradeDates[0]));
+      const firstDate = successfulTradeDates[0];
 
       if (differenceInCalendarDays(today, firstDate) <= 1) {
         currentStreak = 1;
         for (let i = 0; i < successfulTradeDates.length - 1; i++) {
-          const currentDate = startOfDay(parseISO(successfulTradeDates[i]));
-          const nextDate = startOfDay(parseISO(successfulTradeDates[i+1]));
+          const currentDate = successfulTradeDates[i];
+          const nextDate = successfulTradeDates[i+1];
           if (differenceInCalendarDays(currentDate, nextDate) === 1) {
             currentStreak++;
           } else {
@@ -78,13 +95,23 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
       }
     }
     
+    const today = new Date();
+    const weekStart = startOfWeek(today);
+    const weekEnd = endOfWeek(today);
+    const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+    
+    const calendarDays = daysInWeek.map(day => ({
+        date: day,
+        isToday: isToday(day),
+        isSuccessful: successfulTradeDates.some(successfulDay => isSameDay(day, successfulDay)),
+    }));
+    
     return {
       totalPredictions: predictions.length,
-      successfulTrades,
-      unsuccessfulTrades,
       winRate,
       currentStreak,
       chartData,
+      calendarDays,
       totalSuccessful: successfulTrades,
       totalUnsuccessful: unsuccessfulTrades,
     };
@@ -148,19 +175,40 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 icon={TrendingUp}
                 title="Win Rate"
                 value={`${stats.winRate.toFixed(1)}%`}
-                description={`${stats.successfulTrades} wins / ${stats.unsuccessfulTrades} losses`}
+                description={`${totalSuccessful} wins / ${totalUnsuccessful} losses`}
                 iconBgClass="bg-green-500/10"
                 iconColorClass="text-green-500"
             />
 
-            <StatCard
-                icon={CalendarDays}
-                title="Consistency"
-                value={`${stats.currentStreak} Day Streak`}
-                description="Consecutive days with a successful trade."
-                iconBgClass="bg-blue-500/10"
-                iconColorClass="text-blue-500"
-            />
+            <Card className="p-4 border rounded-lg bg-card flex flex-col justify-between h-full">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Consistency</p>
+                <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs">
+                    {stats.calendarDays.map((day, index) => (
+                        <div key={index}>
+                           <p className="text-muted-foreground">{format(day.date, 'E')[0]}</p>
+                           <div className={cn(
+                               "mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold",
+                               day.isToday && "bg-primary text-primary-foreground ring-2 ring-primary/50 ring-offset-2 ring-offset-background",
+                               !day.isToday && day.isSuccessful && "bg-primary/20 text-primary",
+                               !day.isToday && !day.isSuccessful && "text-foreground"
+                           )}>
+                               {format(day.date, 'd')}
+                           </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-6 flex items-center justify-start gap-4 border-t pt-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Day Streak</p>
+                    <p className="text-2xl font-bold flex items-center gap-1.5">
+                      <Flame className="text-orange-500" />
+                      {stats.currentStreak}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
       </div>
     </div>
   );
