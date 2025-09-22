@@ -183,7 +183,7 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
         </CardHeader>
       </Card>
       
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 flex flex-col gap-6">
            <StatCard
                 icon={TrendingUp}
                 title="Win Rate"
