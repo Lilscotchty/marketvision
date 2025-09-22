@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { HistoricalPrediction } from "@/types";
-import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart } from "lucide-react";
+import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart, MoreVertical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PredictionResults } from "@/components/dashboard/prediction-results";
 import { cn } from "@/lib/utils";
 
@@ -69,9 +76,9 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
       <CardContent className="space-y-3">
         {predictions.slice(0, displayCount).map((pred) => (
           <Dialog key={pred.id}>
-            <div className="group relative bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg">
+            <div className="group relative bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg flex items-center pr-2">
               <DialogTrigger asChild>
-                <button className="w-full text-left p-4 rounded-lg flex items-center gap-4">
+                <button className="flex-1 text-left p-4 rounded-lg flex items-center gap-4">
                   <div className="flex-shrink-0">
                     <LineChart className="h-10 w-10 text-primary" />
                   </div>
@@ -82,46 +89,53 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                 </button>
               </DialogTrigger>
 
-               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => onFlagTrade(pred.id, 'successful')} 
-                      title="Flag as Successful"
-                      className={cn("h-8 w-8", pred.manualFlag === 'successful' && 'bg-green-500/20 hover:bg-green-500/30')}
-                  >
-                    <ThumbsUp className="h-4 w-4 text-green-500" />
-                  </Button>
-                  <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => onFlagTrade(pred.id, 'unsuccessful')} 
-                      title="Flag as Unsuccessful"
-                      className={cn("h-8 w-8", pred.manualFlag === 'unsuccessful' && 'bg-red-500/20 hover:bg-red-500/30')}
-                  >
-                    <ThumbsDown className="h-4 w-4 text-red-500" />
-                  </Button>
-                   <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" title="Delete" className="h-8 w-8 text-destructive/70 hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+               <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this analysis result.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDeletePrediction(pred.id)} className="bg-destructive hover:bg-destructive/90">
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem 
+                          onClick={() => onFlagTrade(pred.id, 'successful')}
+                          className={cn(pred.manualFlag === 'successful' && 'bg-green-500/10 text-green-700')}
+                        >
+                          <ThumbsUp className="mr-2 h-4 w-4" />
+                          <span>Successful</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => onFlagTrade(pred.id, 'unsuccessful')}
+                          className={cn(pred.manualFlag === 'unsuccessful' && 'bg-red-500/10 text-red-700')}
+                        >
+                           <ThumbsDown className="mr-2 h-4 w-4" />
+                           <span>Unsuccessful</span>
+                        </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                               <Trash2 className="mr-2 h-4 w-4" />
+                               <span>Delete</span>
+                             </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this analysis result.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onDeletePrediction(pred.id)} className="bg-destructive hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                </div>
             </div>
             
