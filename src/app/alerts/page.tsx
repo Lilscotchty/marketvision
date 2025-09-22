@@ -73,42 +73,53 @@ export default function AlertsPage() {
   const handleSimulateTrigger = async (alertId: string) => {
     const alert = alerts.find(a => a.id === alertId);
     if (!alert) return;
+  
+    const notificationTitle = `Alert Triggered: ${alert.name}`;
+    const notificationMessage = `Your alert for ${alert.asset} met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
 
     if (alert.notificationMethod === 'email') {
       if (!user?.email) {
         toast({
           title: "Email Not Found",
-          description: "Could not find your email address.",
+          description: "Could not find your email address to send the alert.",
           variant: "destructive",
         });
         return;
       }
       try {
-        const subject = `FinSight AI Alert: ${alert.name}`;
-        const body = `Your alert for ${alert.asset} met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
-        
         await sendEmailNotification({
           to: user.email,
-          subject,
-          body,
+          subject: `FinSight AI Alert: ${alert.name}`,
+          body: notificationMessage,
+        });
+
+        // Add an in-app notification to confirm email was sent
+        addNotification({
+          title: "Email Alert Sent",
+          message: `An email notification for "${alert.name}" was sent to ${user.email}. (Simulated)`,
+          type: 'info',
+          iconName: 'BellRing', 
+          relatedLink: `/alerts#${alert.id}`
         });
 
         toast({
           title: "Email Alert Simulated",
-          description: `An email has been sent to ${user.email}.`,
+          description: `An email has been sent to ${user.email} and an in-app notification was created.`,
         });
+
       } catch (error) {
          console.error("Failed to send email notification:", error);
          toast({
           title: "Email Simulation Failed",
+          description: "Could not simulate sending the email alert.",
           variant: "destructive",
         });
       }
 
     } else { // 'in-app'
       addNotification({
-        title: `Alert Triggered: ${alert.name}`,
-        message: `Your alert for ${alert.asset} has met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}. (Simulated)`,
+        title: notificationTitle,
+        message: `${notificationMessage} (Simulated)`,
         type: 'alert_trigger',
         iconName: 'BellRing',
         relatedLink: `/alerts#${alert.id}`
