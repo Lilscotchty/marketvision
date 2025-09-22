@@ -230,14 +230,6 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 iconColorClass="text-blue-500"
             />
 
-            <StatCard
-                icon={Trophy}
-                title="Best Asset"
-                value={stats.bestAsset}
-                description={stats.bestAsset !== 'N/A' ? `${stats.bestAssetWinRate.toFixed(0)}% win rate` : 'No trades flagged yet'}
-                iconBgClass="bg-yellow-500/10"
-                iconColorClass="text-yellow-500"
-            />
       </div>
     </div>
   );
