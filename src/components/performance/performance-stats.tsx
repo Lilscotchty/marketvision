@@ -105,40 +105,12 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
       }
     }
     
-    // Best performing asset
-    const assetPerformance: { [asset: string]: { wins: number, total: number } } = {};
-    flaggedPredictions.forEach(p => {
-        const asset = p.asset || 'N/A';
-        if (!assetPerformance[asset]) {
-            assetPerformance[asset] = { wins: 0, total: 0 };
-        }
-        assetPerformance[asset].total++;
-        if (p.manualFlag === 'successful') {
-            assetPerformance[asset].wins++;
-        }
-    });
-
-    let bestAsset = 'N/A';
-    let bestWinRate = -1;
-
-    for (const asset in assetPerformance) {
-        const { wins, total } = assetPerformance[asset];
-        const rate = (wins / total) * 100;
-        if (rate > bestWinRate) {
-            bestWinRate = rate;
-            bestAsset = asset;
-        }
-    }
-
-
     return {
       totalPredictions,
       successfulTrades,
       unsuccessfulTrades,
       winRate,
       currentStreak,
-      bestAsset,
-      bestAssetWinRate: bestWinRate,
       chartData,
       totalPnl,
       totalProfit,
@@ -259,3 +231,5 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
         <p className="text-xs text-muted-foreground mt-2">{description}</p>
     </div>
 )
+
+    
