@@ -4,34 +4,21 @@
 import React, { useMemo } from "react";
 import type { HistoricalPrediction } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine, Legend } from 'recharts';
-import { Sparkles, TrendingUp, TrendingDown, CalendarDays, Trophy, Info } from "lucide-react";
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, CartesianGrid } from 'recharts';
+import { TrendingUp, CalendarDays, Info } from "lucide-react";
 import { differenceInCalendarDays, parseISO, startOfDay, format } from 'date-fns';
-
-interface PerformanceStatsProps {
-  predictions: HistoricalPrediction[];
-}
-
-// Custom cell for conditional coloring
-const CustomizedBar = (props: any) => {
-  const { x, y, width, height, value } = props;
-  const color = value > 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))';
-  return <rect x={x} y={y} width={width} height={height} fill={color} />;
-};
-
 
 // Custom tooltip for the chart
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
     return (
       <div className="p-2 bg-background/80 border rounded-md shadow-lg backdrop-blur-sm text-xs">
         <p className="font-bold">{label}</p>
-        <p style={{ color: data.pnl > 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
-          P/L: {data.pnl.toFixed(2)}
-        </p>
-        <p className="text-muted-foreground">Wins: {data.wins}</p>
-        <p className="text-muted-foreground">Losses: {data.losses}</p>
+        {payload.map((p: any) => (
+          <p key={p.dataKey} style={{ color: p.color }}>
+            {p.name}: {p.value}
+          </p>
+        ))}
       </div>
     );
   }
@@ -39,45 +26,31 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function PerformanceStats({ predictions }: PerformanceStatsProps) {
-  const { chartData, totalPnl, totalProfit, totalLoss, ...stats } = useMemo(() => {
-    const totalPredictions = predictions.length;
+  const { chartData, totalSuccessful, totalUnsuccessful, ...stats } = useMemo(() => {
     const flaggedPredictions = predictions.filter(p => p.manualFlag);
     const successfulTrades = flaggedPredictions.filter(p => p.manualFlag === 'successful').length;
     const unsuccessfulTrades = flaggedPredictions.filter(p => p.manualFlag === 'unsuccessful').length;
     const totalFlagged = successfulTrades + unsuccessfulTrades;
-
     const winRate = totalFlagged > 0 ? (successfulTrades / totalFlagged) * 100 : 0;
     
-    // --- Chart and P&L Data Calculation ---
-    const dailyPnl: { [date: string]: { pnl: number; wins: number; losses: number; } } = {};
-    let totalPnl = 0;
-    let totalProfit = 0;
-    let totalLoss = 0;
-
+    // --- Chart Data Calculation ---
+    const dailyStats: { [date: string]: { successful: number; unsuccessful: number; } } = {};
+    
     flaggedPredictions.forEach(p => {
       const date = format(parseISO(p.date), 'dd MMM');
-      if (!dailyPnl[date]) {
-        dailyPnl[date] = { pnl: 0, wins: 0, losses: 0 };
+      if (!dailyStats[date]) {
+        dailyStats[date] = { successful: 0, unsuccessful: 0 };
       }
-      
-      // Simulate P&L: win = +1 unit, loss = -1 unit
-      const pnlValue = p.manualFlag === 'successful' ? (10 * (p.prediction.confidenceLevel + 0.5)) : (-10 * (p.prediction.confidenceLevel + 0.5));
-      dailyPnl[date].pnl += pnlValue;
-      totalPnl += pnlValue;
-
-      if (pnlValue > 0) {
-        dailyPnl[date].wins += 1;
-        totalProfit += pnlValue;
+      if (p.manualFlag === 'successful') {
+        dailyStats[date].successful += 1;
       } else {
-        dailyPnl[date].losses += 1;
-        totalLoss += pnlValue;
+        dailyStats[date].unsuccessful += 1;
       }
     });
 
-    const chartData = Object.entries(dailyPnl)
+    const chartData = Object.entries(dailyStats)
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
 
     // Calculate daily streak
     const successfulTradeDates = [...new Set(
@@ -106,32 +79,29 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
     }
     
     return {
-      totalPredictions,
+      totalPredictions: predictions.length,
       successfulTrades,
       unsuccessfulTrades,
       winRate,
       currentStreak,
       chartData,
-      totalPnl,
-      totalProfit,
-      totalLoss,
+      totalSuccessful: successfulTrades,
+      totalUnsuccessful: unsuccessfulTrades,
     };
   }, [predictions]);
-
-  const { winRate } = stats;
 
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <Card className="shadow-lg lg:col-span-3">
         <CardHeader>
           <CardTitle className="font-headline text-lg flex items-center justify-between">
-            Conceptual Profit / Loss
+            Daily Trade Outcomes
              <div className="text-right">
-                <p className={`text-xl font-bold ${totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {totalPnl.toFixed(2)}
+                <p className="text-xl font-bold">
+                  {totalSuccessful} Wins / {totalUnsuccessful} Losses
                 </p>
-                <p className={`text-xs font-normal ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                   {winRate.toFixed(1)}% Win Rate
+                <p className={`text-xs font-normal ${stats.winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
+                   {stats.winRate.toFixed(1)}% Win Rate
                 </p>
              </div>
           </CardTitle>
@@ -151,33 +121,23 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                           data={chartData}
                            margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
                         >
+                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                             <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                             <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.5)' }} />
-                             <ReferenceLine y={0} stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                             <Bar dataKey="pnl" shape={<CustomizedBar />} />
+                             <Legend wrapperStyle={{fontSize: "12px"}}/>
+                             <Bar dataKey="successful" name="Successful" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                             <Bar dataKey="unsuccessful" name="Unsuccessful" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
                         </RechartsBarChart>
                   </ResponsiveContainer>
               </div>
           )}
         </CardContent>
          <CardHeader className="pt-0">
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-primary" />
-                        <span>Profit</span>
-                        <span className="font-semibold text-foreground">+{totalProfit.toFixed(2)}</span>
-                    </div>
-                     <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-destructive" />
-                        <span>Loss</span>
-                        <span className="font-semibold text-foreground">{totalLoss.toFixed(2)}</span>
-                    </div>
-                </div>
+            <div className="flex justify-end items-center text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Info className="h-3 w-3" />
-                  <span>Conceptual P/L Units</span>
+                  <span>Count of trades flagged by outcome.</span>
                 </div>
             </div>
         </CardHeader>
@@ -201,7 +161,6 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 iconBgClass="bg-blue-500/10"
                 iconColorClass="text-blue-500"
             />
-
       </div>
     </div>
   );
@@ -231,5 +190,4 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
         <p className="text-xs text-muted-foreground mt-2">{description}</p>
     </div>
 )
-
     
