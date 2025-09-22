@@ -146,6 +146,8 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
     };
   }, [predictions]);
 
+  const { winRate } = stats;
+
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <Card className="shadow-lg lg:col-span-3">
@@ -265,3 +267,5 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
         <p className="text-xs text-muted-foreground mt-2">{description}</p>
     </div>
 )
+
+    
