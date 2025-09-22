@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -73,7 +72,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
                 <TableHead>Chart</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -81,16 +79,15 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
             <TableBody>
               {predictions.slice(0, displayCount).map((pred) => (
                 <TableRow key={pred.id}>
-                  <TableCell>{new Date(pred.date).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Dialog>
                       <DialogTrigger asChild>
                          <Image
-                          src={pred.imagePreviewUrl || "https://placehold.co/60x40.png"}
+                          src={pred.imagePreviewUrl || "https://placehold.co/80x60.png"}
                           alt="Chart thumbnail"
-                          width={60}
-                          height={40}
-                          className="rounded-sm cursor-pointer hover:opacity-80 transition-opacity"
+                          width={80}
+                          height={60}
+                          className="rounded-md cursor-pointer hover:opacity-80 transition-opacity"
                           data-ai-hint="chart finance"
                         />
                       </DialogTrigger>
