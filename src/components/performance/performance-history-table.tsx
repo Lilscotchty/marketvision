@@ -81,8 +81,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Chart</TableHead>
-              <TableHead>Asset</TableHead>
-              <TableHead>Direction</TableHead>
               <TableHead>Outcome</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -95,7 +93,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                   <Dialog>
                     <DialogTrigger asChild>
                        <Image
-                        src={pred.imagePreviewUrl || pred.imagePreviewUrls?.[0] || "https://placehold.co/60x40.png"}
+                        src={pred.imagePreviewUrl || "https://placehold.co/60x40.png"}
                         alt="Chart thumbnail"
                         width={60}
                         height={40}
@@ -119,11 +117,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                       </div>
                     </DialogContent>
                   </Dialog>
-                </TableCell>
-                <TableCell>{pred.asset || 'N/A'}</TableCell>
-                <TableCell className="flex items-center">
-                  <MarketDirectionIcon direction={pred.prediction.marketDirection} />
-                  {pred.prediction.marketDirection}
                 </TableCell>
                 <TableCell>
                   {pred.manualFlag ? (
