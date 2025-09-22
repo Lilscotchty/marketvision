@@ -79,26 +79,47 @@ export function ImageUploadForm() {
             const newPredictionEntry: HistoricalPrediction = {
                 id: `pred_${new Date().getTime()}`,
                 date: new Date().toISOString(),
-                // Store a smaller placeholder or URL if available, but not the full data URI
-                imagePreviewUrl: state.imagePreviewUrls?.[0] || "https://placehold.co/150x100.png", 
-                imagePreviewUrls: state.imagePreviewUrls,
+                // Use a generic placeholder to avoid storing large data URIs
+                imagePreviewUrl: "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
+                // Persist the full analysis and prediction object in the detail view, not the image data
                 prediction: state.prediction,
                 analysis: state.analysis,
+                // The full image URLs are only needed for the immediate result display, not for long-term storage
+                imagePreviewUrls: state.imagePreviewUrls,
                 manualFlag: undefined,
             };
 
-            // Add to main history
+            // Add to main history, now without large image data
             const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
-            const existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
-            const updatedPredictions = [newPredictionEntry, ...existingPredictions];
-            localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(updatedPredictions));
+            let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
+
+            // When creating the new list, strip out the large image data from old entries as well
+            const predictionsForStorage = [newPredictionEntry, ...existingPredictions].map(p => {
+              const { imagePreviewUrls, ...rest } = p;
+              // Ensure imagePreviewUrl exists and is a placeholder
+              if (!rest.imagePreviewUrl || rest.imagePreviewUrl.startsWith('data:image')) {
+                rest.imagePreviewUrl = "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart";
+              }
+              return rest;
+            });
+            
+            try {
+              localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictionsForStorage));
+            } catch (error) {
+               console.error("Failed to set item in localStorage:", error);
+               toast({
+                 title: "Storage Error",
+                 description: "Could not save the analysis. The browser storage might be full.",
+                 variant: "destructive"
+               });
+            }
             
             // Set a simple flag/timestamp instead of the full object
             localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
         }
         decrementTrialPoint();
     }
-}, [state, isPending, decrementTrialPoint]);
+}, [state, isPending, decrementTrialPoint, toast]);
 
 
   const isFullyAuthenticated = !authLoading && user;
@@ -277,3 +298,5 @@ export function ImageUploadForm() {
     </div>
   );
 }
+
+    
