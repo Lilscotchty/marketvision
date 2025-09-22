@@ -10,8 +10,9 @@ function TradingViewWidget() {
   const { theme } = useTheme();
 
   useEffect(() => {
-    if (!isScriptAppended.current && container.current) {
-      const script = document.createElement("script");
+    const script = document.createElement("script");
+
+    if (container.current && !isScriptAppended.current) {
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
       script.type = "text/javascript";
       script.async = true;
@@ -45,7 +46,15 @@ function TradingViewWidget() {
       container.current.appendChild(script);
       isScriptAppended.current = true;
     }
-  }, []);
+    
+    return () => {
+      // Clean up the script when the component unmounts
+      if (container.current && container.current.contains(script)) {
+        container.current.removeChild(script);
+        isScriptAppended.current = false;
+      }
+    };
+  }, [theme]);
 
   return (
     <div className="tradingview-widget-container h-full w-full" ref={container}>

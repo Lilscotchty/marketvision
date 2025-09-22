@@ -10,9 +10,10 @@ function TradingViewTickerTape() {
   const { theme } = useTheme(); // Get the current theme
 
   useEffect(() => {
+    const script = document.createElement("script");
+    
     // Check if the script has already been appended and if the container exists
     if (container.current && !scriptAppended.current) {
-      const script = document.createElement("script");
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
       script.type = "text/javascript";
       script.async = true;
@@ -35,6 +36,14 @@ function TradingViewTickerTape() {
       container.current.appendChild(script);
       scriptAppended.current = true; // Mark script as appended
     }
+    
+    return () => {
+      // Clean up the script when the component unmounts
+      if (container.current && container.current.contains(script)) {
+        container.current.removeChild(script);
+        scriptAppended.current = false;
+      }
+    };
   }, [theme]); // Re-run effect if theme changes
 
   return (

@@ -10,9 +10,9 @@ const TradingViewMarketOverviewWidget = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    // Only create widget if it hasn't been created yet
+    const script = document.createElement('script');
+    
     if (!isWidgetCreated.current && containerRef.current) {
-      const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
       script.type = 'text/javascript';
       script.async = true;
@@ -78,7 +78,15 @@ const TradingViewMarketOverviewWidget = () => {
       containerRef.current.appendChild(script);
       isWidgetCreated.current = true;
     }
-  }, [theme]); // Re-run if theme changes, though TradingView might handle this internally
+    
+    return () => {
+      // Clean up the script when the component unmounts
+      if (containerRef.current && containerRef.current.contains(script)) {
+        containerRef.current.removeChild(script);
+        isWidgetCreated.current = false;
+      }
+    };
+  }, [theme]);
 
   return (
     <div className="tradingview-widget-container" ref={containerRef}>
