@@ -83,7 +83,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
               <TableHead>Chart</TableHead>
               <TableHead>Asset</TableHead>
               <TableHead>Direction</TableHead>
-              <TableHead>Confidence</TableHead>
               <TableHead>Outcome</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -126,7 +125,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                   <MarketDirectionIcon direction={pred.prediction.marketDirection} />
                   {pred.prediction.marketDirection}
                 </TableCell>
-                <TableCell>{Math.round(pred.prediction.confidenceLevel * 100)}%</TableCell>
                 <TableCell>
                   {pred.manualFlag ? (
                     <Badge variant={pred.manualFlag === 'successful' ? 'default' : 'destructive'} className={pred.manualFlag === 'successful' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}>
