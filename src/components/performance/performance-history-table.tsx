@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -167,3 +168,4 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
     </Card>
   );
 }
+
