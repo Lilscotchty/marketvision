@@ -79,24 +79,19 @@ export function ImageUploadForm() {
             const newPredictionEntry: HistoricalPrediction = {
                 id: `pred_${new Date().getTime()}`,
                 date: new Date().toISOString(),
-                // Use a generic placeholder to avoid storing large data URIs
+                asset: state.asset, // Get asset from state
                 imagePreviewUrl: "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
-                // Persist the full analysis and prediction object in the detail view, not the image data
                 prediction: state.prediction,
                 analysis: state.analysis,
-                // The full image URLs are only needed for the immediate result display, not for long-term storage
                 imagePreviewUrls: state.imagePreviewUrls,
                 manualFlag: undefined,
             };
 
-            // Add to main history, now without large image data
             const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
             let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
 
-            // When creating the new list, strip out the large image data from old entries as well
             const predictionsForStorage = [newPredictionEntry, ...existingPredictions].map(p => {
               const { imagePreviewUrls, ...rest } = p;
-              // Ensure imagePreviewUrl exists and is a placeholder
               if (!rest.imagePreviewUrl || rest.imagePreviewUrl.startsWith('data:image')) {
                 rest.imagePreviewUrl = "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart";
               }
@@ -114,7 +109,6 @@ export function ImageUploadForm() {
                });
             }
             
-            // Set a simple flag/timestamp instead of the full object
             localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
         }
         decrementTrialPoint();
@@ -183,25 +177,36 @@ export function ImageUploadForm() {
             <CardDescription>{getHelperText()}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {imageFields.map((field, index) => (
-                  <div key={field.name} className="space-y-2">
-                    <Label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1.5">
-                       <ImagePlus className="h-4 w-4 text-muted-foreground"/> {field.label}
-                    </Label>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      onChange={(e) => handleFileChange(e, index)}
-                      ref={field.ref}
-                      disabled={interactionDisabledForAuth || needsSubscription}
-                      className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {imageFields.map((field, index) => (
+                <div key={field.name} className="space-y-2">
+                  <Label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1.5">
+                      <ImagePlus className="h-4 w-4 text-muted-foreground"/> {field.label}
+                  </Label>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={(e) => handleFileChange(e, index)}
+                    ref={field.ref}
+                    disabled={interactionDisabledForAuth || needsSubscription}
+                    className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="asset" className="text-sm font-medium flex items-center gap-1.5">
+                    Asset/Pair (e.g., BTC/USD)
+                </Label>
+                <Input
+                    id="asset"
+                    name="asset"
+                    placeholder="Enter the asset symbol shown in the chart"
+                    disabled={interactionDisabledForAuth || needsSubscription}
+                />
+            </div>
             
             {hasFiles && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
@@ -298,5 +303,3 @@ export function ImageUploadForm() {
     </div>
   );
 }
-
-    

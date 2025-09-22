@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { PerformanceHistoryTable } from "@/components/performance/performance-history-table";
+import { PerformanceStats } from "@/components/performance/performance-stats";
 import type { HistoricalPrediction } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
@@ -138,9 +139,13 @@ export default function PerformancePage() {
             Performance <span className="text-accent">Metrics</span>
           </h1>
           <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-            Track and evaluate prediction history.
+            Track and evaluate your prediction history.
           </p>
         </header>
+
+        <section>
+          <PerformanceStats predictions={predictions} />
+        </section>
 
         <section>
           <PerformanceHistoryTable 

@@ -19,6 +19,7 @@ const fileSchema = z
   );
 
 const formSchema = z.object({
+  asset: z.string().min(1, { message: "Asset symbol is required." }),
   chartImage1: fileSchema,
   chartImage2: fileSchema,
   chartImage3: fileSchema,
@@ -31,6 +32,7 @@ const formSchema = z.object({
 export interface AnalysisResult {
   prediction?: PredictionOutput;
   analysis?: AnalysisOutput;
+  asset?: string;
   error?: string;
   imagePreviewUrl?: string; // Legacy support for single image
   imagePreviewUrls?: (string | null)[]; // New multi-image support
@@ -47,15 +49,16 @@ export async function handleImageAnalysisAction(
   formData: FormData
 ): Promise<AnalysisResult> {
   const validatedFields = formSchema.safeParse({
+    asset: formData.get('asset') || undefined,
     chartImage1: formData.get('chartImage1') || undefined,
     chartImage2: formData.get('chartImage2') || undefined,
     chartImage3: formData.get('chartImage3') || undefined,
   });
 
   if (!validatedFields.success) {
-    // This handles the case where no images are uploaded, or if a file is invalid
     const fieldErrors = validatedFields.error.flatten().fieldErrors;
     const errorMessage = 
+      fieldErrors.asset?.join(', ') ||
       fieldErrors.chartImage1?.join(', ') || 
       fieldErrors.chartImage2?.join(', ') || 
       fieldErrors.chartImage3?.join(', ') ||
@@ -64,10 +67,9 @@ export async function handleImageAnalysisAction(
     return { error: errorMessage };
   }
 
-  const { chartImage1, chartImage2, chartImage3 } = validatedFields.data;
+  const { asset, chartImage1, chartImage2, chartImage3 } = validatedFields.data;
   const files = [chartImage1, chartImage2, chartImage3].filter(Boolean) as File[];
 
-  // This check is now redundant because of the .refine() in the schema, but kept as a safeguard.
   if (files.length === 0) {
       return { error: "Please upload at least one chart image." };
   }
@@ -81,12 +83,10 @@ export async function handleImageAnalysisAction(
         chartDataUri3: dataUris.length > 2 ? dataUris[2] : undefined,
     };
 
-    // The prediction flow still only takes one image, so we'll use the first one (HTF)
     const predictionInput = {
         candlestickChartDataUri: dataUris[0]
     };
     
-    // Run AI flows in parallel
     const [predictionResult, analysisResult] = await Promise.all([
       predictMarketMovement(predictionInput),
       analyzeCandlestickChart(analysisInput)
@@ -99,6 +99,7 @@ export async function handleImageAnalysisAction(
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
+      asset: asset,
       imagePreviewUrls: allImageUrls,
     };
   } catch (error) {
@@ -315,5 +316,3 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
     };
   }
 }
-
-    

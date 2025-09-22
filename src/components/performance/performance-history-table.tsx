@@ -72,7 +72,7 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-xl">Prediction Performance</CardTitle>
+        <CardTitle className="font-headline text-xl">Detailed Prediction History</CardTitle>
         <CardDescription>Review past predictions and flag their outcomes.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,9 +81,8 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Chart</TableHead>
+              <TableHead>Asset</TableHead>
               <TableHead>Direction</TableHead>
-              <TableHead>Price Target</TableHead>
-              <TableHead>Stop-Loss</TableHead>
               <TableHead>Confidence</TableHead>
               <TableHead>Outcome</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -105,14 +104,14 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                         data-ai-hint="chart finance"
                       />
                     </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
+                    <DialogContent className="max-w-4xl">
                       <DialogHeader>
                         <DialogTitle>Prediction Details</DialogTitle>
                         <DialogDescription>
                           Analysis from {new Date(pred.date).toLocaleString()}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="py-4 max-h-[70vh] overflow-y-auto">
+                      <div className="py-4 max-h-[80vh] overflow-y-auto pr-4">
                         {pred.analysis ? (
                            <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrls={pred.imagePreviewUrls} />
                         ) : (
@@ -122,12 +121,11 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                     </DialogContent>
                   </Dialog>
                 </TableCell>
+                <TableCell>{pred.asset || 'N/A'}</TableCell>
                 <TableCell className="flex items-center">
                   <MarketDirectionIcon direction={pred.prediction.marketDirection} />
                   {pred.prediction.marketDirection}
                 </TableCell>
-                <TableCell>{pred.prediction.priceTarget.toLocaleString()}</TableCell>
-                <TableCell>{pred.prediction.stopLossLevel.toLocaleString()}</TableCell>
                 <TableCell>{Math.round(pred.prediction.confidenceLevel * 100)}%</TableCell>
                 <TableCell>
                   {pred.manualFlag ? (
