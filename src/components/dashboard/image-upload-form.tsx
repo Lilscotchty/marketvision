@@ -45,7 +45,9 @@ function SubmitButton({ isAuthDisabled, hasFiles }: SubmitButtonProps) {
 }
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
-const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictions';
+const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
+const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
+
 
 export function ImageUploadForm() {
   const initialState: AnalysisResult | undefined = undefined;
@@ -73,22 +75,31 @@ export function ImageUploadForm() {
     if (isPending) return;
 
     if (state?.prediction && state.analysis) {
-      if (typeof window !== 'undefined') {
-        const newPredictionEntry: HistoricalPrediction = {
-          id: `pred_${new Date().getTime()}`,
-          date: new Date().toISOString(),
-          imagePreviewUrl: state.imagePreviewUrls?.[0] || "https://placehold.co/150x100.png",
-          imagePreviewUrls: state.imagePreviewUrls,
-          prediction: state.prediction,
-          analysis: state.analysis,
-          manualFlag: undefined,
-        };
+        if (typeof window !== 'undefined') {
+            const newPredictionEntry: HistoricalPrediction = {
+                id: `pred_${new Date().getTime()}`,
+                date: new Date().toISOString(),
+                // Store a smaller placeholder or URL if available, but not the full data URI
+                imagePreviewUrl: state.imagePreviewUrls?.[0] || "https://placehold.co/150x100.png", 
+                imagePreviewUrls: state.imagePreviewUrls,
+                prediction: state.prediction,
+                analysis: state.analysis,
+                manualFlag: undefined,
+            };
 
-        localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, JSON.stringify([newPredictionEntry]));
-      }
-      decrementTrialPoint();
+            // Add to main history
+            const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
+            const existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
+            const updatedPredictions = [newPredictionEntry, ...existingPredictions];
+            localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(updatedPredictions));
+            
+            // Set a simple flag/timestamp instead of the full object
+            localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
+        }
+        decrementTrialPoint();
     }
-  }, [state, isPending, decrementTrialPoint]);
+}, [state, isPending, decrementTrialPoint]);
+
 
   const isFullyAuthenticated = !authLoading && user;
   const hasSubscription = userData?.hasActiveSubscription;

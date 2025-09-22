@@ -13,17 +13,21 @@ import { Loader2 } from "lucide-react";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
-const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictions';
+const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
+const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
+
 
 export default function PerformancePage() {
   const [predictions, setPredictions] = useState<HistoricalPrediction[]>(() => {
     if (!IS_BROWSER) return [];
-    const savedPredictions = localStorage.getItem("marketVisionPerformance");
+    const savedPredictions = localStorage.getItem(MAIN_PERFORMANCE_KEY);
     return savedPredictions ? JSON.parse(savedPredictions) : [];
   });
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [lastSeenNewId, setLastSeenNewId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,37 +36,33 @@ export default function PerformancePage() {
   }, [user, loading, router]);
 
 
-  const addNewPredictionsFromStorage = useCallback(() => {
+  const syncPredictionsFromStorage = useCallback(() => {
     if (!IS_BROWSER) return;
-    const newPredictionsString = localStorage.getItem(MOCK_NEW_PREDICTIONS_KEY);
-    if (newPredictionsString) {
-      try {
-        const newPredictionEntries: HistoricalPrediction[] = JSON.parse(newPredictionsString);
-        if (Array.isArray(newPredictionEntries) && newPredictionEntries.length > 0) {
-          setPredictions(prev => {
-            const existingIds = new Set(prev.map(p => p.id));
-            const trulyNew = newPredictionEntries.filter(np => !existingIds.has(np.id));
-            if (trulyNew.length > 0) {
-              return [...trulyNew, ...prev];
-            }
-            return prev;
-          });
-          localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); 
+    const newPredictionId = localStorage.getItem(MOCK_NEW_PREDICTIONS_KEY);
+    
+    // Check if the trigger value has changed to avoid redundant updates
+    if (newPredictionId && newPredictionId !== lastSeenNewId) {
+      const allPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
+      if (allPredictionsString) {
+        try {
+          const allPredictions: HistoricalPrediction[] = JSON.parse(allPredictionsString);
+          setPredictions(allPredictions);
+        } catch (error) {
+          console.error("Error parsing performance data from storage:", error);
         }
-      } catch (error) {
-        console.error("Error processing new predictions from storage:", error);
-        localStorage.removeItem(MOCK_NEW_PREDICTIONS_KEY); 
       }
+      setLastSeenNewId(newPredictionId);
     }
-  }, []);
+  }, [lastSeenNewId]);
 
 
   useEffect(() => {
-    addNewPredictionsFromStorage(); 
+    syncPredictionsFromStorage(); // Initial sync
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === MOCK_NEW_PREDICTIONS_KEY) {
-        addNewPredictionsFromStorage();
+      // Listen for changes to the main data store or the trigger key
+      if (event.key === MAIN_PERFORMANCE_KEY || event.key === MOCK_NEW_PREDICTIONS_KEY) {
+        syncPredictionsFromStorage();
       }
     };
     if (IS_BROWSER) {
@@ -71,12 +71,12 @@ export default function PerformancePage() {
         window.removeEventListener('storage', handleStorageChange);
       };
     }
-  }, [addNewPredictionsFromStorage]);
+  }, [syncPredictionsFromStorage]);
 
 
   useEffect(() => {
     if (IS_BROWSER) {
-       localStorage.setItem("marketVisionPerformance", JSON.stringify(predictions));
+       localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictions));
     }
   }, [predictions]);
 

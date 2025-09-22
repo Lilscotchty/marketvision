@@ -8,14 +8,14 @@ import { cn } from '@/lib/utils';
 
 const promotionalImages = [
   {
-    src: 'https://i.ibb.co/d2cWv9Q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
+    src: 'https://i.ibb.co/ym2dh44q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
     alt: 'Promotion 1: Advanced AI Analysis',
     dataAiHint: 'modern technology',
     title: 'Unlock Advanced AI Analysis',
     description: 'Go beyond basic patterns with our Pro-tier insights.',
   },
   {
-    src: 'https://i.ibb.co/d2cWv9Q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
+    src: 'https://i.ibb.co/ym2dh44q/1000150562-imgupscaler-ai-General-8-K-jpg.jpg',
     alt: 'Promotion 2: Real-time Alerts',
     dataAiHint: 'notification bell',
     title: 'Never Miss a Move',
