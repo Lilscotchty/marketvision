@@ -27,6 +27,8 @@ export interface AlertConfig {
   value: string | number; 
   notificationMethod: 'email' | 'sms' | 'in-app'; 
   isActive: boolean;
+  createdAt: string; // ISO string for when the alert was created
+  originalPrice?: number; // The price of the asset when the alert was created
 }
 
 export type PredictionOutput = PredictMarketMovementOutput['prediction'];

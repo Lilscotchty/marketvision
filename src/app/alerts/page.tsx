@@ -28,6 +28,7 @@ export default function AlertsPage() {
   const { addNotification } = useNotificationCenter();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [lastPrices, setLastPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,6 +47,14 @@ export default function AlertsPage() {
     const notificationTitle = `Alert Triggered: ${alert.name}`;
     const notificationMessage = `Your alert for ${alert.asset} met its condition: Price reached ${currentPrice}.`;
 
+    addNotification({
+      title: notificationTitle,
+      message: notificationMessage,
+      type: 'alert_trigger',
+      iconName: 'BellRing',
+      relatedLink: `/alerts#${alert.id}`
+    });
+
     if (alert.notificationMethod === 'email') {
       if (!user?.email) return; 
       try {
@@ -56,7 +65,7 @@ export default function AlertsPage() {
         });
         addNotification({
           title: "Email Alert Sent",
-          message: `An email notification for "${alert.name}" was sent to ${user.email}.`,
+          message: `An email confirmation for "${alert.name}" was sent to ${user.email}.`,
           type: 'info',
           iconName: 'BellRing', 
           relatedLink: `/alerts#${alert.id}`
@@ -64,14 +73,6 @@ export default function AlertsPage() {
       } catch (error) {
          console.error("Failed to send email notification:", error);
       }
-    } else { // 'in-app'
-      addNotification({
-        title: notificationTitle,
-        message: notificationMessage,
-        type: 'alert_trigger',
-        iconName: 'BellRing',
-        relatedLink: `/alerts#${alert.id}`
-      });
     }
      // Deactivate alert after it has been triggered
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isActive: false } : a));
@@ -83,6 +84,9 @@ export default function AlertsPage() {
     alerts.filter(a => a.isActive).map(a => a.asset),
     (trade) => {
         const { s: symbol, p: price } = trade;
+        const lastPrice = lastPrices[symbol];
+        setLastPrices(prev => ({...prev, [symbol]: price}));
+
         const activeAlertsForSymbol = alerts.filter(a => 
             a.isActive && 
             a.asset.toUpperCase() === symbol.toUpperCase() && 
@@ -91,9 +95,30 @@ export default function AlertsPage() {
 
         for (const alert of activeAlertsForSymbol) {
             const targetPrice = Number(alert.value);
-            // Example condition: Price is greater than or equal to target
-            // A more robust implementation would check based on original price direction
-            if (!isNaN(targetPrice) && price >= targetPrice) {
+            if (isNaN(targetPrice)) continue;
+
+            const originalPrice = alert.originalPrice;
+
+            let shouldTrigger = false;
+            
+            if (originalPrice !== undefined && lastPrice !== undefined) {
+                // Precise check: Trigger only on crossover
+                if (originalPrice > targetPrice && lastPrice > targetPrice && price <= targetPrice) {
+                    // Price was above, crossed below target
+                    shouldTrigger = true;
+                } else if (originalPrice < targetPrice && lastPrice < targetPrice && price >= targetPrice) {
+                    // Price was below, crossed above target
+                    shouldTrigger = true;
+                }
+            } else {
+                // Fallback for old alerts or if lastPrice is not yet known:
+                // Trigger if price is very close to the target
+                if (Math.abs(price - targetPrice) / targetPrice < 0.001) { // within 0.1%
+                    shouldTrigger = true;
+                }
+            }
+
+            if (shouldTrigger) {
                  triggerAlertNotification(alert, price);
             }
         }

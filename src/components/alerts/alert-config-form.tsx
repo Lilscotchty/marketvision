@@ -14,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import type { AlertConfig } from "@/types";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchMarketDataFromAV, type FetchMarketDataResult } from "@/lib/actions";
 
 const alertSchema = z.object({
   name: z.string().min(3, "Alert name must be at least 3 characters"),
@@ -44,22 +45,41 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  function onSubmit(values: z.infer<typeof alertSchema>) {
+  async function onSubmit(values: z.infer<typeof alertSchema>) {
     setIsSubmitting(true);
-    // Simulate network delay
-    setTimeout(() => {
-      const newAlert: AlertConfig = {
-        id: Date.now().toString(),
-        ...values,
-      };
-      onAddAlert(newAlert);
-      form.reset();
-      toast({
-        title: "Alert Created",
-        description: `Your new alert "${newAlert.name}" is now set up.`,
-      });
-      setIsSubmitting(false);
-    }, 500);
+    let originalPrice: number | undefined = undefined;
+    
+    if (values.conditionType === 'price_target') {
+      try {
+        const result: FetchMarketDataResult = await fetchMarketDataFromAV(values.asset);
+        if (result.data) {
+          originalPrice = result.data.price;
+        } else {
+          toast({
+            title: "Could Not Fetch Current Price",
+            description: "Unable to get the asset's current price. The alert trigger may be less precise.",
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.warn("Could not fetch current price for alert:", error);
+      }
+    }
+
+    const newAlert: AlertConfig = {
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      originalPrice: originalPrice,
+      ...values,
+    };
+
+    onAddAlert(newAlert);
+    form.reset();
+    toast({
+      title: "Alert Created",
+      description: `Your new alert "${newAlert.name}" is now set up.`,
+    });
+    setIsSubmitting(false);
   }
 
   return (
