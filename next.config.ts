@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  env: {
+    NEXT_PUBLIC_FINNHUB_API_KEY: process.env.FINNHUB_API_KEY,
+  }
 };
 
 export default nextConfig;

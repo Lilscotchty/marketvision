@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { AlertConfigForm } from "@/components/alerts/alert-config-form";
 import { AlertListDisplay } from "@/components/alerts/alert-list-display";
@@ -13,6 +13,8 @@ import { sendEmailNotification } from "@/ai/flows/send-email-flow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { useFinnhubTrades } from "@/hooks/use-finnhub-trades";
+import { Badge } from "@/components/ui/badge";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -39,6 +41,65 @@ export default function AlertsPage() {
       localStorage.setItem("marketVisionAlerts", JSON.stringify(alerts));
     }
   }, [alerts]);
+  
+  const triggerAlertNotification = useCallback(async (alert: AlertConfig, currentPrice: number) => {
+    const notificationTitle = `Alert Triggered: ${alert.name}`;
+    const notificationMessage = `Your alert for ${alert.asset} met its condition: Price reached ${currentPrice}.`;
+
+    if (alert.notificationMethod === 'email') {
+      if (!user?.email) return; 
+      try {
+        await sendEmailNotification({
+          to: user.email,
+          subject: `FinSight AI Alert: ${alert.name}`,
+          body: notificationMessage,
+        });
+        addNotification({
+          title: "Email Alert Sent",
+          message: `An email notification for "${alert.name}" was sent to ${user.email}.`,
+          type: 'info',
+          iconName: 'BellRing', 
+          relatedLink: `/alerts#${alert.id}`
+        });
+      } catch (error) {
+         console.error("Failed to send email notification:", error);
+      }
+    } else { // 'in-app'
+      addNotification({
+        title: notificationTitle,
+        message: notificationMessage,
+        type: 'alert_trigger',
+        iconName: 'BellRing',
+        relatedLink: `/alerts#${alert.id}`
+      });
+    }
+     // Deactivate alert after it has been triggered
+    setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isActive: false } : a));
+
+  }, [addNotification, user?.email]);
+
+
+  const { connectionStatus } = useFinnhubTrades(
+    alerts.filter(a => a.isActive).map(a => a.asset),
+    (trade) => {
+        const { s: symbol, p: price } = trade;
+        const activeAlertsForSymbol = alerts.filter(a => 
+            a.isActive && 
+            a.asset.toUpperCase() === symbol.toUpperCase() && 
+            a.conditionType === 'price_target'
+        );
+
+        for (const alert of activeAlertsForSymbol) {
+            const targetPrice = Number(alert.value);
+            // Example condition: Price is greater than or equal to target
+            // A more robust implementation would check based on original price direction
+            if (!isNaN(targetPrice) && price >= targetPrice) {
+                 triggerAlertNotification(alert, price);
+            }
+        }
+    }
+  );
+
 
   const handleAddAlert = (newAlert: AlertConfig) => {
     setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
@@ -70,66 +131,6 @@ export default function AlertsPage() {
     }
   };
 
-  const handleSimulateTrigger = async (alertId: string) => {
-    const alert = alerts.find(a => a.id === alertId);
-    if (!alert) return;
-  
-    const notificationTitle = `Alert Triggered: ${alert.name}`;
-    const notificationMessage = `Your alert for ${alert.asset} met its condition: ${alert.conditionType.replace('_', ' ')} at ${alert.value}.`;
-
-    if (alert.notificationMethod === 'email') {
-      if (!user?.email) {
-        toast({
-          title: "Email Not Found",
-          description: "Could not find your email address to send the alert.",
-          variant: "destructive",
-        });
-        return;
-      }
-      try {
-        await sendEmailNotification({
-          to: user.email,
-          subject: `FinSight AI Alert: ${alert.name}`,
-          body: notificationMessage,
-        });
-
-        // Add an in-app notification to confirm email was sent
-        addNotification({
-          title: "Email Alert Sent",
-          message: `An email notification for "${alert.name}" was sent to ${user.email}. (Simulated)`,
-          type: 'info',
-          iconName: 'BellRing', 
-          relatedLink: `/alerts#${alert.id}`
-        });
-
-        toast({
-          title: "Email Alert Simulated",
-          description: `An email has been sent to ${user.email} and an in-app notification was created.`,
-        });
-
-      } catch (error) {
-         console.error("Failed to send email notification:", error);
-         toast({
-          title: "Email Simulation Failed",
-          description: "Could not simulate sending the email alert.",
-          variant: "destructive",
-        });
-      }
-
-    } else { // 'in-app'
-      addNotification({
-        title: notificationTitle,
-        message: `${notificationMessage} (Simulated)`,
-        type: 'alert_trigger',
-        iconName: 'BellRing',
-        relatedLink: `/alerts#${alert.id}`
-      });
-      toast({
-          title: "Alert Trigger Simulated",
-          description: `An in-app notification for "${alert.name}" has been sent.`,
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -168,9 +169,19 @@ export default function AlertsPage() {
           <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl">
             Alert <span className="text-accent">System</span>
           </h1>
-          <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-            Create and manage custom market alerts.
-          </p>
+          <div className="mt-3 flex justify-center items-center gap-2">
+            <p className="text-lg text-muted-foreground">
+              Create and manage custom market alerts.
+            </p>
+             <Badge variant={
+                connectionStatus === 'connected' ? 'default' : 
+                connectionStatus === 'disconnected' ? 'destructive' : 'secondary'
+              } className={
+                connectionStatus === 'connected' ? 'bg-green-600 hover:bg-green-700' : ''
+              }>
+                {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
+              </Badge>
+          </div>
         </header>
 
         <section>
@@ -182,7 +193,6 @@ export default function AlertsPage() {
             alerts={alerts}
             onToggleAlert={handleToggleAlert}
             onDeleteAlert={handleDeleteAlert}
-            onSimulateTrigger={handleSimulateTrigger}
           />
         </section>
       </div>

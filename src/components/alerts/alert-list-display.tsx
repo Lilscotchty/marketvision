@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AlertConfig } from "@/types";
-import { BellOff, Trash2, BellRing, Zap, MoreVertical } from "lucide-react";
+import { BellOff, Trash2, BellRing, MoreVertical, Bell } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,10 +30,9 @@ interface AlertListDisplayProps {
   alerts: AlertConfig[];
   onToggleAlert: (alertId: string) => void;
   onDeleteAlert: (alertId: string) => void;
-  onSimulateTrigger: (alertId: string) => void;
 }
 
-export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimulateTrigger }: AlertListDisplayProps) {
+export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert }: AlertListDisplayProps) {
   if (alerts.length === 0) {
     return (
       <Card className="shadow-lg">
@@ -80,12 +79,6 @@ export function AlertListDisplay({ alerts, onToggleAlert, onDeleteAlert, onSimul
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {alert.isActive && (
-                    <DropdownMenuItem onClick={() => onSimulateTrigger(alert.id)}>
-                      <Zap className="mr-2 h-4 w-4 text-yellow-500" />
-                      <span>Simulate</span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={() => onToggleAlert(alert.id)}>
                     {alert.isActive ? <BellOff className="mr-2 h-4 w-4" /> : <BellRing className="mr-2 h-4 w-4" />}
                     <span>{alert.isActive ? "Deactivate" : "Activate"}</span>
