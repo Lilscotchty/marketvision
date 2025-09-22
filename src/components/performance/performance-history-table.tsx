@@ -2,11 +2,10 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { HistoricalPrediction } from "@/types";
-import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart, TrendingDown, TrendingUp } from "lucide-react";
+import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -74,30 +73,11 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
               <DialogTrigger asChild>
                 <button className="w-full text-left p-4 rounded-lg flex items-center gap-4">
                   <div className="flex-shrink-0">
-                    <Image
-                      src={pred.imagePreviewUrl || "https://placehold.co/80x60.png"}
-                      alt="Chart thumbnail"
-                      width={40}
-                      height={40}
-                      className="rounded-md"
-                      data-ai-hint="chart finance"
-                    />
+                    <LineChart className="h-10 w-10 text-primary" />
                   </div>
-                  <div className="flex-1 grid grid-cols-2 items-center gap-4">
-                    <div>
-                      <p className="font-bold text-base">{pred.asset || "N/A"}</p>
+                  <div className="flex-1">
+                      <p className="font-bold text-base">{pred.asset || 'Analysis'}</p>
                       <p className="text-xs text-muted-foreground">{new Date(pred.date).toLocaleDateString()}</p>
-                    </div>
-                    <div className="text-right">
-                       <p className="font-semibold text-base flex items-center justify-end gap-1">
-                          {pred.prediction.marketDirection === 'UP' && <TrendingUp className="h-4 w-4 text-green-500" />}
-                          {pred.prediction.marketDirection === 'DOWN' && <TrendingDown className="h-4 w-4 text-red-500" />}
-                          {pred.prediction.priceTarget.toLocaleString()}
-                       </p>
-                       <p className="text-xs text-muted-foreground">
-                          {pred.prediction.marketDirection}
-                       </p>
-                    </div>
                   </div>
                 </button>
               </DialogTrigger>
