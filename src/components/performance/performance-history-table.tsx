@@ -4,10 +4,9 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import type { HistoricalPrediction } from "@/types";
-import { ThumbsUp, ThumbsDown, HelpCircle, Trash2 } from "lucide-react";
+import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart, TrendingDown, TrendingUp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PredictionResults } from "@/components/dashboard/prediction-results"; // Re-use for detailed view
+import { PredictionResults } from "@/components/dashboard/prediction-results";
 import { cn } from "@/lib/utils";
 
 const INITIAL_DISPLAY_COUNT = 5;
@@ -68,95 +67,101 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
         <CardTitle className="font-headline text-xl">Detailed Prediction History</CardTitle>
         <CardDescription>Review past predictions and flag their outcomes.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Chart</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {predictions.slice(0, displayCount).map((pred) => (
-                <TableRow key={pred.id}>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                         <Image
-                          src={pred.imagePreviewUrl || "https://placehold.co/80x60.png"}
-                          alt="Chart thumbnail"
-                          width={40}
-                          height={40}
-                          className="rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                          data-ai-hint="chart finance"
-                        />
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl">
-                        <DialogHeader>
-                          <DialogTitle>Prediction Details</DialogTitle>
-                          <DialogDescription>
-                            Analysis from {new Date(pred.date).toLocaleString()}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 max-h-[80vh] overflow-y-auto pr-4">
-                          {pred.analysis ? (
-                             <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrls={pred.imagePreviewUrls} />
-                          ) : (
-                            <p>Full analysis details not available.</p>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
-                  <TableCell className="text-right whitespace-nowrap">
-                     <div className="flex justify-end items-center space-x-1">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => onFlagTrade(pred.id, 'successful')} 
-                            title="Flag as Successful"
-                            className={cn(pred.manualFlag === 'successful' && 'bg-green-500/20 hover:bg-green-500/30')}
-                        >
-                          <ThumbsUp className="h-4 w-4 text-green-500" />
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => onFlagTrade(pred.id, 'unsuccessful')} 
-                            title="Flag as Unsuccessful"
-                            className={cn(pred.manualFlag === 'unsuccessful' && 'bg-red-500/20 hover:bg-red-500/30')}
-                        >
-                          <ThumbsDown className="h-4 w-4 text-red-500" />
-                        </Button>
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" title="Delete" className="text-destructive/70 hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this analysis result.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onDeletePrediction(pred.id)} className="bg-destructive hover:bg-destructive/90">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <CardContent className="space-y-3">
+        {predictions.slice(0, displayCount).map((pred) => (
+          <Dialog key={pred.id}>
+            <div className="group relative bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg">
+              <DialogTrigger asChild>
+                <button className="w-full text-left p-4 rounded-lg flex items-center gap-4">
+                  <div className="flex-shrink-0">
+                    <Image
+                      src={pred.imagePreviewUrl || "https://placehold.co/80x60.png"}
+                      alt="Chart thumbnail"
+                      width={40}
+                      height={40}
+                      className="rounded-md"
+                      data-ai-hint="chart finance"
+                    />
+                  </div>
+                  <div className="flex-1 grid grid-cols-2 items-center gap-4">
+                    <div>
+                      <p className="font-bold text-base">{pred.asset || "N/A"}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(pred.date).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                       <p className="font-semibold text-base flex items-center justify-end gap-1">
+                          {pred.prediction.marketDirection === 'UP' && <TrendingUp className="h-4 w-4 text-green-500" />}
+                          {pred.prediction.marketDirection === 'DOWN' && <TrendingDown className="h-4 w-4 text-red-500" />}
+                          {pred.prediction.priceTarget.toLocaleString()}
+                       </p>
+                       <p className="text-xs text-muted-foreground">
+                          {pred.prediction.marketDirection}
+                       </p>
+                    </div>
+                  </div>
+                </button>
+              </DialogTrigger>
+
+               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onFlagTrade(pred.id, 'successful')} 
+                      title="Flag as Successful"
+                      className={cn("h-8 w-8", pred.manualFlag === 'successful' && 'bg-green-500/20 hover:bg-green-500/30')}
+                  >
+                    <ThumbsUp className="h-4 w-4 text-green-500" />
+                  </Button>
+                  <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onFlagTrade(pred.id, 'unsuccessful')} 
+                      title="Flag as Unsuccessful"
+                      className={cn("h-8 w-8", pred.manualFlag === 'unsuccessful' && 'bg-red-500/20 hover:bg-red-500/30')}
+                  >
+                    <ThumbsDown className="h-4 w-4 text-red-500" />
+                  </Button>
+                   <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" title="Delete" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this analysis result.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDeletePrediction(pred.id)} className="bg-destructive hover:bg-destructive/90">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+               </div>
+            </div>
+            
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Prediction Details</DialogTitle>
+                <DialogDescription>
+                  Analysis from {new Date(pred.date).toLocaleString()}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 max-h-[80vh] overflow-y-auto pr-4">
+                {pred.analysis ? (
+                   <PredictionResults prediction={pred.prediction} analysis={pred.analysis} imagePreviewUrls={pred.imagePreviewUrls} />
+                ) : (
+                  <p>Full analysis details not available.</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        ))}
          {predictions.length > displayCount && (
           <div className="mt-4 text-center">
             <Button variant="outline" onClick={handleViewMore}>
