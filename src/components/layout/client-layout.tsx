@@ -64,24 +64,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   };
 
   const Header = () => (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      {!isMobile && (
-        <div className="flex items-center">
-          <SidebarTrigger className="md:hidden" />
-        </div>
-      )}
-
-      {isMobile && (
-        <div className="flex items-center gap-2">
-          <BotIcon className="h-7 w-7 text-accent" />
-          <h1 className="text-lg font-headline font-semibold">
-            FinSight <span className="text-primary">AI</span>
-          </h1>
-        </div>
-      )}
-
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
+      <SidebarTrigger className="sm:hidden" />
+     
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <div className="ml-auto flex-1 sm:flex-initial">
+         <div className="ml-auto flex-1 sm:flex-initial">
           <div className="hidden md:block w-full max-w-sm lg:max-w-md xl:max-w-lg">
             <TradingViewTickerTape />
           </div>
@@ -158,8 +145,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <Sidebar collapsible="icon" className="hidden border-r bg-background sm:flex">
+        <Sidebar collapsible="icon" className="border-r bg-background">
           <SidebarHeader className="h-16 flex items-center justify-center">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <BotIcon className="h-7 w-7 text-accent" />
@@ -176,15 +162,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-          <SidebarInset>
+        <SidebarInset>
             <Header />
             {children}
-          </SidebarInset>
-        </div>
+        </SidebarInset>
         
         {isMobile && <BottomNavigation items={navItems} />}
-      </div>
     </SidebarProvider>
   );
 }
