@@ -92,6 +92,18 @@ export default function PerformancePage() {
     });
   };
 
+  const handleDeletePrediction = (predictionId: string) => {
+    const predictionToDelete = predictions.find(p => p.id === predictionId);
+    if (predictionToDelete) {
+      setPredictions(prevPredictions => prevPredictions.filter(p => p.id !== predictionId));
+      toast({
+        title: "Prediction Deleted",
+        description: `The analysis from ${new Date(predictionToDelete.date).toLocaleDateString()} has been removed.`,
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
      return (
       <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
@@ -131,7 +143,11 @@ export default function PerformancePage() {
         </header>
 
         <section>
-          <PerformanceHistoryTable predictions={predictions} onFlagTrade={handleFlagTrade} />
+          <PerformanceHistoryTable 
+            predictions={predictions} 
+            onFlagTrade={handleFlagTrade}
+            onDeletePrediction={handleDeletePrediction}
+          />
         </section>
       </div>
     </main>

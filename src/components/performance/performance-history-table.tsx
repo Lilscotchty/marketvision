@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { HistoricalPrediction } from "@/types";
-import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, HelpCircle, Eye } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, HelpCircle, Eye, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,12 +17,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PredictionResults } from "@/components/dashboard/prediction-results"; // Re-use for detailed view
 
 
 interface PerformanceHistoryTableProps {
   predictions: HistoricalPrediction[];
   onFlagTrade: (predictionId: string, flag: 'successful' | 'unsuccessful') => void;
+  onDeletePrediction: (predictionId: string) => void;
 }
 
 const MarketDirectionIcon = ({ direction }: { direction: HistoricalPrediction['prediction']['marketDirection'] }) => {
@@ -39,7 +51,7 @@ const MarketDirectionIcon = ({ direction }: { direction: HistoricalPrediction['p
 };
 
 
-export function PerformanceHistoryTable({ predictions, onFlagTrade }: PerformanceHistoryTableProps) {
+export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePrediction }: PerformanceHistoryTableProps) {
   if (predictions.length === 0) {
     return (
       <Card className="shadow-md">
@@ -134,6 +146,27 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade }: Performanc
                   <Button variant="ghost" size="icon" onClick={() => onFlagTrade(pred.id, 'unsuccessful')} title="Flag as Unsuccessful">
                     <ThumbsDown className="h-4 w-4 text-red-500" />
                   </Button>
+                   <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" title="Delete" className="text-destructive/70 hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this analysis result.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDeletePrediction(pred.id)} className="bg-destructive hover:bg-destructive/90">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </TableCell>
               </TableRow>
             ))}
