@@ -86,8 +86,8 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
                          <Image
                           src={pred.imagePreviewUrl || "https://placehold.co/80x60.png"}
                           alt="Chart thumbnail"
-                          width={80}
-                          height={60}
+                          width={40}
+                          height={40}
                           className="rounded-md cursor-pointer hover:opacity-80 transition-opacity"
                           data-ai-hint="chart finance"
                         />
@@ -168,4 +168,3 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
     </Card>
   );
 }
-
