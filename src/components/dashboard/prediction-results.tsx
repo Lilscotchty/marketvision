@@ -271,8 +271,8 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
               <div className="space-y-3">
                  <h4 className="font-semibold flex items-center gap-2 text-md"><Compass className="h-5 w-5 text-accent"/>Daily Bias Setup (HTF)</h4>
                  <div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs">
-                    <p><strong className="text-sm font-medium text-foreground">4H/1H Analysis:</strong> {sniperEntry.dailyBiasContext.fourHourAnalysis}</p>
-                    <p><strong className="text-sm font-medium text-foreground">Alignment:</strong> {sniperEntry.dailyBiasContext.alignment}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">4H/1H Analysis:</strong> {sniperEntry.dailyBiasContext.fourHourAnalysis}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Alignment:</strong> {sniperEntry.dailyBiasContext.alignment}</p>
                  </div>
               </div>
             )}
@@ -280,8 +280,8 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
               <div className="space-y-3">
                  <h4 className="font-semibold flex items-center gap-2 text-md"><PackageOpen className="h-5 w-5 text-accent"/>Entry Mechanic (LTF)</h4>
                  <div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs">
-                    <p><strong className="text-sm font-medium text-foreground">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p>
-                    <p><strong className="text-sm font-medium text-foreground">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p>
                  </div>
               </div>
             )}
@@ -289,9 +289,9 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
               <div className="space-y-3">
                  <h4 className="font-semibold flex items-center gap-2 text-md"><ShieldCheck className="h-5 w-5 text-accent"/>Conceptual Trade Management</h4>
                  <div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs">
-                    <p><strong className="text-sm font-medium text-foreground">Entry:</strong> {sniperEntry.tradeManagement.entry}</p>
-                    <p><strong className="text-sm font-medium text-foreground">Stop Loss:</strong> {sniperEntry.tradeManagement.stopLoss}</p>
-                    <p><strong className="text-sm font-medium text-foreground">Take Profit:</strong> {sniperEntry.tradeManagement.takeProfit}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Entry:</strong> {sniperEntry.tradeManagement.entry}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Stop Loss:</strong> {sniperEntry.tradeManagement.stopLoss}</p>
+                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Take Profit:</strong> {sniperEntry.tradeManagement.takeProfit}</p>
                  </div>
               </div>
             )}
@@ -301,6 +301,8 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
     </div>
   );
 }
+
+    
 
     
 
