@@ -45,7 +45,7 @@ const ICTElementSchema = z.object({
     "Breaker Block (Bullish)",
     "Breaker Block (Bearish)"
   ]).describe("The type of ICT element identified."),
-  location_description: z.string().describe("A textual description of where this element is visually located on the chart, e.g., 'around the recent swing low', 'the large green candle near the top'.")
+  location_description: z.string().describe("A textual description of where this element is visually located on the chart, referencing the timestamp or date from the chart's x-axis if visible. e.g., 'around the swing low on June 5th at 14:00', 'the large green candle near the top'.")
 });
 
 const DailyBiasReasoningSchema = z.object({
@@ -105,7 +105,7 @@ Analyze the provided candlestick chart images. The user has provided up to three
 1.  **Standard Analysis (Multi-Timeframe Context):**
     *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., HTF shows uptrend, MTF is pulling back).
     *   **Candlestick Patterns:** Identify any significant candlestick patterns visible on any of the charts. Note which timeframe they appear on if relevant.
-    *   **ICT Elements:** Visually identify and describe key ICT elements across the charts. Highlight how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
+    *   **ICT Elements:** Visually identify key ICT elements. **Crucially, for each element's location, you must reference the specific date and time from the chart's x-axis if it is visible.** For example: 'Bullish order block located at the swing low on June 5th around 14:30.' Describe how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
     *   **Market Structure:** Comment on visible market structure (BOS, CHoCH) on each timeframe and describe the overall structural narrative.
     *   **Potential AMD Cycle:** Suggest if the charts collectively indicate a phase of Accumulation, Manipulation, or Distribution.
     *   **Daily Bias Determination (Conceptual):** Apply the visual framework using all charts to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
