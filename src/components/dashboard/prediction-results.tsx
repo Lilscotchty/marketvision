@@ -259,10 +259,10 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
       </Card>
 
       {sniperEntry && (sniperEntry.dailyBiasContext || sniperEntry.entryMechanic || sniperEntry.tradeManagement) && (
-        <Card className="lg:col-span-2 shadow-lg border-primary/50">
+        <Card className="lg:col-span-2 shadow-lg border-accent/50">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <Crosshair className="text-primary"/> Conceptual Sniper Entry Setup
+              <Crosshair className="text-accent"/> Conceptual Sniper Entry Setup
             </CardTitle>
             <CardDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a signal.</CardDescription>
           </CardHeader>
@@ -301,5 +301,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
     </div>
   );
 }
+
+    
 
     
