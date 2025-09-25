@@ -79,9 +79,6 @@ export function PerformanceHistoryTable({ predictions, onFlagTrade, onDeletePred
             <div className="group relative bg-muted/30 hover:bg-muted/50 transition-colors rounded-lg flex items-center pr-2">
               <DialogTrigger asChild>
                 <button className="flex-1 text-left p-4 rounded-lg flex items-center gap-4">
-                  <div className="flex-shrink-0">
-                    <LineChart className="h-10 w-10 text-primary" />
-                  </div>
                   <div className="flex-1">
                       <p className="font-bold text-base">{pred.asset || 'Analysis'}</p>
                       <p className="text-xs text-muted-foreground">{new Date(pred.date).toLocaleDateString()}</p>
