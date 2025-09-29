@@ -116,7 +116,7 @@ export function ImageUploadForm() {
 }, [state, isPending, decrementTrialPoint, toast]);
 
 
-  const isFullyAuthenticated = !authLoading && user;
+  const isFullyAuthenticated = !authLoading && !!user;
   const hasSubscription = userData?.hasActiveSubscription;
   const trialPoints = userData?.chartAnalysisTrialPoints ?? 0;
 
