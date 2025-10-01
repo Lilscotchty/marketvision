@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset, SheetHeader, SheetTitle } from '@/components/ui/sidebar';
 import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -37,8 +37,8 @@ const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradi
 const mobileSidebarNavItems: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
   { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
-  { href: "#", label: "About FinSight", icon: Info, authRequired: false },
-  { href: "#", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
+  { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
+  { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
 ];
 
 
