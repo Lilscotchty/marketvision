@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings } from 'lucide-react';
+import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { useTheme } from '@/contexts/theme-context';
 import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { navItems } from './sidebar-nav';
+import { navItems, type NavItem } from './sidebar-nav';
 import { SidebarNav } from './sidebar-nav';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -29,6 +30,15 @@ import { BottomNavigation } from './bottom-navigation';
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
 });
+
+// Define a separate set of nav items for the mobile sidebar drawer
+const mobileSidebarNavItems: NavItem[] = [
+  { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true },
+  { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
+  { href: "#", label: "About FinSight", icon: Info, authRequired: false },
+  { href: "#", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
+];
+
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -155,7 +165,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
           <SidebarContent className="flex-1 pt-2">
-            <SidebarNav items={navItems} />
+             {isMobile ? (
+              <SidebarNav items={mobileSidebarNavItems} />
+            ) : (
+              <SidebarNav items={navItems} />
+            )}
           </SidebarContent>
           <SidebarFooter>
             <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
