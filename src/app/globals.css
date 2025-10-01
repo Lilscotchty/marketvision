@@ -56,7 +56,7 @@
     --background: 220 10% 12%; /* Dark Blue/Gray from original */
     --foreground: 0 0% 95%; /* Almost white */
 
-    --card: 220 10% 18%; /* Slightly lighter dark blue/gray */
+    --card: 210 5% 22%; /* #33373a */
     --card-foreground: 0 0% 95%;
 
     --popover: 220 10% 10%; /* Darker popover */
