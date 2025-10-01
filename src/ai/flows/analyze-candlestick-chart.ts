@@ -15,23 +15,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const AnalyzeCandlestickChartInputSchema = z.object({
-  chartDataUri1: z
-    .string()
-    .describe(
-      "A photo of a candlestick chart (e.g., Higher Timeframe like 4H or Daily), as a data URI."
-    ),
-  chartDataUri2: z
-    .string()
-    .optional()
-    .describe(
-      "An optional photo of a candlestick chart from a Medium Timeframe (e.g., 1H or 15M), as a data URI."
-    ),
-    chartDataUri3: z
-    .string()
-    .optional()
-    .describe(
-      "An optional photo of a candlestick chart from a Lower Timeframe (e.g., 5M or 1M), as a data URI."
-    ),
+  chartDataUris: z.array(z.string()).describe(
+    "An array of candlestick chart images, as data URIs. The AI should analyze them cohesively, inferring timeframes from the context of the charts themselves."
+  ),
 });
 export type AnalyzeCandlestickChartInput = z.infer<typeof AnalyzeCandlestickChartInputSchema>;
 
@@ -100,11 +86,11 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeCandlestickChartOutputSchema},
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-Analyze the provided candlestick chart images. The user has provided up to three images, likely representing Higher (HTF), Medium (MTF), and Lower (LTF) timeframes of the same asset. If only one image is provided, treat it as the primary timeframe and infer where possible. Use all available images to perform a cohesive, multi-timeframe analysis.
+Analyze the provided candlestick chart images. The user has provided up to three images. Infer the timeframes (Higher, Medium, Lower) based on the chart's context and content. Use all available images to perform a cohesive, multi-timeframe analysis.
 
 **Analysis Steps:**
 
-0.  **Identify Asset:** First, identify the asset symbol from the chart image (e.g., BTC/USD, EUR/USD, TSLA). It's usually visible in a corner or as a watermark. Set this in the 'asset' field.
+0.  **Identify Asset:** First, identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA). It's usually visible in a corner or as a watermark. Set this in the 'asset' field.
 
 1.  **Standard Analysis (Multi-Timeframe Context):**
     *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., HTF shows uptrend, MTF is pulling back).
@@ -118,14 +104,14 @@ Analyze the provided candlestick chart images. The user has provided up to three
     *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy, using the different images as proxies for the different timeframes mentioned in the strategy.
     *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
     *   **Strategy Breakdown:**
-        *   **Daily Bias Setup (HTF Filter - using Image 1):**
-            *   **Step 1 (4H):** Use the first image (assumed HTF) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
+        *   **Daily Bias Setup (HTF Filter - using the highest timeframe chart):**
+            *   **Step 1 (4H):** Use the inferred HTF chart to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
             *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on the HTF chart.
-            *   **Step 2 (1H):** Use the second image (assumed MTF) to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
+            *   **Step 2 (1H):** Use the inferred MTF chart to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
             *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\`.
-        *   **Intraday Sniper Entry (LTF Mechanic - using Image 2 & 3):**
-            *   **Step 3 (15M):** Use the second/third image to describe if there's a visual sign of a liquidity grab wick into the identified BB.
-            *   **Step 4 (5M):** Use the third image (assumed LTF) to look for a lower-timeframe MSS confirmation.
+        *   **Intraday Sniper Entry (LTF Mechanic - using the lower timeframe charts):**
+            *   **Step 3 (15M):** Use the inferred MTF/LTF chart to describe if there's a visual sign of a liquidity grab wick into the identified BB.
+            *   **Step 4 (5M):** Use the inferred LTF chart to look for a lower-timeframe MSS confirmation.
             *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\`.
         *   **Trade Management:**
             *   **Step 5 (Entry, SL, TP):** Based on the visual patterns, describe the conceptual entry, stop loss, and take profit points.
@@ -134,9 +120,9 @@ Analyze the provided candlestick chart images. The user has provided up to three
 3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
 
 Analyze the following candlestick charts:
-{{#if chartDataUri1}}HTF Chart: {{media url=chartDataUri1}}{{/if}}
-{{#if chartDataUri2}}MTF Chart: {{media url=chartDataUri2}}{{/if}}
-{{#if chartDataUri3}}LTF Chart: {{media url=chartDataUri3}}{{/if}}
+{{#each chartDataUris}}
+Chart: {{media url=this}}
+{{/each}}
 
 Output MUST be in JSON format according to the defined output schema. If specific elements are not clearly discernible, you may omit those fields, return empty arrays/strings, or state "Unclear" or "Not visually apparent".
 `,

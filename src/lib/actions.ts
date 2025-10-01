@@ -8,32 +8,27 @@ import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote } from '
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILES = 3;
 
 const fileSchema = z
   .instanceof(File)
-  .optional()
-  .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+  .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
   .refine(
-    (file) => !file || ALLOWED_FILE_TYPES.includes(file.type),
+    (file) => ALLOWED_FILE_TYPES.includes(file.type),
     'Only .jpg, .jpeg, .png, .webp, and .gif formats are supported.'
   );
 
 const formSchema = z.object({
-  chartImage1: fileSchema,
-  chartImage2: fileSchema,
-  chartImage3: fileSchema,
-}).refine(data => data.chartImage1 || data.chartImage2 || data.chartImage3, {
-  message: "Please upload at least one chart image.",
-  path: ["chartImage1"], 
+  chartImages: z.array(fileSchema)
+    .min(1, "Please upload at least one chart image.")
+    .max(MAX_FILES, `You can upload a maximum of ${MAX_FILES} images.`),
 });
-
 
 export interface AnalysisResult {
   prediction?: PredictionOutput;
   analysis?: AnalysisOutput;
   error?: string;
-  imagePreviewUrl?: string; // Legacy support for single image
-  imagePreviewUrls?: (string | null)[]; // New multi-image support
+  imagePreviewUrls?: (string | null)[];
 }
 
 async function fileToDataUri(file: File): Promise<string> {
@@ -46,41 +41,32 @@ export async function handleImageAnalysisAction(
   prevState: AnalysisResult | undefined,
   formData: FormData
 ): Promise<AnalysisResult> {
+
+  const files = formData.getAll('chartImages').filter(f => f instanceof File && f.size > 0) as File[];
+
   const validatedFields = formSchema.safeParse({
-    chartImage1: formData.get('chartImage1') || undefined,
-    chartImage2: formData.get('chartImage2') || undefined,
-    chartImage3: formData.get('chartImage3') || undefined,
+    chartImages: files,
   });
 
   if (!validatedFields.success) {
-    const fieldErrors = validatedFields.error.flatten().fieldErrors;
-    const errorMessage = 
-      fieldErrors.chartImage1?.join(', ') || 
-      fieldErrors.chartImage2?.join(', ') || 
-      fieldErrors.chartImage3?.join(', ') ||
-      validatedFields.error.flatten().formErrors[0] ||
-      "Invalid input.";
+    const errorMessage = validatedFields.error.flatten().fieldErrors.chartImages?.[0] 
+      || validatedFields.error.flatten().formErrors[0]
+      || "Invalid input.";
     return { error: errorMessage };
   }
 
-  const { chartImage1, chartImage2, chartImage3 } = validatedFields.data;
-  const files = [chartImage1, chartImage2, chartImage3].filter(Boolean) as File[];
-
-  if (files.length === 0) {
-      return { error: "Please upload at least one chart image." };
-  }
+  const { chartImages } = validatedFields.data;
 
   try {
-    const dataUris = await Promise.all(files.map(fileToDataUri));
+    const dataUris = await Promise.all(chartImages.map(fileToDataUri));
     
-    const analysisInput = {
-        chartDataUri1: dataUris[0],
-        chartDataUri2: dataUris.length > 1 ? dataUris[1] : undefined,
-        chartDataUri3: dataUris.length > 2 ? dataUris[2] : undefined,
-    };
-
+    // The first image is used for the prediction, all are used for analysis.
     const predictionInput = {
         candlestickChartDataUri: dataUris[0]
+    };
+    
+    const analysisInput = {
+        chartDataUris: dataUris
     };
     
     const [predictionResult, analysisResult] = await Promise.all([
@@ -88,14 +74,10 @@ export async function handleImageAnalysisAction(
       analyzeCandlestickChart(analysisInput)
     ]);
     
-    const allImageUrls = await Promise.all(
-        [chartImage1, chartImage2, chartImage3].map(file => file ? fileToDataUri(file) : Promise.resolve(null))
-    );
-
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
-      imagePreviewUrls: allImageUrls,
+      imagePreviewUrls: dataUris,
     };
   } catch (error) {
     console.error('AI analysis failed:', error);

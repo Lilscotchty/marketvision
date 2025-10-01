@@ -47,29 +47,20 @@ function SubmitButton({ isAuthDisabled, hasFiles }: SubmitButtonProps) {
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
 const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
+const MAX_FILES = 3;
 
 
 export function ImageUploadForm() {
   const initialState: AnalysisResult | undefined = undefined;
   const [state, formAction, isPending] = useActionState(handleImageAnalysisAction, initialState);
   
-  const [previewUrls, setPreviewUrls] = useState<(string | null)[]>([null, null, null]);
-  const fileInputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null)
-  ];
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { user, loading: authLoading, userData, decrementTrialPoint, activateSubscription } = useAuth();
   const { toast } = useToast();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [formKey, setFormKey] = useState(Date.now()); // Used to reset the form
-
-  const imageFields = [
-    { name: "chartImage1", label: "HTF Chart (e.g., 4H, Daily)", ref: fileInputRefs[0] },
-    { name: "chartImage2", label: "MTF Chart (e.g., 1H, 15M)", ref: fileInputRefs[1] },
-    { name: "chartImage3", label: "LTF Chart (e.g., 5M, 1M)", ref: fileInputRefs[2] },
-  ];
 
   useEffect(() => {
     if (isPending) return;
@@ -124,7 +115,7 @@ export function ImageUploadForm() {
   const needsSubscription = isFullyAuthenticated && !hasSubscription && trialPoints <= 0;
   const interactionDisabledForAuth = authLoading || !user;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (interactionDisabledForAuth) {
       toast({
         title: "Authentication Required",
@@ -137,28 +128,41 @@ export function ImageUploadForm() {
       return;
     }
 
-    const file = event.target.files?.[0];
-    const newPreviewUrls = [...previewUrls];
-
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        newPreviewUrls[index] = reader.result as string;
-        setPreviewUrls(newPreviewUrls);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      newPreviewUrls[index] = null;
-      setPreviewUrls(newPreviewUrls);
+    const files = event.target.files;
+    if (!files) return;
+    
+    if (files.length > MAX_FILES) {
+        toast({
+            title: "Too Many Files",
+            description: `You can only upload up to ${MAX_FILES} images at a time.`,
+            variant: "destructive"
+        });
+        if(fileInputRef.current) fileInputRef.current.value = "";
+        setPreviewUrls([]);
+        return;
     }
+
+    const newPreviewUrls: string[] = [];
+    const fileList = Array.from(files);
+
+    fileList.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            newPreviewUrls.push(reader.result as string);
+            if (newPreviewUrls.length === fileList.length) {
+                setPreviewUrls(newPreviewUrls);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
   };
 
   const handleReset = () => {
-    setPreviewUrls([null, null, null]);
+    setPreviewUrls([]);
     setFormKey(Date.now()); // Re-mount the form to clear file inputs and reset action state
   };
 
-  const hasFiles = previewUrls.some(url => url !== null);
+  const hasFiles = previewUrls.length > 0;
 
   const getHelperText = () => {
     if (authLoading) return "Loading user data...";
@@ -177,24 +181,21 @@ export function ImageUploadForm() {
             <CardDescription>{getHelperText()}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {imageFields.map((field, index) => (
-                <div key={field.name} className="space-y-2">
-                  <Label htmlFor={field.name} className="text-sm font-medium flex items-center gap-1.5">
-                      <ImagePlus className="h-4 w-4 text-muted-foreground"/> {field.label}
-                  </Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
+             <div className="space-y-2">
+                <Label htmlFor="chart-images" className="text-sm font-medium flex items-center gap-1.5">
+                    <ImagePlus className="h-4 w-4 text-muted-foreground"/> Upload Charts (Max {MAX_FILES})
+                </Label>
+                <Input
+                    id="chart-images"
+                    name="chartImages"
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={(e) => handleFileChange(e, index)}
-                    ref={field.ref}
+                    multiple
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
                     disabled={interactionDisabledForAuth || needsSubscription}
                     className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
-                  />
-                </div>
-              ))}
+                />
             </div>
             
             {hasFiles && (
@@ -208,21 +209,6 @@ export function ImageUploadForm() {
                         fill
                         className="object-contain"
                       />
-                       <Button 
-                         variant="ghost" 
-                         size="icon" 
-                         className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                         onClick={() => {
-                           const newPreviews = [...previewUrls];
-                           newPreviews[index] = null;
-                           setPreviewUrls(newPreviews);
-                           if (fileInputRefs[index].current) {
-                             fileInputRefs[index].current!.value = "";
-                           }
-                         }}
-                       >
-                         <X className="h-4 w-4" />
-                       </Button>
                     </div>
                   ) : null
                 ))}
