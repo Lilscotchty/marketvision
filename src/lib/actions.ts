@@ -81,6 +81,17 @@ export async function handleImageAnalysisAction(
       };
     }
     
+    // Check if multiple images were uploaded but all have the same timeframe
+    if (
+      analysisResult.timeframesDetected &&
+      analysisResult.timeframesDetected.length > 1 &&
+      new Set(analysisResult.timeframesDetected).size === 1
+    ) {
+      return {
+        error: `All uploaded charts appear to be from the same timeframe (${analysisResult.timeframesDetected[0]}). For a comprehensive analysis, please upload charts from multiple timeframes (e.g., 4H, 1H, 15M).`,
+      };
+    }
+
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,

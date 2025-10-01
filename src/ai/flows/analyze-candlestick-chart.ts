@@ -61,6 +61,7 @@ const SniperEntrySetupSchema = z.object({
 
 const AnalyzeCandlestickChartOutputSchema = z.object({
   asset: z.string().describe("The asset symbol identified from the chart, e.g., 'BTC/USD', 'EUR/USD', 'AAPL'. If timeframes are not visible, return 'Unclear'."),
+  timeframesDetected: z.array(z.string()).optional().describe("An array of the timeframes identified from each chart, e.g., ['4H', '15M', '5M']."),
   trend: z.string().describe('The identified trend in the candlestick chart.'),
   patterns: z.array(z.string()).describe('The candlestick patterns identified in the chart.'),
   summary: z.string().describe('A summary of the analysis of the candlestick chart, incorporating daily bias insights.'),
@@ -91,7 +92,7 @@ You have been provided with up to three candlestick chart images. Your primary g
 **CRITICAL FIRST STEP: Timeframe and Asset Identification**
 
 1.  **Identify Asset:** First, try to identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA).
-2.  **Infer Timeframes:** For each image, you MUST identify its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). This is often visible in a corner of the chart.
+2.  **Infer Timeframes:** For each image, you MUST identify its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). This is often visible in a corner of the chart. Populate the 'timeframesDetected' field with the list of identified timeframes (e.g., ["4H", "1H", "15M"]).
 
 **IMPORTANT RULE:** If you CANNOT CLEARLY identify the timeframe on AT LEAST ONE of the provided charts, you MUST STOP. In this case, set the 'asset' field to "Unclear", set the 'summary' to "Timeframe not visible", and leave all other fields empty or with default values. Do not attempt any further analysis.
 
