@@ -124,7 +124,7 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
           <CardTitle className="font-headline text-lg flex items-center justify-between">
             Daily Trade Outcomes
              <div className="text-right">
-                <p className="text-xl font-bold">
+                <p className="text-lg font-bold">
                   {totalSuccessful} Wins / {totalUnsuccessful} Losses
                 </p>
                 <p className={`text-xs font-normal ${stats.winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
@@ -252,3 +252,4 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
 
 
     
+
