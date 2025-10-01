@@ -125,7 +125,7 @@ export function ImageUploadForm() {
   const interactionDisabledForAuth = authLoading || !user;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    if (!user && !authLoading) {
+    if (interactionDisabledForAuth) {
       toast({
         title: "Authentication Required",
         description: (
@@ -303,5 +303,3 @@ export function ImageUploadForm() {
     </div>
   );
 }
-
-    

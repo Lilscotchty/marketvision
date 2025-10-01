@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { HistoricalPrediction } from "@/types";
-import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, LineChart, MoreVertical } from "lucide-react";
+import { ThumbsUp, ThumbsDown, HelpCircle, Trash2, MoreVertical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
