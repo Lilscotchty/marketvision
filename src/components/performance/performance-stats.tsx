@@ -180,7 +180,7 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 iconColorClass="text-green-500"
             />
 
-            <Card className="p-4 border rounded-lg bg-card flex flex-col justify-between h-full">
+            <Card className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Consistency</p>
                 <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs">
@@ -225,7 +225,7 @@ interface StatCardProps {
 }
 
 const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColorClass }: StatCardProps) => (
-    <div className="p-4 border rounded-lg bg-card flex flex-col justify-between h-full">
+    <div className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
         <div>
             <div className="flex items-start justify-between">
                 <p className="text-sm font-medium text-muted-foreground">{title}</p>
