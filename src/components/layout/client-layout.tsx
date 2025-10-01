@@ -26,6 +26,8 @@ import { SidebarNav } from './sidebar-nav';
 import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -33,7 +35,7 @@ const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradi
 
 // Define a separate set of nav items for the mobile sidebar drawer
 const mobileSidebarNavItems: NavItem[] = [
-  { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true },
+  { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
   { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
   { href: "#", label: "About FinSight", icon: Info, authRequired: false },
   { href: "#", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
