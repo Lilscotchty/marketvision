@@ -4,6 +4,7 @@
 /**
  * @fileOverview Analyzes candlestick chart images to identify patterns, trends, basic ICT elements,
  * and apply a conceptual Daily Bias determination framework based on visual information from multiple timeframes.
+ * It also auto-detects the asset symbol from the chart.
  *
  * - analyzeCandlestickChart - A function that handles the candlestick chart analysis process.
  * - AnalyzeCandlestickChartInput - The input type for the analyzeCandlestickChart function.
@@ -73,6 +74,7 @@ const SniperEntrySetupSchema = z.object({
 
 
 const AnalyzeCandlestickChartOutputSchema = z.object({
+  asset: z.string().describe("The asset symbol identified from the chart, e.g., 'BTC/USD', 'EUR/USD', 'AAPL'."),
   trend: z.string().describe('The identified trend in the candlestick chart.'),
   patterns: z.array(z.string()).describe('The candlestick patterns identified in the chart.'),
   summary: z.string().describe('A summary of the analysis of the candlestick chart, incorporating daily bias insights.'),
@@ -101,6 +103,8 @@ const prompt = ai.definePrompt({
 Analyze the provided candlestick chart images. The user has provided up to three images, likely representing Higher (HTF), Medium (MTF), and Lower (LTF) timeframes of the same asset. If only one image is provided, treat it as the primary timeframe and infer where possible. Use all available images to perform a cohesive, multi-timeframe analysis.
 
 **Analysis Steps:**
+
+0.  **Identify Asset:** First, identify the asset symbol from the chart image (e.g., BTC/USD, EUR/USD, TSLA). It's usually visible in a corner or as a watermark. Set this in the 'asset' field.
 
 1.  **Standard Analysis (Multi-Timeframe Context):**
     *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., HTF shows uptrend, MTF is pulling back).
@@ -149,5 +153,3 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

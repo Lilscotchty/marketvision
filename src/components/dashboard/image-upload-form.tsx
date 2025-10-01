@@ -79,7 +79,7 @@ export function ImageUploadForm() {
             const newPredictionEntry: HistoricalPrediction = {
                 id: `pred_${new Date().getTime()}`,
                 date: new Date().toISOString(),
-                asset: state.asset, // Get asset from state
+                asset: state.analysis.asset || 'Unknown', // Get asset from analysis
                 imagePreviewUrl: "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
                 prediction: state.prediction,
                 analysis: state.analysis,
@@ -195,17 +195,6 @@ export function ImageUploadForm() {
                   />
                 </div>
               ))}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="asset" className="text-sm font-medium flex items-center gap-1.5">
-                    Asset/Pair (e.g., BTC/USD)
-                </Label>
-                <Input
-                    id="asset"
-                    name="asset"
-                    placeholder="Enter the asset symbol shown in the chart"
-                    disabled={interactionDisabledForAuth || needsSubscription}
-                />
             </div>
             
             {hasFiles && (

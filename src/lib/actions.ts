@@ -19,7 +19,6 @@ const fileSchema = z
   );
 
 const formSchema = z.object({
-  asset: z.string().min(1, { message: "Asset symbol is required." }),
   chartImage1: fileSchema,
   chartImage2: fileSchema,
   chartImage3: fileSchema,
@@ -32,7 +31,6 @@ const formSchema = z.object({
 export interface AnalysisResult {
   prediction?: PredictionOutput;
   analysis?: AnalysisOutput;
-  asset?: string;
   error?: string;
   imagePreviewUrl?: string; // Legacy support for single image
   imagePreviewUrls?: (string | null)[]; // New multi-image support
@@ -49,7 +47,6 @@ export async function handleImageAnalysisAction(
   formData: FormData
 ): Promise<AnalysisResult> {
   const validatedFields = formSchema.safeParse({
-    asset: formData.get('asset') || undefined,
     chartImage1: formData.get('chartImage1') || undefined,
     chartImage2: formData.get('chartImage2') || undefined,
     chartImage3: formData.get('chartImage3') || undefined,
@@ -58,7 +55,6 @@ export async function handleImageAnalysisAction(
   if (!validatedFields.success) {
     const fieldErrors = validatedFields.error.flatten().fieldErrors;
     const errorMessage = 
-      fieldErrors.asset?.join(', ') ||
       fieldErrors.chartImage1?.join(', ') || 
       fieldErrors.chartImage2?.join(', ') || 
       fieldErrors.chartImage3?.join(', ') ||
@@ -67,7 +63,7 @@ export async function handleImageAnalysisAction(
     return { error: errorMessage };
   }
 
-  const { asset, chartImage1, chartImage2, chartImage3 } = validatedFields.data;
+  const { chartImage1, chartImage2, chartImage3 } = validatedFields.data;
   const files = [chartImage1, chartImage2, chartImage3].filter(Boolean) as File[];
 
   if (files.length === 0) {
@@ -99,7 +95,6 @@ export async function handleImageAnalysisAction(
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
-      asset: asset,
       imagePreviewUrls: allImageUrls,
     };
   } catch (error) {
