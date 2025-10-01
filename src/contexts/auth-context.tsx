@@ -16,9 +16,7 @@ interface AuthContextType {
   user: FirebaseUser | null;
   loading: boolean;
   logout: () => Promise<void>;
-  userData: UserAppData | null;
-  decrementTrialPoint: () => void;
-  activateSubscription: () => void;
+  userData: UserAppData | null; // This will now be a snapshot, not for direct mutation
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,27 +33,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Handle developer accounts with special privileges
     if (DEVELOPER_EMAILS.includes(firebaseUser.email || '')) {
       setUserData({
         userId: firebaseUser.uid,
         email: firebaseUser.email || '',
-        chartAnalysisTrialPoints: 9999, // Unlimited trials
-        hasActiveSubscription: true,    // Always active subscription
+        chartAnalysisTrialPoints: 9999,
+        hasActiveSubscription: true,
       });
       return;
     }
 
-    // Handle regular users, simulating data fetch from localStorage
     try {
       const storedUserDataString = localStorage.getItem(`userData-${firebaseUser.uid}`);
       if (storedUserDataString) {
         const storedUserData = JSON.parse(storedUserDataString) as UserAppData;
-        // Ensure data integrity from older versions
         if (typeof storedUserData.chartAnalysisTrialPoints === 'undefined') {
           storedUserData.chartAnalysisTrialPoints = INITIAL_TRIAL_POINTS;
         }
-        if (storedUserData.chartAnalysisTrialPoints < 0) {
+         if (storedUserData.chartAnalysisTrialPoints < 0) {
           storedUserData.chartAnalysisTrialPoints = 0;
         }
         if (typeof storedUserData.hasActiveSubscription === 'undefined') {
@@ -63,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setUserData(storedUserData);
       } else {
-        // Default for new non-developer users
         const newUser: UserAppData = {
           userId: firebaseUser.uid,
           email: firebaseUser.email || '',
@@ -74,8 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(`userData-${firebaseUser.uid}`, JSON.stringify(newUser));
       }
     } catch (e) {
-      console.error("Failed to parse or set user data from localStorage", e);
-      // Fallback to default if there's an error
+      console.error("Failed to parse user data from localStorage", e);
       setUserData({
         userId: firebaseUser.uid,
         email: firebaseUser.email || '',
@@ -91,15 +84,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initializeOrUpdateUserData(firebaseUser);
       setLoading(false);
     });
-    return () => unsubscribe();
-  }, [initializeOrUpdateUserData]);
 
-  // Persist non-developer userData to localStorage when it changes
-  useEffect(() => {
-    if (userData && user && !DEVELOPER_EMAILS.includes(user.email || '')) {
-      localStorage.setItem(`userData-${user.uid}`, JSON.stringify(userData));
-    }
-  }, [userData, user]);
+    const handleStorageChange = (event: StorageEvent) => {
+      if (user && event.key === `userData-${user.uid}`) {
+        initializeOrUpdateUserData(user);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        unsubscribe();
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [initializeOrUpdateUserData, user]);
+  
 
   const logout = async () => {
     setLoading(true);
@@ -115,27 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const decrementTrialPoint = useCallback(() => {
-    if (userData && !userData.hasActiveSubscription && userData.chartAnalysisTrialPoints > 0) {
-      setUserData(prev => {
-        if (!prev) return null;
-        const newPoints = Math.max(0, prev.chartAnalysisTrialPoints - 1);
-        return { ...prev, chartAnalysisTrialPoints: newPoints };
-      });
-    }
-  }, [userData]);
-
-  const activateSubscription = useCallback(() => {
-    if (userData) {
-      setUserData(prev => {
-        if (!prev) return null;
-        return { ...prev, hasActiveSubscription: true };
-      });
-    }
-  }, [userData]);
-
   return (
-    <AuthContext.Provider value={{ user, loading, logout, userData, decrementTrialPoint, activateSubscription }}>
+    <AuthContext.Provider value={{ user, loading, logout, userData }}>
       {children}
     </AuthContext.Provider>
   );

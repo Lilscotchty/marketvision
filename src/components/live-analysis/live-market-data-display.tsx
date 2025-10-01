@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"; 
@@ -18,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { analyzeMarketData, type AnalyzeMarketDataOutput } from "@/ai/flows/analyze-market-data-flow";
 import { fetchMarketDataFromAV, type FetchMarketDataResult } from "@/lib/actions"; 
 import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert";
-import type { TradingSession, AlphaVantageGlobalQuote, AnalyzeMarketDataInput, Timeframe } from "@/types"; 
+import type { TradingSession, AlphaVantageGlobalQuote, AnalyzeMarketDataInput, Timeframe, UserAppData } from "@/types"; 
 import { availableTimeframes } from "@/types"; 
 import { useAuth } from "@/contexts/auth-context";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
@@ -66,20 +65,33 @@ export function LiveMarketDataDisplay() {
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [fetchDataError, setFetchDataError] = useState<string | null>(null);
   
-  const { user, loading: authLoading, userData, activateSubscription } = useAuth();
+  const { user, loading: authLoading, userData } = useAuth();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isApiKeyAvailable, setIsApiKeyAvailable] = useState(true);
 
+  const [localUserData, setLocalUserData] = useState<UserAppData | null>(null);
+
   useEffect(() => {
-    // This check should reflect if the API key is available on the server-side,
-    // which is tricky. We'll let the server action handle the check and return an error.
-    // For a better UX, a dedicated endpoint to check configuration could be used,
-    // but for now, we'll assume it's available and let the server action fail gracefully.
+    if(userData) {
+      setLocalUserData(userData);
+    }
+  }, [userData]);
+
+  const activateSubscription = () => {
+    if (user) {
+      const updatedUserData = { ...localUserData, hasActiveSubscription: true } as UserAppData;
+      localStorage.setItem(`userData-${user.uid}`, JSON.stringify(updatedUserData));
+      setLocalUserData(updatedUserData);
+    }
+  };
+
+
+  useEffect(() => {
     setIsApiKeyAvailable(true); 
   }, []);
 
   const isFullyAuthenticated = !authLoading && user;
-  const hasSubscription = userData?.hasActiveSubscription;
+  const hasSubscription = localUserData?.hasActiveSubscription;
 
   const form = useForm<z.infer<typeof marketDataFormSchema>>({
     resolver: zodResolver(marketDataFormSchema),
@@ -563,5 +575,3 @@ export function LiveMarketDataDisplay() {
     </div>
   );
 }
-
-    

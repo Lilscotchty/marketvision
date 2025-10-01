@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
-import type { HistoricalPrediction } from "@/types";
+import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface SubmitButtonProps {
@@ -47,7 +47,7 @@ const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
 const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
 const MAX_FILES = 3;
-
+const INITIAL_TRIAL_POINTS = 5;
 
 export function ImageUploadForm() {
   const initialState: AnalysisResult | undefined = undefined;
@@ -56,16 +56,91 @@ export function ImageUploadForm() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { user, loading: authLoading, userData, decrementTrialPoint, activateSubscription } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
-  const [formKey, setFormKey] = useState(Date.now()); // Used to reset the form
+  const [formKey, setFormKey] = useState(Date.now());
+
+  const [userData, setUserData] = useState<UserAppData | null>(null);
+
+  const loadUserData = useCallback(() => {
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+    const storedData = localStorage.getItem(`userData-${user.uid}`);
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        if (typeof parsedData.chartAnalysisTrialPoints === 'undefined') {
+            parsedData.chartAnalysisTrialPoints = INITIAL_TRIAL_POINTS;
+        }
+         if (parsedData.chartAnalysisTrialPoints < 0) {
+          parsedData.chartAnalysisTrialPoints = 0;
+        }
+        if (typeof parsedData.hasActiveSubscription === 'undefined') {
+          parsedData.hasActiveSubscription = false;
+        }
+        setUserData(parsedData);
+      } catch (error) {
+        console.error("Failed to parse user data:", error)
+        // Set default if parsing fails
+        setUserData({
+            userId: user.uid,
+            email: user.email || '',
+            chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
+            hasActiveSubscription: false,
+        });
+      }
+    } else {
+      // Initialize for a new user
+      const newUser: UserAppData = {
+        userId: user.uid,
+        email: user.email || '',
+        chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
+        hasActiveSubscription: false,
+      };
+      setUserData(newUser);
+      localStorage.setItem(`userData-${user.uid}`, JSON.stringify(newUser));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
+
+
+  const decrementTrialPoint = () => {
+    setUserData(prev => {
+        if (prev && !prev.hasActiveSubscription && prev.chartAnalysisTrialPoints > 0) {
+            const newPoints = Math.max(0, prev.chartAnalysisTrialPoints - 1);
+            const updatedUserData = { ...prev, chartAnalysisTrialPoints: newPoints };
+            localStorage.setItem(`userData-${prev.userId}`, JSON.stringify(updatedUserData));
+            return updatedUserData;
+        }
+        return prev;
+    });
+  };
+
+  const activateSubscription = () => {
+    setUserData(prev => {
+        if (prev) {
+            const updatedUserData = { ...prev, hasActiveSubscription: true };
+            localStorage.setItem(`userData-${prev.userId}`, JSON.stringify(updatedUserData));
+            return updatedUserData;
+        }
+        return null;
+    });
+  };
+
 
   useEffect(() => {
     if (isPending) return;
 
     if (state?.prediction && state.analysis) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && user) {
+            decrementTrialPoint();
+
             const newPredictionEntry: HistoricalPrediction = {
                 id: `pred_${new Date().getTime()}`,
                 date: new Date().toISOString(),
@@ -101,9 +176,9 @@ export function ImageUploadForm() {
             
             localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
         }
-        decrementTrialPoint();
     }
-}, [state, isPending, decrementTrialPoint, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, isPending, user, toast]);
 
 
   const isFullyAuthenticated = !authLoading && !!user;
@@ -164,7 +239,7 @@ export function ImageUploadForm() {
   const hasFiles = previewUrls.length > 0;
 
   const getHelperText = () => {
-    if (authLoading) return "Loading user data...";
+    if (authLoading || userData === null) return "Loading user data...";
     if (!user) return "Log in or sign up to analyze charts.";
     if (hasSubscription) return "Premium access enabled.";
     if (trialPoints > 0) return `You have ${trialPoints} trial analyses remaining.`;
