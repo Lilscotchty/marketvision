@@ -53,7 +53,7 @@
   }
 
   .dark {
-    --background: 220 10% 12%; /* Dark Blue/Gray from original */
+    --background: 206 37% 4%;
     --foreground: 0 0% 95%; /* Almost white */
 
     --card: 206 6% 21%;
