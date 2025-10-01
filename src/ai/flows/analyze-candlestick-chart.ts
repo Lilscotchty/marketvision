@@ -86,35 +86,37 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeCandlestickChartOutputSchema},
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-Analyze the provided candlestick chart images. The user has provided up to three images. Infer the timeframes (Higher, Medium, Lower) based on the chart's context and content. Use all available images to perform a cohesive, multi-timeframe analysis.
+You have been provided with up to three candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis.
 
 **Analysis Steps:**
 
-0.  **Identify Asset:** First, identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA). It's usually visible in a corner or as a watermark. Set this in the 'asset' field.
+0.  **Identify Asset and Timeframes:**
+    *   First, identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA). Set this in the 'asset' field.
+    *   Next, for each image, infer its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). You will use these inferred timeframes to conduct the rest of the analysis.
 
 1.  **Standard Analysis (Multi-Timeframe Context):**
-    *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., HTF shows uptrend, MTF is pulling back).
+    *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., "The 4H chart shows an uptrend, while the 15M chart is in a pullback.").
     *   **Candlestick Patterns:** Identify any significant candlestick patterns visible on any of the charts. Note which timeframe they appear on if relevant.
-    *   **ICT Elements:** Visually identify key ICT elements. **Crucially, for each element's location, you must reference the specific date and time from the chart's x-axis if it is visible.** For example: 'Bullish order block located at the swing low on June 5th around 14:30.' Describe how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
+    *   **ICT Elements:** Visually identify key ICT elements on all charts. **For each element's location, you must reference the specific date and time from the chart's x-axis if visible.** For example: 'Bullish order block on the 1H chart located at the swing low on June 5th around 14:30.' Describe how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
     *   **Market Structure:** Comment on visible market structure (BOS, CHoCH) on each timeframe and describe the overall structural narrative.
     *   **Potential AMD Cycle:** Suggest if the charts collectively indicate a phase of Accumulation, Manipulation, or Distribution.
     *   **Daily Bias Determination (Conceptual):** Apply the visual framework using all charts to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
 
 2.  **Intraday Sniper Entry Strategy Analysis (Multi-Timeframe):**
-    *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy, using the different images as proxies for the different timeframes mentioned in the strategy.
+    *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy. **Use your inferred timeframes to map the provided charts to the strategy's steps.**
     *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
     *   **Strategy Breakdown:**
-        *   **Daily Bias Setup (HTF Filter - using the highest timeframe chart):**
-            *   **Step 1 (4H):** Use the inferred HTF chart to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
-            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on the HTF chart.
-            *   **Step 2 (1H):** Use the inferred MTF chart to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
-            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\`.
-        *   **Intraday Sniper Entry (LTF Mechanic - using the lower timeframe charts):**
-            *   **Step 3 (15M):** Use the inferred MTF/LTF chart to describe if there's a visual sign of a liquidity grab wick into the identified BB.
-            *   **Step 4 (5M):** Use the inferred LTF chart to look for a lower-timeframe MSS confirmation.
-            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\`.
+        *   **Daily Bias Setup (HTF Filter):**
+            *   **Step 1 (4H):** Use the chart you've identified as the highest timeframe (ideally 4H or 1H) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
+            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on that higher timeframe chart.
+            *   **Step 2 (1H):** Use a medium timeframe chart (like 1H or 30M) to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
+            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\` based on these higher timeframe charts.
+        *   **Intraday Sniper Entry (LTF Mechanic):**
+            *   **Step 3 (15M):** Use a lower timeframe chart (like 15M or 5M) to describe if there's a visual sign of a liquidity grab wick into the identified Breaker Block.
+            *   **Step 4 (5M):** Use the chart you've identified as the lowest timeframe (ideally 5M or 1M) to look for a lower-timeframe MSS confirmation after the liquidity grab.
+            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\` based on these lower timeframe charts.
         *   **Trade Management:**
-            *   **Step 5 (Entry, SL, TP):** Based on the visual patterns, describe the conceptual entry, stop loss, and take profit points.
+            *   **Step 5 (Entry, SL, TP):** Based on the visual patterns from the LTF charts, describe the conceptual entry, stop loss, and take profit points.
             *   Populate \`sniperEntrySetup.tradeManagement\` with these details.
 
 3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
@@ -139,3 +141,5 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
