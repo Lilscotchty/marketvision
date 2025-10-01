@@ -6,42 +6,45 @@ import { useTheme } from '@/contexts/theme-context'; // Import useTheme
 
 function TradingViewTickerTape() {
   const container = useRef<HTMLDivElement>(null);
-  const scriptAppended = useRef(false); // Ref to track if script has been appended
   const { theme } = useTheme(); // Get the current theme
 
   useEffect(() => {
-    const script = document.createElement("script");
-    
-    // Check if the script has already been appended and if the container exists
-    if (container.current && !scriptAppended.current) {
-      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-      script.type = "text/javascript";
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        "symbols": [
-          { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500 Index" },
-          { "proName": "FOREXCOM:NSXUSD", "title": "US 100 Cash CFD" },
-          { "proName": "FX_IDC:EURUSD", "title": "EUR to USD" },
-          { "proName": "BITSTAMP:BTCUSD", "title": "Bitcoin" },
-          { "proName": "BITSTAMP:ETHUSD", "title": "Ethereum" },
-          { "proName": "ICMARKETS:USTEC", "title": "USTEC" }
-        ],
-        "showSymbolLogo": true,
-        "colorTheme": theme, // Use the dynamic theme
-        "isTransparent": true,
-        "displayMode": "regular",
-        "locale": "en"
-      });
-      
-      container.current.appendChild(script);
-      scriptAppended.current = true; // Mark script as appended
+    // Function to create and append the script
+    const createScript = () => {
+      if (container.current && !container.current.querySelector('script')) {
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+        script.type = "text/javascript";
+        script.async = true;
+        script.innerHTML = JSON.stringify({
+          "symbols": [
+            { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500 Index" },
+            { "proName": "FOREXCOM:NSXUSD", "title": "US 100 Cash CFD" },
+            { "proName": "FX_IDC:EURUSD", "title": "EUR to USD" },
+            { "proName": "BITSTAMP:BTCUSD", "title": "Bitcoin" },
+            { "proName": "BITSTAMP:ETHUSD", "title": "Ethereum" },
+            { "proName": "ICMARKETS:USTEC", "title": "USTEC" }
+          ],
+          "showSymbolLogo": true,
+          "colorTheme": theme, // Use the dynamic theme
+          "isTransparent": true,
+          "displayMode": "regular",
+          "locale": "en"
+        });
+        container.current.appendChild(script);
+      }
+    };
+
+    // Clear the container and recreate script on theme change
+    if (container.current) {
+      container.current.innerHTML = '';
+      createScript();
     }
     
     return () => {
-      // Clean up the script when the component unmounts
-      if (container.current && container.current.contains(script)) {
-        container.current.removeChild(script);
-        scriptAppended.current = false;
+      // Clean up the widget when the component unmounts
+      if (container.current) {
+        container.current.innerHTML = '';
       }
     };
   }, [theme]); // Re-run effect if theme changes
