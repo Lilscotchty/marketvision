@@ -53,33 +53,33 @@
   }
 
   .dark {
-    --background: 206 37% 4%;
-    --foreground: 0 0% 95%; /* Almost white */
+    --background: 210 10% 12%; /* Darker, less saturated background */
+    --foreground: 210 20% 95%; /* Almost white for text */
 
-    --card: 206 40% 7%;
-    --card-foreground: 0 0% 95%;
+    --card: 210 10% 15%; /* Slightly lighter card background */
+    --card-foreground: 210 20% 95%;
 
-    --popover: 220 10% 10%; /* Darker popover */
-    --popover-foreground: 0 0% 95%;
+    --popover: 210 10% 12%; /* Same as background */
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 220 85% 55%; /* Vibrant Blue from original */
+    --primary: 220 85% 55%; 
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 10% 25%; /* Muted dark blue/gray */
+    --secondary: 210 10% 25%; 
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 10% 20%; /* Darker muted background */
-    --muted-foreground: 0 0% 60%; /* Muted text */
+    --muted: 210 10% 20%; 
+    --muted-foreground: 210 15% 60%; 
 
-    --accent: 220 85% 60%; /* Vibrant Blue from original */
+    --accent: 220 85% 60%; 
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 55%; /* Visible red */
+    --destructive: 0 63% 50%; /* Adjusted red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 25%; /* Subtle border */
-    --input: 220 10% 22%; /* Darker input fields */
-    --ring: 220 85% 50%; /* Ring color related to primary */
+    --border: 210 10% 25%;
+    --input: 210 10% 22%;
+    --ring: 220 85% 50%; 
     
     /* Chart colors for dark theme */
     --chart-1: 220 80% 70%;
@@ -89,13 +89,13 @@
     --chart-5: 120 50% 60%;
     
     /* Sidebar Colors for Dark Theme */
-    --sidebar-background: 220 10% 10%; /* Deeper dark for sidebar */
+    --sidebar-background: 210 10% 15%; 
     --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 220 85% 55%; /* Vibrant blue for active items */
+    --sidebar-primary: 220 85% 55%; 
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 20%; /* Dark gray hover */
+    --sidebar-accent: 210 10% 22%; 
     --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 220 10% 15%; /* More subtle sidebar border */
+    --sidebar-border: 210 10% 20%; 
     --sidebar-ring: 220 85% 50%;
   }
 }
@@ -110,7 +110,7 @@
     @apply transition-colors duration-300;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+    @apply font-body;
   }
 }
 
