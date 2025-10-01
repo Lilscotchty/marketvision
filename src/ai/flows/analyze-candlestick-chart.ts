@@ -87,7 +87,7 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeCandlestickChartOutputSchema},
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-You have been provided with up to three candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis.
+You have been provided with one or more candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis if multiple charts are available.
 
 **CRITICAL FIRST STEP: Timeframe and Asset Identification**
 
@@ -109,6 +109,7 @@ You have been provided with up to three candlestick chart images. Your primary g
     *   **Daily Bias Determination (Conceptual):** Apply the visual framework using all charts to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
 
 2.  **Intraday Sniper Entry Strategy Analysis (Multi-Timeframe):**
+    *   **CONDITION:** ONLY perform this analysis if you have been provided with MORE THAN ONE chart image. If only one chart is provided, SKIP this entire step and leave the \`sniperEntrySetup\` field empty.
     *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy. **Use your inferred timeframes to map the provided charts to the strategy's steps.**
     *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
     *   **Strategy Breakdown:**
