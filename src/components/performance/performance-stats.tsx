@@ -147,14 +147,15 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                         <RechartsBarChart 
                           data={chartData}
                            margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                           stackOffset="sign"
                         >
                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
                              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.5)' }} />
                              <Legend wrapperStyle={{fontSize: "12px"}}/>
-                             <Bar dataKey="successful" name="Successful" fill="hsl(var(--primary))" barSize={8} />
-                             <Bar dataKey="unsuccessful" name="Unsuccessful" fill="hsl(var(--destructive))" barSize={8} />
+                             <Bar dataKey="successful" name="Successful" fill="hsl(var(--primary))" stackId="a" barSize={8} />
+                             <Bar dataKey="unsuccessful" name="Unsuccessful" fill="hsl(var(--destructive))" stackId="a" barSize={8} />
                         </RechartsBarChart>
                   </ResponsiveContainer>
               </div>
@@ -176,8 +177,11 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 title="Win Rate"
                 value={`${stats.winRate.toFixed(1)}%`}
                 description={`${totalSuccessful} wins / ${totalUnsuccessful} losses`}
-                iconBgClass="bg-green-500/10"
-                iconColorClass="text-green-500"
+                iconBgClass="bg-white/10"
+                iconColorClass="text-white"
+                className="bg-gradient-to-br from-primary/80 to-primary/60 text-primary-foreground"
+                valueClassName="text-white"
+                descriptionClassName="text-primary-foreground/80"
             />
 
             <Card className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
@@ -222,20 +226,23 @@ interface StatCardProps {
     description: string;
     iconBgClass: string;
     iconColorClass: string;
+    className?: string;
+    valueClassName?: string;
+    descriptionClassName?: string;
 }
 
-const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColorClass }: StatCardProps) => (
-    <Card className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
+const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColorClass, className, valueClassName, descriptionClassName }: StatCardProps) => (
+    <Card className={cn("p-4 rounded-lg bg-card flex flex-col justify-between h-full", className)}>
         <div>
             <div className="flex items-start justify-between">
-                <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                <div className={`p-1.5 rounded-md ${iconBgClass}`}>
-                    <Icon className={`h-5 w-5 ${iconColorClass}`} />
+                <p className={cn("text-sm font-medium text-muted-foreground", descriptionClassName)}>{title}</p>
+                <div className={cn("p-1.5 rounded-md", iconBgClass)}>
+                    <Icon className={cn("h-5 w-5", iconColorClass)} />
                 </div>
             </div>
-            <p className="text-2xl font-bold font-headline mt-1">{value}</p>
+            <p className={cn("text-2xl font-bold font-headline mt-1", valueClassName)}>{value}</p>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">{description}</p>
+        <p className={cn("text-xs text-muted-foreground mt-2", descriptionClassName)}>{description}</p>
     </Card>
 )
     
