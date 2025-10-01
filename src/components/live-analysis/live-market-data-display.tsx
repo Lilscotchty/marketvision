@@ -255,13 +255,13 @@ export function LiveMarketDataDisplay() {
           <form onSubmit={form.handleSubmit(onSubmitAnalysis)}>
             <CardContent className="space-y-6 pt-4">
 
-              <div className="border p-4 rounded-md space-y-4 bg-muted/30">
+              <div className="border p-4 rounded-md space-y-4 bg-gradient-to-br from-card to-muted">
                 <FormField
                   control={form.control}
                   name="symbolToFetch"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1"><Search className="h-4 w-4" /> Symbol for Quote Fetch (Optional)</FormLabel>
+                      <FormLabel className="flex items-center gap-1 font-semibold"><Search className="h-4 w-4" /> Symbol for Quote Fetch</FormLabel>
                       <div className="flex gap-2 items-center">
                         <FormControl>
                           <Input {...field} placeholder="e.g., AAPL, EUR/USD, BTCUSD" disabled={!isApiKeyAvailable} />
@@ -563,3 +563,5 @@ export function LiveMarketDataDisplay() {
     </div>
   );
 }
+
+    
