@@ -74,6 +74,13 @@ export async function handleImageAnalysisAction(
       analyzeCandlestickChart(analysisInput)
     ]);
     
+    // Check if the AI indicated that timeframes were unclear.
+    if (analysisResult.asset === 'Unclear' && analysisResult.summary === "Timeframe not visible") {
+      return {
+        error: 'Could not identify timeframes on the chart. Please use a screenshot of the chart window instead of a downloaded image, as it helps capture the timeframe.'
+      };
+    }
+    
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
@@ -293,3 +300,5 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
     };
   }
 }
+
+    

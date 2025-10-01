@@ -60,7 +60,7 @@ const SniperEntrySetupSchema = z.object({
 
 
 const AnalyzeCandlestickChartOutputSchema = z.object({
-  asset: z.string().describe("The asset symbol identified from the chart, e.g., 'BTC/USD', 'EUR/USD', 'AAPL'."),
+  asset: z.string().describe("The asset symbol identified from the chart, e.g., 'BTC/USD', 'EUR/USD', 'AAPL'. If timeframes are not visible, return 'Unclear'."),
   trend: z.string().describe('The identified trend in the candlestick chart.'),
   patterns: z.array(z.string()).describe('The candlestick patterns identified in the chart.'),
   summary: z.string().describe('A summary of the analysis of the candlestick chart, incorporating daily bias insights.'),
@@ -88,11 +88,16 @@ const prompt = ai.definePrompt({
 
 You have been provided with up to three candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis.
 
-**Analysis Steps:**
+**CRITICAL FIRST STEP: Timeframe and Asset Identification**
 
-0.  **Identify Asset and Timeframes:**
-    *   First, identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA). Set this in the 'asset' field.
-    *   Next, for each image, infer its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). You will use these inferred timeframes to conduct the rest of the analysis.
+1.  **Identify Asset:** First, try to identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA).
+2.  **Infer Timeframes:** For each image, you MUST identify its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). This is often visible in a corner of the chart.
+
+**IMPORTANT RULE:** If you CANNOT CLEARLY identify the timeframe on AT LEAST ONE of the provided charts, you MUST STOP. In this case, set the 'asset' field to "Unclear", set the 'summary' to "Timeframe not visible", and leave all other fields empty or with default values. Do not attempt any further analysis.
+
+**If and only if timeframes are identifiable, proceed with the full analysis:**
+
+**Analysis Steps:**
 
 1.  **Standard Analysis (Multi-Timeframe Context):**
     *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., "The 4H chart shows an uptrend, while the 15M chart is in a pullback.").
