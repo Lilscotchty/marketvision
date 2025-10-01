@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -22,15 +23,15 @@ export type PredictMarketMovementInput = z.infer<typeof PredictMarketMovementInp
 
 const PredictMarketMovementOutputSchema = z.object({
   prediction: z.object({
-    priceTarget: z.number().describe('The predicted price target.'),
-    stopLossLevel: z.number().describe('The recommended stop-loss level.'),
+    priceTarget: z.number().describe('The predicted price target, derived from a visible resistance or support level.'),
+    stopLossLevel: z.number().describe('The recommended stop-loss level, placed logically beyond a key support or resistance point.'),
     confidenceLevel: z
       .number()
       .describe('The confidence level of the prediction (0-1).'),
     marketDirection: z
       .enum(['UP', 'DOWN', 'NEUTRAL'])
       .describe('Predicted direction of market movement'),
-    rationale: z.string().describe('Explanation of why the model made this prediction'),
+    rationale: z.string().describe('Explanation of why the model made this prediction, including which specific chart features were used to determine the price target and stop-loss.'),
   }),
 });
 export type PredictMarketMovementOutput = z.infer<typeof PredictMarketMovementOutputSchema>;
@@ -45,15 +46,31 @@ const prompt = ai.definePrompt({
   name: 'predictMarketMovementPrompt',
   input: {schema: PredictMarketMovementInputSchema},
   output: {schema: PredictMarketMovementOutputSchema},
-  prompt: `You are an expert financial analyst specializing in candlestick pattern analysis. Analyze the provided candlestick chart image and predict future market movements.
+  prompt: `You are an expert financial analyst and trader specializing in technical analysis from candlestick charts. Your task is to analyze the provided chart image and generate a conceptual trade idea.
 
-Provide a prediction including price target, stop-loss level, confidence level (0-1), predicted direction (UP, DOWN, or NEUTRAL), and a brief rationale.
+**Analysis Steps:**
+
+1.  **Determine Market Direction:** Analyze the chart to predict the most likely short-term market direction (UP, DOWN, or NEUTRAL).
+2.  **Identify Key Levels:**
+    *   Visually identify the most significant, recent **support** level (e.g., a swing low, a bullish order block).
+    *   Visually identify the most significant, recent **resistance** level (e.g., a swing high, a bearish order block).
+3.  **Set Price Target and Stop-Loss:**
+    *   **If predicting UP:**
+        *   Set the \`priceTarget\` to the identified **resistance** level.
+        *   Set the \`stopLossLevel\` to a value just **below** the identified **support** level.
+    *   **If predicting DOWN:**
+        *   Set the \`priceTarget\` to the identified **support** level.
+        *   Set the \`stopLossLevel\` to a value just **above** the identified **resistance** level.
+    *   **If predicting NEUTRAL:** Set both \`priceTarget\` and \`stopLossLevel\` to 0.
+    *   **CRITICAL RULE:** The \`priceTarget\` and \`stopLossLevel\` must NOT be the same value unless the direction is NEUTRAL.
+4.  **Determine Confidence:** Based on the clarity of the patterns and levels, assign a \`confidenceLevel\` between 0 and 1.
+5.  **Write Rationale:** In the \`rationale\` field, clearly explain your reasoning. You MUST state which specific visual feature you used for the price target (e.g., "Price target is based on the swing high at approximately [price]") and which feature you used for the stop-loss (e.g., "Stop-loss is placed just below the recent swing low at [price]").
+
+**Analyze the following candlestick chart:**
 
 Candlestick Chart: {{media url=candlestickChartDataUri}}
 
-Consider various technical indicators, chart patterns, and the overall market context to make the most accurate prediction possible.
-
-Output MUST be in JSON format.
+Output MUST be in valid JSON format according to the defined schema.
 `,
 });
 
