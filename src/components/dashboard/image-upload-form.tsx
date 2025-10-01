@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -174,7 +173,7 @@ export function ImageUploadForm() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg bg-gradient-to-br from-card to-muted">
+      <Card className="shadow-lg">
         <form action={formAction} key={formKey}>
            <CardHeader>
             <CardTitle className="font-headline text-2xl flex items-center gap-2"><BarChartHorizontal className="text-primary"/>Multi-Timeframe Analysis</CardTitle>
