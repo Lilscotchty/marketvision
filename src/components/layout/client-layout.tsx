@@ -96,61 +96,63 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <span className="sr-only">Toggle theme</span>
             </Button>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                {user?.photoURL ? (
-                  <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {getInitials(user?.email)}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {user ? (
-              <>
-                <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <Link href="/settings" passHref>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+        {isClient && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar className="h-8 w-8">
+                  {user?.photoURL ? (
+                    <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitials(user?.email)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {user ? (
+                <>
+                  <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <Link href="/settings" passHref>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/notifications" passHref>
+                    <DropdownMenuItem>
+                      <Bell className="mr-2 h-4 w-4" />
+                      <span>Notifications</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
                   </DropdownMenuItem>
-                </Link>
-                <Link href="/notifications" passHref>
-                  <DropdownMenuItem>
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span>Notifications</span>
-                  </DropdownMenuItem>
-                </Link>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <Link href="/login" passHref>
-                  <DropdownMenuItem>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    <span>Login</span>
-                  </DropdownMenuItem>
-                </Link>
-                <Link href="/signup" passHref>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Sign Up</span>
-                  </DropdownMenuItem>
-                </Link>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" passHref>
+                    <DropdownMenuItem>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      <span>Login</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/signup" passHref>
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Sign Up</span>
+                    </DropdownMenuItem>
+                  </Link>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );
