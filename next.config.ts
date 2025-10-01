@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_FINNHUB_API_KEY: process.env.FINNHUB_API_KEY,
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   }
 };
 
