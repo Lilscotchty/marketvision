@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-bold">{label}</p>
         {payload.map((p: any) => (
           <p key={p.dataKey} style={{ color: p.color }}>
-            {p.name}: {p.value}
+            {p.name}: {p.dataKey === 'unsuccessful' ? Math.abs(p.value) : p.value}
           </p>
         ))}
       </div>
@@ -60,7 +60,7 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
       if (p.manualFlag === 'successful') {
         dailyStats[date].successful += 1;
       } else {
-        dailyStats[date].unsuccessful += 1;
+        dailyStats[date].unsuccessful -= 1; // Make unsuccessful trades negative
       }
     });
 
@@ -242,3 +242,6 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
 
 
 
+
+
+    
