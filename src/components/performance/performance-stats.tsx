@@ -176,8 +176,8 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 title="Win Rate"
                 value={`${stats.winRate.toFixed(1)}%`}
                 description={`${totalSuccessful} wins / ${totalUnsuccessful} losses`}
-                iconBgClass="dark:bg-green-500/10 bg-black/10"
-                iconColorClass="dark:text-green-500 text-white"
+                iconBgClass="bg-green-500/10"
+                iconColorClass="text-green-500"
             />
 
             <Card className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
@@ -225,21 +225,19 @@ interface StatCardProps {
 }
 
 const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColorClass }: StatCardProps) => (
-    <div className={cn(
-        "p-4 rounded-lg flex flex-col justify-between h-full",
-        "dark:bg-card bg-green-500" // Inverted background for light theme
-    )}>
+    <Card className="p-4 rounded-lg bg-card flex flex-col justify-between h-full">
         <div>
             <div className="flex items-start justify-between">
-                <p className="text-sm font-medium dark:text-muted-foreground text-green-100">{title}</p>
+                <p className="text-sm font-medium text-muted-foreground">{title}</p>
                 <div className={`p-1.5 rounded-md ${iconBgClass}`}>
                     <Icon className={`h-5 w-5 ${iconColorClass}`} />
                 </div>
             </div>
-            <p className="text-2xl font-bold font-headline mt-1 dark:text-foreground text-white">{value}</p>
+            <p className="text-2xl font-bold font-headline mt-1">{value}</p>
         </div>
-        <p className="text-xs dark:text-muted-foreground text-green-100 mt-2">{description}</p>
-    </div>
+        <p className="text-xs text-muted-foreground mt-2">{description}</p>
+    </Card>
 )
     
+
 
