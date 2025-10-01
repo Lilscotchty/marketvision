@@ -6,7 +6,6 @@ import { useTheme } from '@/contexts/theme-context';
 
 const TradingViewMarketOverviewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isWidgetCreated = useRef(false);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -81,15 +80,22 @@ const TradingViewMarketOverviewWidget = () => {
     };
 
     // Clear the container and recreate the script when the theme changes
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
+    const container = containerRef.current;
+    if (container) {
+      // Clear previous widget
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      // Create new widget
       createScript();
     }
     
+    // Cleanup function
     return () => {
-      // Clean up the widget when the component unmounts
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      if (container) {
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
       }
     };
   }, [theme]);
