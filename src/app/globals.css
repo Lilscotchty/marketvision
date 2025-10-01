@@ -53,10 +53,10 @@
   }
 
   .dark {
-    --background: 210 10% 12%; /* Darker, less saturated background */
+    --background: 206 40% 4%; /* Darker, less saturated background */
     --foreground: 210 20% 95%; /* Almost white for text */
 
-    --card: 210 10% 15%; /* Slightly lighter card background */
+    --card: 206 40% 7%; /* Slightly lighter card background */
     --card-foreground: 210 20% 95%;
 
     --popover: 210 10% 12%; /* Same as background */

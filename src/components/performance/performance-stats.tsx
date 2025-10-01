@@ -153,8 +153,8 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
                              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.5)' }} />
                              <Legend wrapperStyle={{fontSize: "12px"}}/>
-                             <Bar dataKey="successful" name="Successful" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                             <Bar dataKey="unsuccessful" name="Unsuccessful" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                             <Bar dataKey="successful" name="Successful" fill="hsl(var(--primary))" barSize={8} />
+                             <Bar dataKey="unsuccessful" name="Unsuccessful" fill="hsl(var(--destructive))" barSize={8} />
                         </RechartsBarChart>
                   </ResponsiveContainer>
               </div>
@@ -239,5 +239,6 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
     </Card>
 )
     
+
 
 
