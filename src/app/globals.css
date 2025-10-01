@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -54,50 +53,50 @@
   }
 
   .dark {
-    --background: 0 0% 4%; /* Near Black from image */
-    --foreground: 0 0% 98%; /* Almost White from image */
+    --background: 220 10% 12%; /* Dark Blue/Gray from original */
+    --foreground: 0 0% 95%; /* Almost white */
 
-    --card: 220 10% 15%; /* Dark Gray for containers from image */
+    --card: 220 10% 18%; /* Slightly lighter dark blue/gray */
     --card-foreground: 0 0% 95%;
 
-    --popover: 220 10% 10%; /* Even darker for popovers */
+    --popover: 220 10% 10%; /* Darker popover */
     --popover-foreground: 0 0% 95%;
 
-    --primary: 0 0% 85%; /* Light Gray as primary */
-    --primary-foreground: 0 0% 5%; 
+    --primary: 220 85% 55%; /* Vibrant Blue from original */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 10% 15%; /* Muted Dark Gray for secondary elements */
+    --secondary: 220 10% 25%; /* Muted dark blue/gray */
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 10% 15%; /* Darker muted background */
-    --muted-foreground: 0 0% 60%; /* Subtle muted text */
+    --muted: 220 10% 20%; /* Darker muted background */
+    --muted-foreground: 0 0% 60%; /* Muted text */
 
-    --accent: 0 0% 85%; /* Light gray as accent */
-    --accent-foreground: 0 0% 5%; /* Black on accent */
+    --accent: 220 85% 60%; /* Vibrant Blue from original */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 55%; /* Keep a visible red for errors */
+    --destructive: 0 70% 55%; /* Visible red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 20%; /* Subtle border */
-    --input: 220 10% 15%; /* Dark input fields */
-    --ring: 0 0% 85%; /* Ring color to match primary/accent */
+    --border: 220 10% 25%; /* Subtle border */
+    --input: 220 10% 22%; /* Darker input fields */
+    --ring: 220 85% 50%; /* Ring color related to primary */
     
-    /* Chart colors - can be adjusted for better visibility on dark theme */
-    --chart-1: 0 0% 80%;
-    --chart-2: 0 0% 70%;
-    --chart-3: 0 0% 60%;
-    --chart-4: 0 0% 50%;
-    --chart-5: 0 0% 40%;
+    /* Chart colors for dark theme */
+    --chart-1: 220 80% 70%;
+    --chart-2: 210 70% 65%;
+    --chart-3: 190 80% 60%;
+    --chart-4: 30 80% 60%;
+    --chart-5: 120 50% 60%;
     
-    /* Sidebar Colors for Pro Dark Theme */
-    --sidebar-background: 0 0% 6%; /* Even deeper dark for sidebar */
-    --sidebar-foreground: 0 0% 88%; 
-    --sidebar-primary: 0 0% 85%; /* Light gray for active items */
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 220 10% 15%; /* Dark gray hover */
+    /* Sidebar Colors for Dark Theme */
+    --sidebar-background: 220 10% 10%; /* Deeper dark for sidebar */
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 220 85% 55%; /* Vibrant blue for active items */
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 220 10% 20%; /* Dark gray hover */
     --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 220 10% 12%; /* More subtle sidebar border */
-    --sidebar-ring: 0 0% 85%; 
+    --sidebar-border: 220 10% 15%; /* More subtle sidebar border */
+    --sidebar-ring: 220 85% 50%;
   }
 }
 
