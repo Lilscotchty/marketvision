@@ -262,9 +262,9 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
         <Card className="lg:col-span-2 shadow-lg border-accent/50">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <Crosshair className="text-accent"/> Conceptual Sniper Entry Setup
+              <Crosshair className="text-accent"/> Sniper Entry Analysis
             </CardTitle>
-            <CardDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a signal.</CardDescription>
+            <CardDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a trade signal.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {sniperEntry.dailyBiasContext && (
@@ -285,13 +285,22 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
                  </div>
               </div>
             )}
-            {sniperEntry.tradeManagement && (
+            {sniperEntry.tradeManagement && (sniperEntry.tradeManagement.entryPrice || sniperEntry.tradeManagement.stopLossPrice || sniperEntry.tradeManagement.takeProfitPrice) && (
               <div className="space-y-3">
-                 <h4 className="font-semibold flex items-center gap-2 text-md"><ShieldCheck className="h-5 w-5 text-accent"/>Conceptual Trade Management</h4>
-                 <div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs">
-                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Entry:</strong> {sniperEntry.tradeManagement.entry}</p>
-                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Stop Loss:</strong> {sniperEntry.tradeManagement.stopLoss}</p>
-                    <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">Take Profit:</strong> {sniperEntry.tradeManagement.takeProfit}</p>
+                 <h4 className="font-semibold flex items-center gap-2 text-md"><ShieldCheck className="h-5 w-5 text-accent"/>Precise Trade Management</h4>
+                 <div className="p-4 border rounded-lg bg-muted/40 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <Label className="text-xs text-muted-foreground">Entry Price</Label>
+                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.entryPrice.toLocaleString()}</p>
+                    </div>
+                     <div>
+                        <Label className="text-xs text-red-500">Stop Loss</Label>
+                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.stopLossPrice.toLocaleString()}</p>
+                    </div>
+                     <div>
+                        <Label className="text-xs text-green-500">Take Profit</Label>
+                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.takeProfitPrice.toLocaleString()}</p>
+                    </div>
                  </div>
               </div>
             )}
@@ -301,6 +310,8 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
     </div>
   );
 }
+
+    
 
     
 

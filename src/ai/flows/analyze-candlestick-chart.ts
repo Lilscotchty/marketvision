@@ -52,9 +52,9 @@ const SniperEntrySetupSchema = z.object({
     fiveMinConfirmation: z.string().describe("Step 4: Description of the 5M MSS confirmation after the liquidity grab.")
   }).optional(),
   tradeManagement: z.object({
-    entry: z.string().describe("Step 5 (Entry): The ideal entry point, described conceptually (e.g., 'Entry at the retest of the 5M Breaker Block')."),
-    stopLoss: z.string().describe("Step 5 (Stop Loss): The recommended stop loss placement (e.g., 'Stop loss just beyond the 15M wick high/low')."),
-    takeProfit: z.string().describe("Step 5 (Take Profit): The logical take profit target (e.g., 'Targeting the most recent 15M swing high/low for profit-taking').")
+    entryPrice: z.number().describe("Step 5 (Entry): The precise, numeric entry price, visually identified from the retest of the 5M Breaker Block or a related FVG."),
+    stopLossPrice: z.number().describe("Step 5 (Stop Loss): The precise, numeric stop loss price, placed logically just beyond the 15M liquidity grab wick high/low."),
+    takeProfitPrice: z.number().describe("Step 5 (Take Profit): The precise, numeric take profit price, targeting the most recent and logical 15M swing high/low for profit-taking.")
   }).optional()
 }).optional().describe("A conceptual trade setup based on the 'Intraday Sniper Entry' strategy if a similar pattern is visually identifiable on the chart.");
 
@@ -112,7 +112,7 @@ You have been provided with one or more candlestick chart images. Your primary g
     *   **CONDITION:** ONLY perform this analysis if you have been provided with MORE THAN ONE chart image. If only one chart is provided, SKIP this entire step and leave the \`sniperEntrySetup\` field empty.
     *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy. **Use your inferred timeframes to map the provided charts to the strategy's steps.**
     *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
-    *   **Strategy Breakdown:**
+    *   **Strategy Breakdown (Contextual Description):**
         *   **Daily Bias Setup (HTF Filter):**
             *   **Step 1 (4H):** Use the chart you've identified as the highest timeframe (ideally 4H or 1H) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
             *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on that higher timeframe chart.
@@ -122,9 +122,12 @@ You have been provided with one or more candlestick chart images. Your primary g
             *   **Step 3 (15M):** Use a lower timeframe chart (like 15M or 5M) to describe if there's a visual sign of a liquidity grab wick into the identified Breaker Block.
             *   **Step 4 (5M):** Use the chart you've identified as the lowest timeframe (ideally 5M or 1M) to look for a lower-timeframe MSS confirmation after the liquidity grab.
             *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\` based on these lower timeframe charts.
-        *   **Trade Management:**
-            *   **Step 5 (Entry, SL, TP):** Based on the visual patterns from the LTF charts, describe the conceptual entry, stop loss, and take profit points.
-            *   Populate \`sniperEntrySetup.tradeManagement\` with these details.
+    *   **Trade Management (Precise Values):**
+        *   **Step 5 (Entry, SL, TP):** Based on the visual patterns from the LTF charts, you MUST identify **PRECISE, NUMERIC price levels** for the trade.
+        *   **entryPrice**: Determine the numeric price at the retest of the 5M Breaker Block or a related FVG.
+        *   **stopLossPrice**: Determine the numeric price just beyond the high/low of the 15M liquidity grab wick.
+        *   **takeProfitPrice**: Determine the numeric price of the most logical recent 15M swing high/low to be targeted.
+        *   Populate the \`sniperEntrySetup.tradeManagement\` object with these exact numeric values.
 
 3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
 
@@ -148,5 +151,7 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
 
     
