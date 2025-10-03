@@ -47,16 +47,21 @@ function TradingViewWidget() {
       }
     };
 
-    // Clear container and recreate script on theme change
-    if (container.current) {
-        container.current.innerHTML = '';
-        createScript();
+    const containerRef = container.current;
+    if (containerRef) {
+      // Clear the container on theme change to force re-render of the widget
+      while (containerRef.firstChild) {
+        containerRef.removeChild(containerRef.firstChild);
+      }
+      createScript();
     }
     
+    // The cleanup function is important for Next.js's fast refresh
     return () => {
-      // Clean up the widget when the component unmounts
-      if (container.current) {
-        container.current.innerHTML = '';
+      if (containerRef) {
+        while (containerRef.firstChild) {
+          containerRef.removeChild(containerRef.firstChild);
+        }
       }
     };
   }, [theme]);
