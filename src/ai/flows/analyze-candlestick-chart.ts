@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -49,10 +48,10 @@ const SniperEntrySetupSchema = z.object({
   }).optional(),
   entryMechanic: z.object({
     fifteenMinSetup: z.string().describe("Step 3: Description of the 15M liquidity grab (wick sweep) into or near the Breaker Block."),
-    fiveMinConfirmation: z.string().describe("Step 4: Description of the 5M MSS confirmation after the liquidity grab.")
+    fiveMinConfirmation: z.string().describe("Step 4: Description of the 5M MSS confirmation after the liquidity grab, specifically highlighting the creation of a new Fair Value Gap (FVG) or Breaker Block that can be used for entry.")
   }).optional(),
   tradeManagement: z.object({
-    entryPrice: z.number().describe("Step 5 (Entry): The precise, numeric entry price, visually identified from the retest of the 5M Breaker Block or a related FVG."),
+    entryPrice: z.number().describe("Step 5 (Entry): The PRECISE, NUMERIC entry price, targeting the retest of the 5M FVG or Breaker Block. For a bullish trade, this should be the top of the FVG (a discount entry). For a bearish trade, this should be the bottom of the FVG (a premium entry)."),
     stopLossPrice: z.number().describe("Step 5 (Stop Loss): The precise, numeric stop loss price, placed logically just beyond the 15M liquidity grab wick high/low."),
     takeProfitPrice: z.number().describe("Step 5 (Take Profit): The precise, numeric take profit price, targeting the most recent and logical 15M swing high/low for profit-taking.")
   }).optional()
@@ -114,17 +113,17 @@ You have been provided with one or more candlestick chart images. Your primary g
     *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
     *   **Strategy Breakdown (Contextual Description):**
         *   **Daily Bias Setup (HTF Filter):**
-            *   **Step 1 (4H):** Use the chart you've identified as the highest timeframe (ideally 4H or 1H) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS).
-            *   **Step 1 (4H):** Identify if an untapped **Breaker Block (BB)** was formed after this MSS on that higher timeframe chart.
-            *   **Step 2 (1H):** Use a medium timeframe chart (like 1H or 30M) to confirm alignment with the HTF bias and to visually verify the Breaker Block as the point of interest.
-            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\` based on these higher timeframe charts.
+            *   **Step 1 & 2:** Use the charts you've identified as the highest timeframes (ideally 4H/1H) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS), which then forms an untapped **Breaker Block (BB)**.
+            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\` based on these higher timeframe charts, confirming alignment.
         *   **Intraday Sniper Entry (LTF Mechanic):**
-            *   **Step 3 (15M):** Use a lower timeframe chart (like 15M or 5M) to describe if there's a visual sign of a liquidity grab wick into the identified Breaker Block.
-            *   **Step 4 (5M):** Use the chart you've identified as the lowest timeframe (ideally 5M or 1M) to look for a lower-timeframe MSS confirmation after the liquidity grab.
-            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\` based on these lower timeframe charts.
-    *   **Trade Management (Precise Values):**
+            *   **Step 3 (15M):** Use a lower timeframe chart (like 15M) to describe if there's a visual sign of a liquidity grab wick into the identified HTF Breaker Block.
+            *   **Step 4 (5M):** Use the chart you've identified as the lowest timeframe (ideally 5M) to look for a lower-timeframe MSS confirmation after the liquidity grab. **Crucially, identify the new Fair Value Gap (FVG) or Breaker Block created by this 5M MSS.** This is the entry target.
+            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\` based on these LTF charts.
+    *   **Trade Management (Precise, Actionable Values):**
         *   **Step 5 (Entry, SL, TP):** Based on the visual patterns from the LTF charts, you MUST identify **PRECISE, NUMERIC price levels** for the trade.
-        *   **entryPrice**: Determine the numeric price at the retest of the 5M Breaker Block or a related FVG.
+        *   **entryPrice**: Determine the numeric price for an optimal entry. This is NOT the current price. It's a future price based on a retest of the 5M FVG/Breaker identified in Step 4.
+            *   **For a Bullish (Buy) setup:** The entry price should be at the **top** of the bullish 5M FVG, representing an entry at a **discount**.
+            *   **For a Bearish (Sell) setup:** The entry price should be at the **bottom** of the bearish 5M FVG, representing an entry at a **premium**.
         *   **stopLossPrice**: Determine the numeric price just beyond the high/low of the 15M liquidity grab wick.
         *   **takeProfitPrice**: Determine the numeric price of the most logical recent 15M swing high/low to be targeted.
         *   Populate the \`sniperEntrySetup.tradeManagement\` object with these exact numeric values.
@@ -151,7 +150,3 @@ const analyzeCandlestickChartFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
-
-    
