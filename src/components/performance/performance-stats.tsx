@@ -189,10 +189,10 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 <p className="text-sm font-medium text-muted-foreground">Consistency</p>
                 <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs">
                     {stats.calendarDays.map((day, index) => (
-                        <div key={index}>
+                        <div key={index} className="flex flex-col items-center gap-1">
                            <p className="text-muted-foreground">{format(day.date, 'E')[0]}</p>
                            <div className={cn(
-                               "mt-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold",
+                               "flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold",
                                day.isToday && "bg-primary text-primary-foreground ring-2 ring-primary/50 ring-offset-2 ring-offset-background",
                                !day.isToday && day.isSuccessful && "bg-primary/20 text-primary",
                                !day.isToday && !day.isSuccessful && "text-foreground"
@@ -204,7 +204,7 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
                 </div>
                 <div className="mt-6 flex items-center justify-start gap-4 border-t pt-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Day Streak</p>
+                    <p className="text-sm text-muted-foreground">Analysis Streak</p>
                     <p className="text-2xl font-bold flex items-center gap-1.5">
                       <Flame className="text-orange-500" />
                       {stats.currentStreak}
@@ -253,3 +253,6 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
 
     
 
+
+
+    
