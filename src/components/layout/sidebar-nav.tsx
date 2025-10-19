@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
   { href: "/signup", label: "Sign Up", icon: UserPlus, fullLabel: "Sign Up", guestOnly: true },
 ];
 
-export function SidebarNav({ items, isMobile }: { items: NavItem[], isMobile: boolean }) {
+export function SidebarNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const { unreadCount } = useNotificationCenter();
@@ -64,29 +64,6 @@ export function SidebarNav({ items, isMobile }: { items: NavItem[], isMobile: bo
     );
   }
   
-  if (!isMobile) {
-      const desktopItems = items.filter(item => item.href === '/settings');
-      return (
-        <SidebarMenu>
-          {desktopItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={{ children: item.fullLabel || item.label, side: "right", align: "center" }}
-                className="relative"
-              >
-                <Link href={item.href}>
-                  <item.icon />
-                  <span>{item.fullLabel || item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      );
-  }
-
   return (
     <SidebarMenu>
       {filteredItems.map((item) => (

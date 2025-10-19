@@ -19,13 +19,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { SidebarNav } from "../layout/sidebar-nav"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state"
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3.5rem"
+const SIDEBAR_WIDTH = "18rem"
+const SIDEBAR_WIDTH_ICON = "3.25rem"
+const SIDEBAR_COOKIE_NAME = "sidebar-open"
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -54,8 +54,7 @@ const SidebarProvider = React.forwardRef<
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean
     open?: boolean
-    onOpenChange?: (open: boolean) => void,
-    mobileSidebarContent?: React.ReactNode;
+    onOpenChange?: (open: boolean) => void
   }
 >(
   (
@@ -66,7 +65,6 @@ const SidebarProvider = React.forwardRef<
       className,
       style,
       children,
-      mobileSidebarContent,
       ...props
     },
     ref
@@ -156,18 +154,7 @@ const SidebarProvider = React.forwardRef<
             ref={ref}
             {...props}
           >
-            {children}
-            {isMobile && (
-              <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-                <SheetContent
-                  side="left"
-                  className="w-[--sidebar-width-mobile] bg-sidebar p-0"
-                  style={{'--sidebar-width-mobile': SIDEBAR_WIDTH_MOBILE} as React.CSSProperties}
-                >
-                  {mobileSidebarContent}
-                </SheetContent>
-              </Sheet>
-            )}
+             {children}
           </div>
         </TooltipProvider>
       </SidebarContext.Provider>
@@ -762,7 +749,7 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  SheetHeader, 
-  SheetTitle,
   useSidebar,
 }
+
+    

@@ -2,7 +2,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset, SheetHeader, SheetTitle } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -197,39 +198,43 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-     <SidebarProvider mobileSidebarContent={
-        <>
+     <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader className="h-16 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <BotIcon className="h-7 w-7 text-accent" />
+            <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
+              FinSight <span className="text-primary">AI</span>
+            </h1>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent className="flex-1 pt-2">
+           <SidebarNav items={mobileSidebarNavItems} />
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+        </SidebarFooter>
+      </Sidebar>
+
+      <SidebarInset>
+        <Header />
+        {children}
+      </SidebarInset>
+
+      {isClient && isMobile && <BottomNavigation items={navItems} />}
+
+      {isClient && isMobile && (
+        <Sheet>
+          <SheetContent side="left" className="w-[--sidebar-width-mobile] bg-sidebar p-0" style={{'--sidebar-width-mobile': '18rem'} as React.CSSProperties}>
             <SheetHeader>
                 <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
             </SheetHeader>
             <div className="p-4">
-                <SidebarNav items={mobileSidebarNavItems} isMobile={true} />
+              <SidebarNav items={mobileSidebarNavItems} />
             </div>
-        </>
-     }>
-        <Sidebar collapsible="icon" className="border-r bg-background">
-          <SidebarHeader className="h-16 flex items-center justify-center">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <BotIcon className="h-7 w-7 text-accent" />
-              <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-                FinSight <span className="text-primary">AI</span>
-              </h1>
-            </Link>
-          </SidebarHeader>
-          <SidebarContent className="flex-1 pt-2">
-             <SidebarNav items={navItems} isMobile={false} />
-          </SidebarContent>
-          <SidebarFooter>
-            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} isMobile={false} />
-          </SidebarFooter>
-        </Sidebar>
-
-        <SidebarInset>
-            <Header />
-            {children}
-        </SidebarInset>
-        
-        {isClient && isMobile && <BottomNavigation items={navItems} />}
+          </SheetContent>
+        </Sheet>
+      )}
     </SidebarProvider>
   );
 }
