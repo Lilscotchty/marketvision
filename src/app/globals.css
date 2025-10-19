@@ -32,7 +32,7 @@
     --input: 220 15% 94%; /* Light input fields */
     --ring: 220 85% 50%; /* Ring color, related to primary */
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Chart colors for light theme - ensure good visibility */
     --chart-1: 220 80% 60%; 
