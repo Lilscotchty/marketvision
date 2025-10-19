@@ -109,7 +109,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   {user ? (
                     hasSubscription ? (
                         <button className="flex items-center gap-2 bg-orange-200 text-black rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-4 w-4">
                                 {user?.photoURL ? (
                                 <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
                                 ) : (
@@ -137,7 +137,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                      <Button variant="ghost" size="icon" className="rounded-full">
                         <Avatar className="h-8 w-8">
                              <AvatarFallback className="bg-muted text-muted-foreground">
-                                <User className="h-5 w-5"/>
+                                <User className="h-4 w-4"/>
                              </AvatarFallback>
                         </Avatar>
                     </Button>
