@@ -72,7 +72,8 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   return (
     <SidebarMenu>
       {filteredItems.map((item) => {
-         if (item.href === '/login' || item.href === '/signup' || item.href === '/pricing') return null;
+         // Since nav is in header on desktop, only show items meant for the sidebar footer (like settings)
+         if (item.href !== '/settings') return null;
 
         return(
             <SidebarMenuItem key={item.href}>
