@@ -149,16 +149,17 @@ export default function LoginPage() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isGoogleLoading}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isGoogleLoading} style={{background: 'linear-gradient(90deg,rgb(99, 13, 248),rgb(27, 2, 126))'}}>
+          
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging in...
+                Signning in...
               </>
             ) : (
               <>
                 <LogIn className="mr-2 h-4 w-4" />
-                Log In
+                Sign In
               </>
             )}
           </Button>

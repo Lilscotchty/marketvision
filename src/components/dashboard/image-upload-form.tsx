@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
 import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
+import { Lights } from "@/components/ui/background-lights";
 
 interface SubmitButtonProps {
   isAuthDisabled: boolean;
@@ -248,88 +250,91 @@ export function ImageUploadForm() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg">
-        <form action={formAction} key={formKey}>
-           <CardHeader>
-            <CardTitle className="font-headline text-2xl flex items-center gap-2"><BarChartHorizontal className="text-primary"/>Multi-Timeframe Analysis</CardTitle>
-            <CardDescription>{getHelperText()}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="space-y-2">
-                <Label htmlFor="chart-images" className="text-sm font-medium flex items-center gap-1.5">
-                    <ImagePlus className="h-4 w-4 text-muted-foreground"/> Upload Charts (Max {MAX_FILES})
-                </Label>
-                <Input
-                    id="chart-images"
-                    name="chartImages"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    multiple
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    disabled={interactionDisabledForAuth || needsSubscription}
-                    className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
-                />
-            </div>
-            
-            {hasFiles && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {previewUrls.map((url, index) => (
-                  url ? (
-                    <div key={index} className="relative aspect-[4/3] bg-muted/30 rounded-lg overflow-hidden border">
-                      <Image
-                        src={url}
-                        alt={`Chart preview ${index + 1}`}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  ) : null
-                ))}
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex-grow w-full sm:w-auto">
-             {state?.error && (
-                <Alert variant="destructive" className="mb-4 sm:mb-0">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{state.error}</AlertDescription>
-                </Alert>
-              )}
-              {!isPending && !state?.error && state?.prediction && (
-                 <Alert variant="default" className="mb-4 sm:mb-0 border-green-500 text-green-500 [&>svg]:text-green-500">
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>Analysis Complete</AlertTitle>
-                  <AlertDescription>Scroll down for results.</AlertDescription>
-                </Alert>
-              )}
-              {needsSubscription && (
-                 <Alert variant="default" className="mb-4 sm:mb-0 border-accent text-accent [&>svg]:text-accent">
-                  <CreditCard className="h-4 w-4" />
-                  <AlertTitle>Subscription Required</AlertTitle>
-                  <AlertDescription>
-                    Your trial has ended.
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto ml-1 text-accent font-semibold"
-                      onClick={() => setIsSubscriptionModalOpen(true)}
-                    >
-                      Subscribe Now
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto self-end">
-              <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isPending}>
-                Reset
-              </Button>
-              <SubmitButton isAuthDisabled={interactionDisabledForAuth || !canAnalyze || isPending} hasFiles={hasFiles} />
-            </div>
-          </CardFooter>
-        </form>
+      <Card className="shadow-lg relative overflow-hidden">
+        <Lights className="absolute top-0 left-0 w-full h-full" />
+        <div className="relative z-10">
+            <form action={formAction} key={formKey}>
+            <CardHeader>
+                <CardTitle className="font-headline text-xl flex items-center gap-2"><BarChartHorizontal className="text-primary h-5 mr-2 w-5"/>Multi-Timeframe Analysis</CardTitle>
+                <CardDescription>{getHelperText()}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="chart-images" className="text-sm font-medium flex items-center gap-1.5">
+                        <ImagePlus className="h-4 w-4 text-muted-foreground"/> Upload Charts (Max {MAX_FILES})
+                    </Label>
+                    <Input
+                        id="chart-images"
+                        name="chartImages"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        multiple
+                        onChange={handleFileChange}
+                        ref={fileInputRef}
+                        disabled={interactionDisabledForAuth || needsSubscription}
+                        className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
+                    />
+                </div>
+                
+                {hasFiles && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    {previewUrls.map((url, index) => (
+                    url ? (
+                        <div key={index} className="relative aspect-[4/3] bg-muted/30 rounded-lg overflow-hidden border">
+                        <Image
+                            src={url}
+                            alt={`Chart preview ${index + 1}`}
+                            fill
+                            className="object-contain"
+                        />
+                        </div>
+                    ) : null
+                    ))}
+                </div>
+                )}
+            </CardContent>
+            <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex-grow w-full sm:w-auto">
+                {state?.error && (
+                    <Alert variant="destructive" className="mb-4 sm:mb-0">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{state.error}</AlertDescription>
+                    </Alert>
+                )}
+                {!isPending && !state?.error && state?.prediction && (
+                    <Alert variant="default" className="mb-4 sm:mb-0 border-green-500 text-green-500 [&>svg]:text-green-500">
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertTitle>Analysis Complete</AlertTitle>
+                    <AlertDescription>Scroll down for results.</AlertDescription>
+                    </Alert>
+                )}
+                {needsSubscription && (
+                    <Alert variant="default" className="mb-4 sm:mb-0 border-accent text-accent [&>svg]:text-accent">
+                    <CreditCard className="h-4 w-4" />
+                    <AlertTitle>Subscription Required</AlertTitle>
+                    <AlertDescription>
+                        Your trial has ended.
+                        <Button 
+                        variant="link" 
+                        className="p-0 h-auto ml-1 text-accent font-semibold"
+                        onClick={() => setIsSubscriptionModalOpen(true)}
+                        >
+                        Subscribe Now
+                        </Button>
+                    </AlertDescription>
+                    </Alert>
+                )}
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto self-end">
+                <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isPending}>
+                    Reset
+                </Button>
+                <SubmitButton isAuthDisabled={interactionDisabledForAuth || !canAnalyze || isPending} hasFiles={hasFiles} />
+                </div>
+            </CardFooter>
+            </form>
+        </div>
       </Card>
 
       {isFullyAuthenticated && !isPending && state?.prediction && state?.analysis && (

@@ -119,7 +119,7 @@ export default function SignupPage() {
   const isButtonDisabled = isLoading || isSocialLoading !== null;
 
   return (
-    <AuthFormWrapper
+    <AuthFormWrapper 
       title="Get started quickly"
       description="Choose your preferred sign-up method"
     >
@@ -217,7 +217,7 @@ export default function SignupPage() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-base font-semibold" disabled={isButtonDisabled} style={{background: 'linear-gradient(90deg, #A16BFE, #9D84FF)'}}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-base font-semibold" disabled={isButtonDisabled} style={{background: 'linear-gradient(90deg,rgb(99, 13, 248),rgb(27, 2, 126))'}}>
             {isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
@@ -231,7 +231,7 @@ export default function SignupPage() {
       </Form>
       
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?
         <Link href="/login" className="font-medium text-primary hover:underline">
           Sign in here
         </Link>

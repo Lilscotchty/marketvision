@@ -18,7 +18,7 @@ const TradingViewMarketOverview = dynamic(() =>
   import('@/components/dashboard/tradingview-market-overview').then(mod => mod.TradingViewMarketOverview),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-[660px] w-full" />,
+    loading: () => <Skeleton className="h-[60px] w-full" />,
   }
 );
 
@@ -29,8 +29,8 @@ export function ClientDashboard() {
     <main className="space-y-10 md:space-y-12">
       <section id="chart-analysis-tool">
         <header className="mb-6 text-center">
-          <h2 className="text-2xl md:text-3xl font-semibold flex items-center justify-center">
-            <CandlestickChart className="mr-3 h-8 w-8 text-primary"/>
+          <h2 className="text-xl md:text-3xl font-semibold flex items-center justify-center">
+            <CandlestickChart className="mr-3 h-6 w-8 text-primary"/>
             Chart Analysis <span className="text-accent">Tool</span>
           </h2>
         </header>
@@ -46,7 +46,7 @@ export function ClientDashboard() {
 
       <section id="global-market-data">
          <header className="mb-6 text-center">
-          <h2 className="text-2xl md:text-3xl font-semibold flex items-center justify-center">
+          <h2 className="text-xl md:text-3xl font-semibold flex items-center justify-center">
               <TrendingUp className="mr-3 h-8 w-8 text-primary"/>
               Global <span className="text-accent">Markets</span>
           </h2>
