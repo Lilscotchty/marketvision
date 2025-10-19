@@ -90,7 +90,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 <TradingViewTickerTape />
               </div>
             </div>
-            {isMobile && (
+            {isMobile && !hasSubscription && (
               <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
                   <Link href="/pricing">Subscribe</Link>
               </Button>
