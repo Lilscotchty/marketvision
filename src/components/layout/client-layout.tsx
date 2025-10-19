@@ -28,6 +28,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
+import { NavBar } from './nav';
 
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
@@ -81,6 +82,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
       {isClient && <SidebarTrigger className="sm:hidden" />}
+      
+      {isClient && !isMobile && (
+        <div className="flex-1">
+          <NavBar tabs={navItems} />
+        </div>
+      )}
      
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         {isClient && (
@@ -91,7 +98,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             {isMobile && !hasSubscription && (
-              <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+              <Button asChild size="sm" className="bg-primary h-8 hover:bg-primary/90">
                   <Link href="/pricing">Subscribe</Link>
               </Button>
             )}
@@ -202,11 +209,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
           <SidebarContent className="flex-1 pt-2">
-             {isMobile ? (
-              <SidebarNav items={mobileSidebarNavItems} />
-            ) : (
-              <SidebarNav items={navItems} />
-            )}
+             <SidebarNav items={navItems} />
           </SidebarContent>
           <SidebarFooter>
             <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
