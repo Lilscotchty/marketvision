@@ -27,6 +27,7 @@ import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { cn } from '@/lib/utils';
 
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
@@ -45,7 +46,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, userData } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -74,6 +75,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     if (!email) return 'U';
     return email.substring(0, 2).toUpperCase();
   };
+  
+  const hasSubscription = userData?.hasActiveSubscription;
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -103,17 +106,42 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    {user?.photoURL ? (
-                      <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                  {user ? (
+                    hasSubscription ? (
+                        <button className="flex items-center gap-2 bg-orange-200 text-black rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
+                            <Avatar className="h-6 w-6">
+                                {user?.photoURL ? (
+                                <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                                ) : (
+                                <AvatarFallback className="bg-black text-white text-xs">
+                                    {getInitials(user?.email)}
+                                </AvatarFallback>
+                                )}
+                            </Avatar>
+                            <span>PRO</span>
+                        </button>
                     ) : (
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {getInitials(user?.email)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </Button>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                            <Avatar className="h-8 w-8">
+                                {user?.photoURL ? (
+                                <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                                ) : (
+                                <AvatarFallback className="bg-primary text-primary-foreground">
+                                    {getInitials(user?.email)}
+                                </AvatarFallback>
+                                )}
+                            </Avatar>
+                        </Button>
+                    )
+                  ) : (
+                     <Button variant="ghost" size="icon" className="rounded-full">
+                        <Avatar className="h-8 w-8">
+                             <AvatarFallback className="bg-muted text-muted-foreground">
+                                <User className="h-5 w-5"/>
+                             </AvatarFallback>
+                        </Avatar>
+                    </Button>
+                  )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {user ? (
