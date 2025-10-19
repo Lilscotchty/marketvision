@@ -54,7 +54,8 @@ const SidebarProvider = React.forwardRef<
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean
     open?: boolean
-    onOpenChange?: (open: boolean) => void
+    onOpenChange?: (open: boolean) => void,
+    mobileSidebarContent?: React.ReactNode;
   }
 >(
   (
@@ -65,6 +66,7 @@ const SidebarProvider = React.forwardRef<
       className,
       style,
       children,
+      mobileSidebarContent,
       ...props
     },
     ref
@@ -155,6 +157,17 @@ const SidebarProvider = React.forwardRef<
             {...props}
           >
             {children}
+            {isMobile && (
+              <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                <SheetContent
+                  side="left"
+                  className="w-[--sidebar-width-mobile] bg-sidebar p-0"
+                  style={{'--sidebar-width-mobile': SIDEBAR_WIDTH_MOBILE} as React.CSSProperties}
+                >
+                  {mobileSidebarContent}
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </TooltipProvider>
       </SidebarContext.Provider>
@@ -182,36 +195,14 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile, open } = useSidebar()
+    const { isMobile, open } = useSidebar()
+
+    if (isMobile) return null; // Rendered via Sheet in provider
+    
     const currentCollapsible = isMobile ? "offcanvas" : collapsible;
     const desktopState = open ? "expanded" : "collapsed";
 
 
-    if (isMobile) {
-      return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-          <SheetContent
-            data-sidebar="sidebar"
-            data-mobile="true"
-            className={cn("w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground", className)}
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              } as React.CSSProperties
-            }
-            side={side}
-          >
-            <SheetHeader>
-               <SheetTitle>
-                  <VisuallyHidden>Sidebar Menu</VisuallyHidden>
-               </SheetTitle>
-            </SheetHeader>
-            <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
-      )
-    }
-    
     if (currentCollapsible === "none") {
       return (
         <div

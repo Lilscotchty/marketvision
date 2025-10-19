@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -198,7 +197,16 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-     <SidebarProvider>
+     <SidebarProvider mobileSidebarContent={
+        <>
+            <SheetHeader>
+                <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
+            </SheetHeader>
+            <div className="p-4">
+                <SidebarNav items={mobileSidebarNavItems} isMobile={true} />
+            </div>
+        </>
+     }>
         <Sidebar collapsible="icon" className="border-r bg-background">
           <SidebarHeader className="h-16 flex items-center justify-center">
             <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -209,10 +217,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
           <SidebarContent className="flex-1 pt-2">
-             <SidebarNav items={navItems} />
+             <SidebarNav items={navItems} isMobile={false} />
           </SidebarContent>
           <SidebarFooter>
-            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} isMobile={false} />
           </SidebarFooter>
         </Sidebar>
 

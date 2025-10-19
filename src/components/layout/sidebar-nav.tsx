@@ -14,7 +14,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { useNotificationCenter } from "@/contexts/notification-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useIsMobile } from '@/hooks/use-mobile';
 
 
 export interface NavItem {
@@ -38,10 +37,10 @@ export const navItems: NavItem[] = [
   { href: "/signup", label: "Sign Up", icon: UserPlus, fullLabel: "Sign Up", guestOnly: true },
 ];
 
-export function SidebarNav({ items }: { items: NavItem[] }) {
+export function SidebarNav({ items, isMobile }: { items: NavItem[], isMobile: boolean }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const isMobile = useIsMobile();
+  const { unreadCount } = useNotificationCenter();
 
   const filteredItems = items.filter(item => {
     if (loading) return false;
@@ -65,32 +64,53 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
     );
   }
   
-  if (isMobile) {
-      return null;
+  if (!isMobile) {
+      const desktopItems = items.filter(item => item.href === '/settings');
+      return (
+        <SidebarMenu>
+          {desktopItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.fullLabel || item.label, side: "right", align: "center" }}
+                className="relative"
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.fullLabel || item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      );
   }
 
   return (
     <SidebarMenu>
-      {filteredItems.map((item) => {
-         // Since nav is in header on desktop, only show items meant for the sidebar footer (like settings)
-         if (item.href !== '/settings') return null;
-
-        return(
+      {filteredItems.map((item) => (
             <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                 asChild
                 isActive={pathname === item.href}
-                tooltip={{ children: item.fullLabel || item.label, side: "right", align: "center" }}
                 className="relative"
                 >
                 <Link href={item.href}>
                     <item.icon />
                     <span>{item.fullLabel || item.label}</span>
+                     {item.showBadge && unreadCount > 0 && (
+                      <Badge 
+                          variant="destructive" 
+                          className="absolute top-1.5 right-2 h-4 w-4 p-0 min-w-0 flex items-center justify-center text-[9px]"
+                      >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                      </Badge>
+                  )}
                 </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-        )
-      })}
+        ))}
     </SidebarMenu>
   );
 }
