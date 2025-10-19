@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus } from 'lucide-react';
+import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,8 @@ const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradi
 const mobileSidebarNavItems: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
   { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
+  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false },
+  { href: "/contact", label: "Contact", icon: Mail, authRequired: false },
   { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
   { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
 ];
@@ -199,42 +201,42 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader className="h-16 flex items-center justify-center">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <BotIcon className="h-7 w-7 text-accent" />
-            <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-              FinSight <span className="text-primary">AI</span>
-            </h1>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent className="flex-1 pt-2">
-           <SidebarNav items={mobileSidebarNavItems} />
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
-        </SidebarFooter>
-      </Sidebar>
+        <Sidebar>
+            <SidebarHeader className="h-16 flex items-center justify-center">
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+                <BotIcon className="h-7 w-7 text-accent" />
+                <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
+                FinSight <span className="text-primary">AI</span>
+                </h1>
+            </Link>
+            </SidebarHeader>
+            <SidebarContent className="flex-1 pt-2">
+                <SidebarNav items={mobileSidebarNavItems} />
+            </SidebarContent>
+            <SidebarFooter>
+            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+            </SidebarFooter>
+        </Sidebar>
 
-      <SidebarInset>
-        <Header />
-        {children}
-      </SidebarInset>
+        <SidebarInset>
+            <Header />
+            {children}
+        </SidebarInset>
 
-      {isClient && isMobile && <BottomNavigation items={navItems} />}
+        {isClient && isMobile && <BottomNavigation items={navItems} />}
 
-      {isClient && isMobile && (
-        <Sheet>
-          <SheetContent side="left" className="w-[--sidebar-width-mobile] bg-sidebar p-0" style={{'--sidebar-width-mobile': '18rem'} as React.CSSProperties}>
-            <SheetHeader>
-                <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
-            </SheetHeader>
-            <div className="p-4">
-              <SidebarNav items={mobileSidebarNavItems} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+        {isClient && isMobile && (
+            <Sheet>
+                <SheetContent side="left" className="w-[--sidebar-width-mobile] bg-sidebar p-0" style={{'--sidebar-width-mobile': '18rem'} as React.CSSProperties}>
+                    <SheetHeader>
+                        <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
+                    </SheetHeader>
+                    <div className="p-4">
+                        <SidebarNav items={mobileSidebarNavItems} />
+                    </div>
+                </SheetContent>
+            </Sheet>
+        )}
     </SidebarProvider>
   );
 }
