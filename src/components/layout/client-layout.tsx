@@ -108,12 +108,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                   {user ? (
                     hasSubscription ? (
-                        <button className="flex items-center gap-2 bg-primary text-primary-foreground rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-primary/90 transition-colors">
+                        <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
                             <Avatar className="h-6 w-10">
                                 {user?.photoURL ? (
                                 <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
                                 ) : (
-                                <AvatarFallback className="bg-primary-foreground text-primary text-xs">
+                                <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
                                     {getInitials(user?.email)}
                                 </AvatarFallback>
                                 )}
