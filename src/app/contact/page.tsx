@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Mail, Send, Loader2, Phone, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { sendEmailNotification } from '@/ai/flows/send-email-flow';
 
 const contactSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -38,18 +39,41 @@ export default function ContactPage() {
 
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Contact form submitted:', data);
+    try {
+      const emailBody = `
+        New contact message from: ${data.name} (${data.email})
+        -------------------------------------------------
+        Subject: ${data.subject}
+        -------------------------------------------------
+        Message:
+        ${data.message}
+      `;
 
-    toast({
-      title: 'Message Sent!',
-      description: "Thanks for reaching out. We'll get back to you shortly.",
-    });
+      const result = await sendEmailNotification({
+        to: 'pb7552212@gmail.com',
+        subject: `New FinSight Contact Form: ${data.subject}`,
+        body: emailBody,
+      });
 
-    form.reset();
-    setIsSubmitting(false);
+      if (result.success) {
+        toast({
+          title: 'Message Sent!',
+          description: "Thanks for reaching out. We'll get back to you shortly.",
+        });
+        form.reset();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Failed to send contact message:', error);
+      toast({
+        title: 'Submission Failed',
+        description: 'Something went wrong. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
