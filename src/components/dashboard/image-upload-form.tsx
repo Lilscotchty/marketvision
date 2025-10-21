@@ -56,7 +56,9 @@ export function ImageUploadForm() {
   const [state, formAction, isPending] = useActionState(handleImageAnalysisAction, initialState);
   
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -191,7 +193,7 @@ export function ImageUploadForm() {
   const needsSubscription = isFullyAuthenticated && !hasSubscription && trialPoints <= 0;
   const interactionDisabledForAuth = authLoading || !user;
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileDrop = (newFiles: FileList) => {
     if (interactionDisabledForAuth) {
       toast({
         title: "Authentication Required",
@@ -200,41 +202,73 @@ export function ImageUploadForm() {
         ),
         variant: "destructive",
       });
-      event.target.value = "";
       return;
     }
 
-    const files = event.target.files;
-    if (!files) return;
-    
-    if (files.length > MAX_FILES) {
-        toast({
-            title: "Too Many Files",
-            description: `You can only upload up to ${MAX_FILES} images at a time.`,
-            variant: "destructive"
-        });
-        if(fileInputRef.current) fileInputRef.current.value = "";
-        setPreviewUrls([]);
-        return;
+    if (!newFiles) return;
+
+    if (newFiles.length > MAX_FILES) {
+      toast({
+        title: "Too Many Files",
+        description: `You can only upload up to ${MAX_FILES} images at a time.`,
+        variant: "destructive",
+      });
+      return;
     }
 
+    const fileList = Array.from(newFiles);
+    setFiles(fileList);
+    
     const newPreviewUrls: string[] = [];
-    const fileList = Array.from(files);
-
     fileList.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            newPreviewUrls.push(reader.result as string);
-            if (newPreviewUrls.length === fileList.length) {
-                setPreviewUrls(newPreviewUrls);
-            }
-        };
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviewUrls.push(reader.result as string);
+        if (newPreviewUrls.length === fileList.length) {
+          setPreviewUrls(newPreviewUrls);
+        }
+      };
+      reader.readAsDataURL(file);
     });
   };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+        handleFileDrop(event.target.files);
+    }
+  };
+
+  const handleDragEvents = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragging(true);
+    } else if (e.type === "dragleave") {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      handleFileDrop(e.dataTransfer.files);
+    }
+  };
+
+  const removeFile = (indexToRemove: number) => {
+    setPreviewUrls(prev => prev.filter((_, index) => index !== indexToRemove));
+    setFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
 
   const handleReset = () => {
     setPreviewUrls([]);
+    setFiles([]);
     setFormKey(Date.now()); // Re-mount the form to clear file inputs and reset action state
   };
 
@@ -248,6 +282,14 @@ export function ImageUploadForm() {
     return "Your trial has ended. Subscribe to continue.";
   };
 
+  useEffect(() => {
+    const dataTransfer = new DataTransfer();
+    files.forEach(file => dataTransfer.items.add(file));
+    if (fileInputRef.current) {
+        fileInputRef.current.files = dataTransfer.files;
+    }
+  }, [files]);
+
   return (
     <div className="space-y-8">
       <Card className="shadow-lg relative overflow-hidden">
@@ -259,39 +301,84 @@ export function ImageUploadForm() {
                 <CardDescription>{getHelperText()}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="chart-images" className="text-sm font-medium flex items-center gap-1.5">
-                        <ImagePlus className="h-4 w-4 text-muted-foreground"/> Upload Charts (Max {MAX_FILES})
-                    </Label>
-                    <Input
-                        id="chart-images"
-                        name="chartImages"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        multiple
-                        onChange={handleFileChange}
-                        ref={fileInputRef}
-                        disabled={interactionDisabledForAuth || needsSubscription}
-                        className="file:text-foreground file:font-medium file:bg-muted file:border-0 file:px-3 file:py-2 file:rounded-md file:mr-3 text-xs"
-                    />
-                </div>
                 
-                {hasFiles && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {previewUrls.map((url, index) => (
-                    url ? (
-                        <div key={index} className="relative aspect-[4/3] bg-muted/30 rounded-lg overflow-hidden border">
-                        <Image
-                            src={url}
-                            alt={`Chart preview ${index + 1}`}
-                            fill
-                            className="object-contain"
-                        />
-                        </div>
-                    ) : null
-                    ))}
-                </div>
-                )}
+              <div 
+                  className={cn(
+                      "group relative flex flex-col items-center justify-center w-full min-h-[150px] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer transition-colors",
+                      isDragging && "border-primary bg-primary/10",
+                      (interactionDisabledForAuth || needsSubscription) && "cursor-not-allowed opacity-50",
+                      hasFiles && "border-none min-h-0"
+                  )}
+                  onDragEnter={handleDragEvents}
+                  onDragOver={handleDragEvents}
+                  onDragLeave={handleDragEvents}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Input
+                      id="chart-images"
+                      name="chartImages"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
+                      disabled={interactionDisabledForAuth || needsSubscription}
+                      className="hidden"
+                  />
+                  {!hasFiles ? (
+                      <div className="text-center p-8">
+                          <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/50" />
+                          <p className="mt-4 text-sm font-semibold text-foreground">
+                              Drag & drop charts here or click to select
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                              Up to {MAX_FILES} images (PNG, JPG, etc.)
+                          </p>
+                      </div>
+                  ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 w-full">
+                          {previewUrls.map((url, index) => (
+                          url ? (
+                              <div key={index} className="relative aspect-video bg-muted/30 rounded-lg overflow-hidden border">
+                                <Image
+                                    src={url}
+                                    alt={`Chart preview ${index + 1}`}
+                                    fill
+                                    className="object-contain"
+                                />
+                                <Button 
+                                  type="button"
+                                  variant="destructive" 
+                                  size="icon" 
+                                  className="absolute top-1 right-1 h-6 w-6 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                      e.stopPropagation(); // prevent opening file dialog
+                                      removeFile(index);
+                                  }}
+                                >
+                                    <X className="h-4 w-4"/>
+                                </Button>
+                              </div>
+                          ) : null
+                          ))}
+                          {files.length < MAX_FILES && (
+                            <div 
+                              className="flex items-center justify-center aspect-video bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                              }}
+                            >
+                                <div className="text-center">
+                                    <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground/50"/>
+                                    <p className="mt-2 text-xs text-muted-foreground">Add more</p>
+                                </div>
+                            </div>
+                          )}
+                      </div>
+                  )}
+              </div>
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex-grow w-full sm:w-auto">
