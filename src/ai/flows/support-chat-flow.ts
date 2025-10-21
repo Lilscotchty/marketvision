@@ -67,7 +67,6 @@ const supportChatFlow = ai.defineFlow(
     const chatPrompt = ai.definePrompt({
       name: 'supportChatPrompt',
       tools: [gatherUserInfoTool],
-      history: history,
       system: `You are a friendly and professional customer support agent for FinSight AI, a financial analytics platform. Your goal is to provide helpful assistance.
 
 Your operation has two stages:
@@ -87,7 +86,10 @@ Keep your responses concise and professional.
       `,
     });
 
-    const llmResponse = await chatPrompt({ message });
+    const llmResponse = await chatPrompt({
+      history: history,
+      message: message,
+    });
 
     const toolCalls = llmResponse.toolCalls(gatherUserInfoTool.name);
 
@@ -96,20 +98,26 @@ Keep your responses concise and professional.
       const toolCall = toolCalls[0];
       const toolOutput = await gatherUserInfoTool(toolCall.input);
       
+      // We need to add the AI's tool request and the tool's output back into the history
+      // so it can generate the final concluding message.
+      const newHistory: MessageData[] = [
+        ...history,
+        { role: 'user', content: [{ text: message }] },
+        llmResponse, // The model's response which includes the tool call request
+        { role: 'tool', content: [{tool, output: toolOutput}]}
+      ];
+
       const finalResponse = await chatPrompt({
-          message,
-          toolResponse: {
-            tool: gatherUserInfoTool.name,
-            output: toolOutput
-          }
+          history: newHistory,
+          message: "The user's information has been collected. Please provide a concluding message." // A simple prompt to get the final message
       });
       
-      const fullHistory = history.concat([
-          { role: 'user', content: [{ text: message }] },
-          finalResponse,
-      ]);
+      const fullHistory = newHistory.concat(finalResponse);
 
-      const conversationText = fullHistory.map(msg => `${msg.role}: ${msg.content[0]?.text || ''}`).join('\n');
+      const conversationText = fullHistory.map(msg => {
+          if (msg.role === 'tool') return `tool: (system) user info collected`;
+          return `${msg.role}: ${msg.content[0]?.text || ''}`;
+      }).join('\n');
       
       const summaryResult = await summarizationPrompt({
           conversation: conversationText,
