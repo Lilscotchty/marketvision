@@ -28,7 +28,8 @@ const config: Config = {
         'toast-slide-in-down': 'toast-slide-in-down 0.4s ease-out',
         'toast-slide-out-up': 'toast-slide-out-up 0.3s ease-in',
         moveUp: 'moveUp 1.4s ease forwards',
-        appear: 'appear 1s 1s forwards'
+        appear: 'appear 1s 1s forwards',
+        bounce: 'bounce 1s infinite',
       },
       keyframes: {
         'accordion-down': {
@@ -62,7 +63,17 @@ const config: Config = {
         appear: {
           from: { opacity: '0' },
           to: { opacity: '1' }
-        }
+        },
+        bounce: {
+          '0%, 100%': {
+            transform: 'translateY(-25%)',
+            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)',
+          },
+          '50%': {
+            transform: 'translateY(0)',
+            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)',
+          },
+        },
       },
       fontFamily: {
         body: ['var(--font-inter)', 'sans-serif'],

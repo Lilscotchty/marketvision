@@ -17,6 +17,15 @@ interface Message {
   content: string;
 }
 
+const TypingIndicator = () => (
+  <div className="flex items-center space-x-1">
+    <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+    <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+    <div className="h-2 w-2 bg-primary rounded-full animate-bounce"></div>
+  </div>
+);
+
+
 export function SupportChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'model', content: "Hello! I'm the FinSight AI assistant. How can I help you today?" },
@@ -120,8 +129,8 @@ export function SupportChatbot() {
                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                 <Bot size={20} />
               </div>
-              <div className="bg-muted rounded-lg px-4 py-2">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div className="bg-muted rounded-lg px-4 py-3">
+                <TypingIndicator />
               </div>
             </div>
           )}
