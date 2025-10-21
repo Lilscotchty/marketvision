@@ -7,6 +7,7 @@ import type {
   AnalyzeMarketDataOutput as FlowAnalyzeMarketDataOutput 
 } from '@/ai/flows/analyze-market-data-flow';
 import { z } from 'zod';
+import type { MessageData } from 'genkit';
 
 
 export interface UploadedImageAnalysis {
@@ -128,3 +129,24 @@ export interface MarketNewsItem {
     ticker_sentiment_label: string;
   }[];
 }
+
+// --- Support Chat Flow Types ---
+export const UserInfoSchema = z.object({
+  name: z.string().describe("The user's full name."),
+  email: z.string().email().describe("The user's email address."),
+  issueType: z.enum(['General Inquiry', 'Technical Issue', 'Billing Question', 'Feature Request'])
+    .describe("The category of the user's issue."),
+});
+export type UserInfo = z.infer<typeof UserInfoSchema>;
+
+export const SupportChatInputSchema = z.object({
+  history: z.array(z.custom<MessageData>()).describe("The chat history between the user and the AI."),
+  message: z.string().describe("The user's latest message."),
+});
+export type SupportChatInput = z.infer<typeof SupportChatInputSchema>;
+
+export const SupportChatOutputSchema = z.object({
+  response: z.string().describe("The AI's response to the user."),
+  summary: z.string().optional().describe("A summary of the conversation and collected user data, generated after all information is gathered."),
+});
+export type SupportChatOutput = z.infer<typeof SupportChatOutputSchema>;
