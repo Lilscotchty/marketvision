@@ -20,6 +20,7 @@ import { SubscriptionModal } from "@/components/billing/subscription-modal";
 import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
 import { Lights } from "@/components/ui/background-lights";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubmitButtonProps {
   isAuthDisabled: boolean;
@@ -66,6 +67,7 @@ export function ImageUploadForm() {
   const [formKey, setFormKey] = useState(Date.now());
 
   const [userData, setUserData] = useState<UserAppData | null>(null);
+  const isMobile = useIsMobile();
 
   const loadUserData = useCallback(() => {
     if (!user) {
@@ -290,6 +292,107 @@ export function ImageUploadForm() {
     }
   }, [files]);
 
+  const renderFileInput = () => {
+    if (isMobile) {
+      return (
+        <div 
+          className={cn(
+            "flex flex-col items-center justify-center w-full min-h-[150px] p-4",
+            (interactionDisabledForAuth || needsSubscription) && "cursor-not-allowed opacity-50"
+          )}
+        >
+          {!hasFiles ? (
+            <Button 
+              type="button" 
+              className="w-full h-auto py-8 flex flex-col items-center justify-center bg-muted/20 border-2 border-dashed border-muted-foreground/30 text-foreground hover:bg-muted/40"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <p className="mt-4 text-sm font-semibold">Select Charts to Analyze</p>
+              <p className="mt-1 text-xs text-muted-foreground">Up to {MAX_FILES} images</p>
+            </Button>
+          ) : (
+             renderPreviews()
+          )}
+        </div>
+      );
+    }
+
+    // Desktop view
+    return (
+      <div 
+        className={cn(
+          "group relative flex flex-col items-center justify-center w-full min-h-[150px] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer transition-colors",
+          isDragging && "border-primary bg-primary/10",
+          (interactionDisabledForAuth || needsSubscription) && "cursor-not-allowed opacity-50",
+          hasFiles && "border-none min-h-0"
+        )}
+        onDragEnter={handleDragEvents}
+        onDragOver={handleDragEvents}
+        onDragLeave={handleDragEvents}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        {!hasFiles ? (
+          <div className="text-center p-8">
+            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/50" />
+            <p className="mt-4 text-sm font-semibold text-foreground">
+              Drag & drop charts here or click to select
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Up to {MAX_FILES} images (PNG, JPG, etc.)
+            </p>
+          </div>
+        ) : (
+          renderPreviews()
+        )}
+      </div>
+    );
+  };
+  
+  const renderPreviews = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 w-full">
+        {previewUrls.map((url, index) => (
+        url ? (
+            <div key={index} className="relative aspect-video bg-muted/30 rounded-lg overflow-hidden border">
+            <Image
+                src={url}
+                alt={`Chart preview ${index + 1}`}
+                fill
+                className="object-contain"
+            />
+            <Button 
+                type="button"
+                variant="destructive" 
+                size="icon" 
+                className="absolute top-1 right-1 h-6 w-6 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                    e.stopPropagation(); // prevent opening file dialog
+                    removeFile(index);
+                }}
+            >
+                <X className="h-4 w-4"/>
+            </Button>
+            </div>
+        ) : null
+        ))}
+        {files.length < MAX_FILES && (
+        <div 
+            className="flex items-center justify-center aspect-video bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors"
+            onClick={(e) => {
+            e.stopPropagation();
+            fileInputRef.current?.click();
+            }}
+        >
+            <div className="text-center">
+                <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground/50"/>
+                <p className="mt-2 text-xs text-muted-foreground">Add more</p>
+            </div>
+        </div>
+        )}
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       <Card className="shadow-lg relative overflow-hidden">
@@ -302,83 +405,19 @@ export function ImageUploadForm() {
             </CardHeader>
             <CardContent className="space-y-4">
                 
-              <div 
-                  className={cn(
-                      "group relative flex flex-col items-center justify-center w-full min-h-[150px] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer transition-colors",
-                      isDragging && "border-primary bg-primary/10",
-                      (interactionDisabledForAuth || needsSubscription) && "cursor-not-allowed opacity-50",
-                      hasFiles && "border-none min-h-0"
-                  )}
-                  onDragEnter={handleDragEvents}
-                  onDragOver={handleDragEvents}
-                  onDragLeave={handleDragEvents}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Input
-                      id="chart-images"
-                      name="chartImages"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      multiple
-                      onChange={handleFileChange}
-                      ref={fileInputRef}
-                      disabled={interactionDisabledForAuth || needsSubscription}
-                      className="hidden"
-                  />
-                  {!hasFiles ? (
-                      <div className="text-center p-8">
-                          <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                          <p className="mt-4 text-sm font-semibold text-foreground">
-                              Drag & drop charts here or click to select
-                          </p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                              Up to {MAX_FILES} images (PNG, JPG, etc.)
-                          </p>
-                      </div>
-                  ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 w-full">
-                          {previewUrls.map((url, index) => (
-                          url ? (
-                              <div key={index} className="relative aspect-video bg-muted/30 rounded-lg overflow-hidden border">
-                                <Image
-                                    src={url}
-                                    alt={`Chart preview ${index + 1}`}
-                                    fill
-                                    className="object-contain"
-                                />
-                                <Button 
-                                  type="button"
-                                  variant="destructive" 
-                                  size="icon" 
-                                  className="absolute top-1 right-1 h-6 w-6 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-                                  onClick={(e) => {
-                                      e.stopPropagation(); // prevent opening file dialog
-                                      removeFile(index);
-                                  }}
-                                >
-                                    <X className="h-4 w-4"/>
-                                </Button>
-                              </div>
-                          ) : null
-                          ))}
-                          {files.length < MAX_FILES && (
-                            <div 
-                              className="flex items-center justify-center aspect-video bg-muted/20 border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/40 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                fileInputRef.current?.click();
-                              }}
-                            >
-                                <div className="text-center">
-                                    <ImagePlus className="mx-auto h-8 w-8 text-muted-foreground/50"/>
-                                    <p className="mt-2 text-xs text-muted-foreground">Add more</p>
-                                </div>
-                            </div>
-                          )}
-                      </div>
-                  )}
-              </div>
+              <Input
+                id="chart-images"
+                name="chartImages"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                disabled={interactionDisabledForAuth || needsSubscription}
+                className="hidden"
+              />
+              {renderFileInput()}
+
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex-grow w-full sm:w-auto">
