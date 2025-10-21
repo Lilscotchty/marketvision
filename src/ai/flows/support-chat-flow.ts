@@ -16,7 +16,6 @@ import {
   SupportChatOutputSchema,
   type SupportChatOutput,
   UserInfoSchema,
-  type UserInfo,
 } from '@/types';
 import type { MessageData } from 'genkit';
 
@@ -24,7 +23,7 @@ import type { MessageData } from 'genkit';
 const gatherUserInfoTool = ai.defineTool(
   {
     name: 'gatherUserInfo',
-    description: 'Use this tool to collect the user\'s name, email, and issue type.',
+    description: "Use this tool to collect the user's name, email, and the type of issue they are facing (e.g., 'Technical Issue') before ending the conversation. Only use this tool after you have determined you cannot solve the user's problem yourself.",
     inputSchema: UserInfoSchema,
     outputSchema: z.object({ success: z.boolean() }),
   },
@@ -41,8 +40,7 @@ const summarizationPrompt = ai.definePrompt(
       input: { schema: z.object({ conversation: z.string(), userInfo: UserInfoSchema }) },
       output: { format: 'text' },
       prompt: `
-          You are a helpful assistant. Based on the provided user information and conversation transcript,
-          create a concise summary for a human support agent.
+          You are a helpful assistant. Your task is to create a concise summary for a human support agent based on the provided user information and the full conversation transcript. The summary should be clear and directly actionable for the agent.
 
           **User Information:**
           - Name: {{userInfo.name}}
@@ -50,9 +48,9 @@ const summarizationPrompt = ai.definePrompt(
           - Issue Type: {{userInfo.issueType}}
 
           **Conversation Transcript:**
-          {{conversation}}
+          {{{conversation}}}
 
-          **Summary:**
+          **Concise Summary for Support Agent:**
       `,
   }
 );
@@ -70,13 +68,22 @@ const supportChatFlow = ai.defineFlow(
       name: 'supportChatPrompt',
       tools: [gatherUserInfoTool],
       history: history,
-      system: `You are a friendly and professional customer support agent for FinSight AI.
-      Your goals are:
-      1. Greet the user and understand their problem.
-      2. Politely ask for their name, email, and the type of issue they are facing (General Inquiry, Technical Issue, Billing Question, or Feature Request).
-      3. Use the 'gatherUserInfo' tool to collect this information once you have it. You must call this tool.
-      4. After the tool is successfully called, provide a concluding message to the user, letting them know that an agent will follow up, and then stop the conversation. Do not ask for more information after the tool call.
-      5. Keep your responses concise and to the point.
+      system: `You are a friendly and professional customer support agent for FinSight AI, a financial analytics platform. Your goal is to provide helpful assistance.
+
+Your operation has two stages:
+
+**Stage 1: Direct Assistance**
+- First, try your best to answer the user's questions directly. The platform features include AI chart analysis, real-time alerts, performance tracking, and live market data.
+- If the user's question is about something you can answer (e.g., "How do I set an alert?", "What is ICT analysis?"), provide a helpful and direct response.
+
+**Stage 2: Information Gathering & Escalation**
+- If you cannot answer the question, if the user is reporting a specific problem you can't solve, or if the user explicitly asks to speak to a human, you MUST transition to this stage.
+- Inform the user that you will need to collect some information to pass on to the support team.
+- Politely ask for their full name, email address, and the type of issue they are facing (General Inquiry, Technical Issue, Billing Question, or Feature Request).
+- Once you have gathered all three pieces of information, you MUST use the 'gatherUserInfo' tool to submit them.
+- After the 'gatherUserInfo' tool has been called successfully, provide a concluding message to the user, like "Thank you, [User's Name]. We have all the details we need. A support agent will review your case and get back to you at [User's Email] shortly." Then, stop the conversation. Do not ask for more information after the tool call.
+
+Keep your responses concise and professional.
       `,
     });
 
@@ -84,9 +91,10 @@ const supportChatFlow = ai.defineFlow(
 
     const toolCalls = llmResponse.toolCalls(gatherUserInfoTool.name);
 
-    if (toolCalls.length > 0) {
+    if (toolCalls.length > 0 && toolCalls[0].input) {
       // The AI has decided to use the tool.
-      const toolOutput = await gatherUserInfoTool(toolCalls[0].input);
+      const toolCall = toolCalls[0];
+      const toolOutput = await gatherUserInfoTool(toolCall.input);
       
       const finalResponse = await chatPrompt({
           message,
@@ -101,16 +109,16 @@ const supportChatFlow = ai.defineFlow(
           finalResponse,
       ]);
 
-      const conversationText = fullHistory.map(msg => `${msg.content[0].text ? `${msg.role}: ${msg.content[0].text}` : ''}`).join('\n');
+      const conversationText = fullHistory.map(msg => `${msg.role}: ${msg.content[0]?.text || ''}`).join('\n');
       
-      const summary = await summarizationPrompt({
+      const summaryResult = await summarizationPrompt({
           conversation: conversationText,
-          userInfo: toolCalls[0].input,
+          userInfo: toolCall.input,
       });
 
       return {
         response: finalResponse.text,
-        summary: summary.text,
+        summary: summaryResult.text,
       };
 
     } else {
