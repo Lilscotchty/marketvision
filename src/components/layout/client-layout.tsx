@@ -39,8 +39,8 @@ const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradi
 const mobileSidebarNavItems: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
   { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
-  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false },
-  { href: "/contact", label: "Contact", icon: Mail, authRequired: false },
+  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false, href: "/support" },
+  { href: "/contact", label: "Contact", icon: Mail, authRequired: false, href: "/contact" },
   { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
   { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
   { href: "/terms", label: "Terms & Conditions", icon: FileText, authRequired: false },
@@ -84,7 +84,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-      {isClient && <SidebarTrigger className="sm:hidden" />}
+       {isClient && <SidebarTrigger />}
       
       {isClient && !isMobile && (
         <div className="flex-1">
@@ -202,22 +202,22 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader className="h-16 flex items-center justify-center">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <BotIcon className="h-7 w-7 text-accent" />
-            <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-              FinSight <span className="text-primary">AI</span>
-            </h1>
-          </Link>
-        </SidebarHeader>
-        <SidebarContent className="flex-1 pt-2">
-           <SidebarNav items={mobileSidebarNavItems} />
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
-        </SidebarFooter>
-      </Sidebar>
+        <Sidebar>
+          <SidebarHeader className="h-16 flex items-center justify-center">
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+              <BotIcon className="h-7 w-7 text-accent" />
+              <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
+                FinSight <span className="text-primary">AI</span>
+              </h1>
+            </Link>
+          </SidebarHeader>
+           <SidebarContent>
+              <SidebarNav items={mobileSidebarNavItems} />
+           </SidebarContent>
+          <SidebarFooter>
+            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+          </SidebarFooter>
+        </Sidebar>
 
       <SidebarInset>
           <Header />
