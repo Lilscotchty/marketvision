@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail } from 'lucide-react';
+import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ const mobileSidebarNavItems: NavItem[] = [
   { href: "/contact", label: "Contact", icon: Mail, authRequired: false },
   { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
   { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
+  { href: "/terms", label: "Terms & Conditions", icon: FileText, authRequired: false },
 ];
 
 
@@ -118,7 +119,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   {user ? (
                     hasSubscription ? (
                         <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
-                            <Avatar className="h-6 w-10">
+                            <Avatar className="h-6 w-6">
                                 {user?.photoURL ? (
                                 <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
                                 ) : (
@@ -201,42 +202,29 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <SidebarProvider>
-        <Sidebar>
-            <SidebarHeader className="h-16 flex items-center justify-center">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-                <BotIcon className="h-7 w-7 text-accent" />
-                <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-                FinSight <span className="text-primary">AI</span>
-                </h1>
-            </Link>
-            </SidebarHeader>
-            <SidebarContent className="flex-1 pt-2">
-                <SidebarNav items={mobileSidebarNavItems} />
-            </SidebarContent>
-            <SidebarFooter>
-            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
-            </SidebarFooter>
-        </Sidebar>
+      <Sidebar>
+        <SidebarHeader className="h-16 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <BotIcon className="h-7 w-7 text-accent" />
+            <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
+              FinSight <span className="text-primary">AI</span>
+            </h1>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent className="flex-1 pt-2">
+           <SidebarNav items={mobileSidebarNavItems} />
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+        </SidebarFooter>
+      </Sidebar>
 
-        <SidebarInset>
-            <Header />
-            {children}
-        </SidebarInset>
+      <SidebarInset>
+          <Header />
+          {children}
+      </SidebarInset>
 
-        {isClient && isMobile && <BottomNavigation items={navItems} />}
-
-        {isClient && isMobile && (
-            <Sheet>
-                <SheetContent side="left" className="w-[--sidebar-width-mobile] bg-sidebar p-0" style={{'--sidebar-width-mobile': '18rem'} as React.CSSProperties}>
-                    <SheetHeader>
-                        <SheetTitle><VisuallyHidden>Mobile Menu</VisuallyHidden></SheetTitle>
-                    </SheetHeader>
-                    <div className="p-4">
-                        <SidebarNav items={mobileSidebarNavItems} />
-                    </div>
-                </SheetContent>
-            </Sheet>
-        )}
+      {isClient && isMobile && <BottomNavigation items={navItems} />}
     </SidebarProvider>
   );
 }
