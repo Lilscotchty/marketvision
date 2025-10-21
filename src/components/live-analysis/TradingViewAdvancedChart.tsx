@@ -7,11 +7,11 @@ import { useTheme } from '@/contexts/theme-context';
 function TradingViewWidget() {
   const container = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const scriptExists = useRef(false); // Use ref to track script state
 
   useEffect(() => {
-    // Function to create the script
     const createScript = () => {
-      if (container.current && !container.current.querySelector('script')) {
+      if (container.current && !scriptExists.current) {
         const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
         script.type = "text/javascript";
@@ -44,24 +44,27 @@ function TradingViewWidget() {
           "autosize": true
         });
         container.current.appendChild(script);
+        scriptExists.current = true;
       }
     };
 
     const containerRef = container.current;
     if (containerRef) {
-      // Clear the container on theme change to force re-render of the widget
+      // Clear the container on theme change to force re-render of the widget with the new theme
       while (containerRef.firstChild) {
         containerRef.removeChild(containerRef.firstChild);
       }
+      scriptExists.current = false; // Reset script existence flag
       createScript();
     }
-    
+
     // The cleanup function is important for Next.js's fast refresh
     return () => {
       if (containerRef) {
         while (containerRef.firstChild) {
           containerRef.removeChild(containerRef.firstChild);
         }
+        scriptExists.current = false;
       }
     };
   }, [theme]);

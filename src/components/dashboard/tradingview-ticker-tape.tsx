@@ -7,11 +7,12 @@ import { useTheme } from '@/contexts/theme-context'; // Import useTheme
 function TradingViewTickerTape() {
   const container = useRef<HTMLDivElement>(null);
   const { theme } = useTheme(); // Get the current theme
+  const scriptExists = useRef(false);
 
   useEffect(() => {
     // Function to create and append the script
     const createScript = () => {
-      if (container.current && !container.current.querySelector('script')) {
+      if (container.current && !scriptExists.current) {
         const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
         script.type = "text/javascript";
@@ -32,19 +33,23 @@ function TradingViewTickerTape() {
           "locale": "en"
         });
         container.current.appendChild(script);
+        scriptExists.current = true;
       }
     };
 
     // Clear the container and recreate script on theme change
-    if (container.current) {
-      container.current.innerHTML = '';
+    const containerRef = container.current;
+    if (containerRef) {
+      containerRef.innerHTML = '';
+      scriptExists.current = false;
       createScript();
     }
     
     return () => {
       // Clean up the widget when the component unmounts
-      if (container.current) {
-        container.current.innerHTML = '';
+      if (containerRef) {
+        containerRef.innerHTML = '';
+        scriptExists.current = false;
       }
     };
   }, [theme]); // Re-run effect if theme changes

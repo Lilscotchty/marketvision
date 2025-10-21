@@ -7,11 +7,12 @@ import { useTheme } from '@/contexts/theme-context';
 const TradingViewMarketOverviewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const scriptExists = useRef(false);
 
   useEffect(() => {
     // Function to create the script
     const createScript = () => {
-      if (containerRef.current && !containerRef.current.querySelector('script')) {
+      if (containerRef.current && !scriptExists.current) {
         const script = document.createElement('script');
         script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
         script.type = 'text/javascript';
@@ -76,6 +77,7 @@ const TradingViewMarketOverviewWidget = () => {
           ]
         });
         containerRef.current.appendChild(script);
+        scriptExists.current = true;
       }
     };
 
@@ -86,6 +88,7 @@ const TradingViewMarketOverviewWidget = () => {
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
+      scriptExists.current = false;
       // Create new widget
       createScript();
     }
@@ -96,6 +99,7 @@ const TradingViewMarketOverviewWidget = () => {
         while (container.firstChild) {
           container.removeChild(container.firstChild);
         }
+        scriptExists.current = false;
       }
     };
   }, [theme]);
