@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Mail, Send, Loader2, Phone, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { sendEmailNotification } from '@/ai/flows/send-email-flow';
+import { useNotificationCenter } from '@/contexts/notification-context';
 
 const contactSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -25,6 +26,7 @@ type ContactFormValues = z.infer<typeof contactSchema>;
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { addNotification } = useNotificationCenter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<ContactFormValues>({
@@ -60,6 +62,14 @@ export default function ContactPage() {
           title: 'Message Sent!',
           description: "Thanks for reaching out. We'll get back to you shortly.",
         });
+        
+        addNotification({
+          title: 'Contact Form Submitted',
+          message: `Your message "${data.subject}" was sent to the admin.`,
+          type: 'info',
+          iconName: 'Mail'
+        });
+        
         form.reset();
       } else {
         throw new Error(result.message);

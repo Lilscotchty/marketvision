@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Bell, CheckCheck, Trash2, Info, AlertTriangle, ServerCog, BellRing, FileText, Sparkles, BellOff } from "lucide-react";
+import { Bell, CheckCheck, Trash2, Info, AlertTriangle, ServerCog, BellRing, FileText, Sparkles, BellOff, Mail } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ const iconMap: Record<string, React.ElementType> = {
   ServerCog,
   Sparkles,
   FileText,
+  Mail,
 };
 
 const NotificationIcon = ({ type, iconName }: { type: NotificationType; iconName?: string }) => {
