@@ -13,13 +13,19 @@ import {
 import { MessageSquare, X } from 'lucide-react';
 import { SupportChatbot } from './support-chatbot';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function SupportWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className={cn(
+        "fixed right-4 z-50",
+        isMobile ? "bottom-[calc(3.5rem+1rem)]" : "bottom-4" // h-14 (3.5rem) + bottom-4 (1rem) for mobile
+      )}>
         <AnimatePresence>
           {!isOpen && (
             <motion.div
