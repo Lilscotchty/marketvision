@@ -108,4 +108,23 @@ export const SendEmailOutputSchema = z.object({
 });
 export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
 
-    
+export interface MarketNewsItem {
+  title: string;
+  url: string;
+  time_published: string; // e.g., "20240726T013854"
+  authors: string[];
+  summary: string;
+  banner_image: string;
+  source: string;
+  category_within_source: string;
+  source_domain: string;
+  topics: { topic: string; relevance_score: string }[];
+  overall_sentiment_score: number;
+  overall_sentiment_label: string;
+  ticker_sentiment: {
+    ticker: string;
+    relevance_score: string;
+    ticker_sentiment_score: string;
+    ticker_sentiment_label: string;
+  }[];
+}

@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { predictMarketMovement } from '@/ai/flows/predict-market-movement';
 import { analyzeCandlestickChart } from '@/ai/flows/analyze-candlestick-chart';
-import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote } from '@/types';
+import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote, MarketNewsItem } from '@/types';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -312,4 +312,40 @@ export async function fetchMarketDataFromAV(symbol: string): Promise<FetchMarket
   }
 }
 
-    
+export interface FetchNewsResult {
+  data?: MarketNewsItem[];
+  error?: string;
+}
+
+export async function fetchMarketNews(): Promise<FetchNewsResult> {
+  const apiKey = process.env.ALPHAVANTAGE_API_KEY;
+  if (!apiKey) {
+    return { error: 'News service API key is not configured.' };
+  }
+
+  const url = `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets&limit=50&apikey=${apiKey}`;
+
+  try {
+    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+    if (!response.ok) {
+      return { error: `News API request failed: ${response.statusText}` };
+    }
+    const data = await response.json();
+    if (data['Error Message']) {
+      return { error: `News service: ${data['Error Message']}` };
+    }
+    if (data['Note']) {
+        console.warn('News service API Note:', data['Note']);
+        // If the note indicates a free tier limit, we can show a specific message
+        if (data['Note'].includes('free tier')) {
+            return { error: `Could not fetch news. The API limit for the free tier may have been reached.` };
+        }
+    }
+
+    const newsItems: MarketNewsItem[] = data.feed || [];
+    return { data: newsItems };
+  } catch (error) {
+    console.error(`Failed to fetch market news:`, error);
+    return { error: error instanceof Error ? error.message : 'An unexpected error occurred while fetching news.' };
+  }
+}
