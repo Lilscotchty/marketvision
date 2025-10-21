@@ -87,8 +87,10 @@ Keep your responses concise and professional.
     });
 
     const llmResponse = await chatPrompt({
-      history: history,
-      message: message,
+      history: [
+        ...history,
+        { role: 'user', content: [{ text: message }] },
+      ],
     });
 
     const toolCalls = llmResponse.toolCalls(gatherUserInfoTool.name);
@@ -104,12 +106,11 @@ Keep your responses concise and professional.
         ...history,
         { role: 'user', content: [{ text: message }] },
         llmResponse, // The model's response which includes the tool call request
-        { role: 'tool', content: [{tool, output: toolOutput}]}
+        { role: 'tool', content: [{ toolResponse: { name: gatherUserInfoTool.name, output: toolOutput } }]}
       ];
-
+      
       const finalResponse = await chatPrompt({
           history: newHistory,
-          message: "The user's information has been collected. Please provide a concluding message." // A simple prompt to get the final message
       });
       
       const fullHistory = newHistory.concat(finalResponse);
