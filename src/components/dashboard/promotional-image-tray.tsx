@@ -39,7 +39,7 @@ export function PromotionalImageTray() {
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prevIndex) => (prevIndex + 1) % promotionalImages.length);
-    }, 5000); // Change image every 5 seconds
+    }, 9000); // Change image every 9 seconds
 
     return () => clearInterval(interval);
   }, []);
