@@ -55,7 +55,6 @@ const summarizationPrompt = ai.definePrompt(
   }
 );
 
-
 const supportChatFlow = ai.defineFlow(
   {
     name: 'supportChatFlow',
@@ -102,13 +101,16 @@ Keep your responses concise and professional. Do not invent features that don't 
       `,
     });
 
-    const llmResponse = await chatPrompt({
-      history: [
-        ...history,
-        { role: 'user', content: [{ text: message }] },
-      ],
-    });
+    // Create the full history for this turn
+    const currentHistory: MessageData[] = [
+      ...history,
+      { role: 'user', content: [{ text: message }] },
+    ];
+    
+    // Get the initial response from the model
+    const llmResponse = await chatPrompt(currentHistory);
 
+    // Check if the model decided to call the 'gatherUserInfo' tool
     const toolCalls = llmResponse.toolCalls(gatherUserInfoTool.name);
 
     if (toolCalls.length > 0 && toolCalls[0].input) {
@@ -116,28 +118,33 @@ Keep your responses concise and professional. Do not invent features that don't 
       const toolCall = toolCalls[0];
       const toolOutput = await gatherUserInfoTool(toolCall.input);
       
-      // We need to add the AI's tool request and the tool's output back into the history
+      // We must add the AI's tool request and the tool's output back into the history
       // so it can generate the final concluding message.
-      const newHistory: MessageData[] = [
-        ...history,
-        { role: 'user', content: [{ text: message }] },
+      const historyForFinalResponse: MessageData[] = [
+        ...currentHistory,
         llmResponse, // The model's response which includes the tool call request
         { role: 'tool', content: [{ toolResponse: { name: gatherUserInfoTool.name, output: toolOutput } }]}
       ];
       
-      const finalResponse = await chatPrompt({
-          history: newHistory,
-      });
+      // Call the prompt *again* with the updated history to get the final confirmation message.
+      const finalResponse = await chatPrompt(historyForFinalResponse);
       
-      const fullHistory = newHistory.concat(finalResponse);
+      const fullConversationForSummary = historyForFinalResponse.concat(finalResponse);
 
-      const conversationText = fullHistory.map(msg => {
+      // Create a plain text version of the conversation for the summary
+      const conversationText = fullConversationForSummary.map(msg => {
           if (msg.role === 'tool') return `tool: (system) user info collected`;
-          const textContent = msg.content[0]?.text;
-          const toolCallContent = msg.content[0]?.toolRequest?.name;
-          return `${msg.role}: ${textContent || (toolCallContent ? `[tool call: ${toolCallContent}]` : '')}`;
+          
+          let content = '';
+          if (msg.content[0]?.text) {
+              content = msg.content[0].text;
+          } else if (msg.content[0]?.toolRequest?.name) {
+              content = `[tool call: ${msg.content[0].toolRequest.name}]`;
+          }
+          return `${msg.role}: ${content}`;
       }).join('\n');
       
+      // Generate the summary
       const summaryResult = await summarizationPrompt({
           conversation: conversationText,
           userInfo: toolCall.input,
@@ -149,7 +156,7 @@ Keep your responses concise and professional. Do not invent features that don't 
       };
 
     } else {
-      // The AI is just having a regular conversation.
+      // The AI is just having a regular conversation, no tool was called.
       return {
         response: llmResponse.text,
       };
