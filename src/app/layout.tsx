@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider } from '@/contexts/theme-context';
 import { NotificationProvider } from '@/contexts/notification-context'; // Import NotificationProvider
-import { SupportWidget } from '@/components/support/support-widget';
 
 export const metadata: Metadata = {
   title: 'FinSight AI',
@@ -28,7 +27,6 @@ export default function RootLayout({
           <AuthProvider>
             <NotificationProvider>
               <AppLayout>{children}</AppLayout>
-              <SupportWidget />
             </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
