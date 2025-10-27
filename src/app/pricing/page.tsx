@@ -3,6 +3,7 @@ import { PriceCard, OfferingWrapper, Offering, ProductName, Price, Description }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, Star } from 'lucide-react';
+import SubscribeButton from '@/components/pricing/subscribe-button';
 
 export default function PricingPage() {
   return (
@@ -46,7 +47,7 @@ export default function PricingPage() {
               For active traders who need advanced tools and multi-timeframe analysis.
             </Description>
             <Price period="/ month">$49</Price>
-            <Button className="w-full">Subscribe to Pro</Button>
+            <SubscribeButton />
             <OfferingWrapper>
               <Offering>500 chart analyses per month</Offering>
               <Offering>Advanced ICT concepts (Breaker Blocks, FVGs)</Offering>
