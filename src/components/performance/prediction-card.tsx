@@ -1,4 +1,3 @@
-
 import React from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction } from '@/types';
@@ -71,17 +70,17 @@ const StyledWrapper = styled.div`
     transform-style: preserve-3d;
     transition: transform 300ms;
     box-shadow: 0px 0px 10px 1px #000000ee;
-    border-radius: 5px;
+    border-radius: var(--radius);
   }
 
   .front, .back {
-    background-color: #151515;
+    background-color: hsl(var(--card));
     position: absolute;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    border-radius: 5px;
+    border-radius: var(--radius);
     overflow: hidden;
   }
 
@@ -100,7 +99,7 @@ const StyledWrapper = styled.div`
     display: block;
     width: 160px;
     height: 160%;
-    background: linear-gradient(90deg, transparent, #ff9966, #ff9966, #ff9966, #ff9966, transparent);
+    background: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--primary)), hsl(var(--primary)), hsl(var(--primary)), transparent);
     animation: rotation_481 5000ms infinite linear;
   }
 
@@ -108,9 +107,9 @@ const StyledWrapper = styled.div`
     position: absolute;
     width: 99%;
     height: 99%;
-    background-color: #151515;
+    background-color: hsl(var(--card));
     border-radius: 5px;
-    color: white;
+    color: hsl(var(--card-foreground));
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -193,14 +192,14 @@ const StyledWrapper = styled.div`
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background-color: #ffbb66;
+    background-color: hsl(var(--primary));
     position: relative;
     filter: blur(15px);
     animation: floating 2600ms infinite linear;
   }
 
   #bottom {
-    background-color: #ff8866;
+    background-color: hsl(var(--accent));
     left: 50px;
     top: 0px;
     width: 150px;

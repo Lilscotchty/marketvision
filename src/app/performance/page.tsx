@@ -163,7 +163,7 @@ export default function PerformancePage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
-              {predictions.map((pred) => (
+              {predictions.slice(0, 4).map((pred) => (
                 <PredictionCard key={pred.id} prediction={pred} />
               ))}
             </div>
