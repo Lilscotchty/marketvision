@@ -1,4 +1,3 @@
-
 import React from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction } from '@/types';
@@ -42,34 +41,6 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
             <div className="back-content">
               {DirectionIcon}
               <strong>{marketDirection}</strong>
-              <div className="flag-buttons">
-                <button 
-                  className="flag-btn successful" 
-                  onClick={(e) => handleFlagClick(e, 'successful')}
-                  title="Mark as Successful"
-                >
-                  <ThumbsUp size={16} />
-                </button>
-                <button 
-                  className="flag-btn unsuccessful" 
-                  onClick={(e) => handleFlagClick(e, 'unsuccessful')}
-                  title="Mark as Unsuccessful"
-                >
-                  <ThumbsDown size={16} />
-                </button>
-                 <button 
-                  className="flag-btn delete" 
-                  onClick={handleDeleteClick}
-                  title="Delete Prediction"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-               {manualFlag && (
-                <small className={`badge ${manualFlag}`}>
-                  {manualFlag.charAt(0).toUpperCase() + manualFlag.slice(1)}
-                </small>
-              )}
             </div>
           </div>
           <div className="front">
@@ -91,6 +62,34 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
                 <p className="card-footer">
                   {summaryText.substring(0, 50)}{summaryText.length > 50 ? '...' : ''}
                 </p>
+                <div className="flag-buttons">
+                  <button 
+                    className="flag-btn successful" 
+                    onClick={(e) => handleFlagClick(e, 'successful')}
+                    title="Mark as Successful"
+                  >
+                    <ThumbsUp size={12} />
+                  </button>
+                  <button 
+                    className="flag-btn unsuccessful" 
+                    onClick={(e) => handleFlagClick(e, 'unsuccessful')}
+                    title="Mark as Unsuccessful"
+                  >
+                    <ThumbsDown size={12} />
+                  </button>
+                   <button 
+                    className="flag-btn delete" 
+                    onClick={handleDeleteClick}
+                    title="Delete Prediction"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+                {manualFlag && (
+                  <small className={`badge-sm ${manualFlag}`}>
+                    {manualFlag}
+                  </small>
+                )}
               </div>
             </div>
           </div>
@@ -160,62 +159,6 @@ const StyledWrapper = styled.div`
     gap: 15px;
   }
   
-  .flag-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .flag-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background-color: hsla(var(--muted-foreground) / 0.2);
-    color: hsl(var(--muted-foreground));
-    transition: all 0.3s ease;
-  }
-
-  .flag-btn:hover {
-    transform: scale(1.1);
-  }
-
-  .flag-btn.successful {
-    color: #28a745; /* green */
-  }
-  .flag-btn.successful:hover {
-    background-color: rgba(40, 167, 69, 0.2);
-  }
-
-  .flag-btn.unsuccessful {
-    color: #dc3545; /* red */
-  }
-  .flag-btn.unsuccessful:hover {
-    background-color: rgba(220, 53, 69, 0.2);
-  }
-  
-  .flag-btn.delete {
-    color: hsl(var(--muted-foreground));
-  }
-  .flag-btn.delete:hover {
-    color: hsl(var(--destructive));
-    background-color: hsla(var(--destructive) / 0.2);
-  }
-  
-  .badge.successful {
-      background-color: rgba(40, 167, 69, 0.8);
-      color: white;
-  }
-  .badge.unsuccessful {
-      background-color: rgba(220, 53, 69, 0.8);
-      color: white;
-  }
-
-
   .card:hover .content {
     transform: rotateY(180deg);
   }
@@ -253,6 +196,27 @@ const StyledWrapper = styled.div`
     width: fit-content;
     color: hsl(var(--card));
   }
+  
+  .badge-sm {
+      background-color: hsla(var(--muted-foreground) / 0.7);
+      padding: 2px 8px;
+      border-radius: 10px;
+      width: fit-content;
+      color: hsl(var(--card));
+      font-size: 9px;
+      text-transform: capitalize;
+      margin-top: 4px;
+      align-self: center;
+  }
+  
+  .badge-sm.successful {
+      background-color: rgba(40, 167, 69, 0.7);
+  }
+  
+  .badge-sm.unsuccessful {
+      background-color: rgba(220, 53, 69, 0.7);
+  }
+
 
   .description {
     box-shadow: 0px 0px 10px 5px hsla(var(--card-foreground) / 0.1);
@@ -261,6 +225,8 @@ const StyledWrapper = styled.div`
     background-color: hsla(var(--card-foreground) / 0.2);
     backdrop-filter: blur(5px);
     border-radius: 5px;
+    display: flex;
+    flex-direction: column;
   }
 
   .title {
@@ -278,6 +244,47 @@ const StyledWrapper = styled.div`
     color: hsla(var(--card-foreground) / 0.8);
     margin-top: 5px;
     font-size: 8px;
+    min-height: 24px; /* Ensure space for 3 lines */
+  }
+
+  .flag-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: center;
+  }
+
+  .flag-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: hsla(var(--muted-foreground) / 0.1);
+    color: hsl(var(--muted-foreground));
+    transition: all 0.2s ease;
+  }
+
+  .flag-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .flag-btn.successful:hover {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+  }
+
+  .flag-btn.unsuccessful:hover {
+    background-color: rgba(220, 53, 69, 0.2);
+     color: #dc3545;
+  }
+  
+  .flag-btn.delete:hover {
+    color: hsl(var(--destructive));
+    background-color: hsla(var(--destructive) / 0.1);
   }
 
   .front .img {
