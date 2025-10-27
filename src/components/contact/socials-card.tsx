@@ -189,3 +189,5 @@ const StyledWrapper = styled.div`
 `;
 
 export default SocialsCard;
+
+    
