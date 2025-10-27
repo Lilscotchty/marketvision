@@ -85,9 +85,7 @@ const prompt = ai.definePrompt({
   name: 'analyzeCandlestickChartPrompt',
   input: {schema: AnalyzeCandlestickChartInputSchema},
   output: {schema: AnalyzeCandlestickChartOutputSchema},
-  config: {
-    model: 'googleai/gemini-2.5-flash',
-  },
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
 You have been provided with one or more candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis if multiple charts are available.

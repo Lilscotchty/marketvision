@@ -60,9 +60,7 @@ const prompt = ai.definePrompt({
   name: 'analyzeMarketDataPrompt',
   input: {schema: AnalyzeMarketDataInputSchema}, 
   output: {schema: AnalyzeMarketDataOutputSchema},
-  config: {
-    model: 'googleai/gemini-2.5-flash',
-  },
+  model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert trading analyst. Your goal is to provide two types of analysis based on the provided market data for asset {{{assetSymbol}}}:
 1.  **ICT-Specific Analysis**: For traders familiar with Inner Circle Trader (ICT) concepts.
 2.  **Simplified Guidance**: For users less familiar with ICT, offering conceptual direction, potential price zones, and simplified reasoning.
