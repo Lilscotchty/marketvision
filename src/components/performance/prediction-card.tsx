@@ -11,6 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from '../ui/scroll-area';
 import html2canvas from 'html2canvas';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+
 
 interface PredictionCardProps {
   prediction: HistoricalPrediction;
