@@ -1,9 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { handleImageAnalysisAction, type AnalysisResult } from "@/lib/actions";
@@ -25,13 +23,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface SubmitButtonProps {
   isAuthDisabled: boolean;
   hasFiles: boolean;
+  isPending: boolean;
 }
 
-function SubmitButton({ isAuthDisabled, hasFiles }: SubmitButtonProps) {
-  const { pending } = useFormStatus();
+function SubmitButton({ isAuthDisabled, hasFiles, isPending }: SubmitButtonProps) {
   return (
-    <Button type="submit" disabled={pending || isAuthDisabled || !hasFiles} className="w-full bg-primary hover:bg-primary/90">
-      {pending ? (
+    <Button type="submit" disabled={isPending || isAuthDisabled || !hasFiles} className="w-full bg-primary hover:bg-primary/90">
+      {isPending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Analyzing...
@@ -53,18 +51,18 @@ const MAX_FILES = 3;
 const INITIAL_TRIAL_POINTS = 5;
 
 export function ImageUploadForm() {
-  const initialState: AnalysisResult | undefined = undefined;
-  const [state, formAction, isPending] = useActionState(handleImageAnalysisAction, initialState);
+  const [state, setState] = useState<AnalysisResult | undefined>(undefined);
+  const [isPending, startTransition] = useTransition();
   
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
-  const [formKey, setFormKey] = useState(Date.now());
 
   const [userData, setUserData] = useState<UserAppData | null>(null);
   const isMobile = useIsMobile();
@@ -141,7 +139,7 @@ export function ImageUploadForm() {
 
 
   useEffect(() => {
-    if (isPending) return;
+    if (!state) return;
 
     if (state?.prediction && state.analysis) {
         if (typeof window !== 'undefined' && user) {
@@ -184,7 +182,7 @@ export function ImageUploadForm() {
         }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, isPending, user, toast]);
+  }, [state, user, toast]);
 
 
   const isFullyAuthenticated = !authLoading && !!user;
@@ -271,7 +269,20 @@ export function ImageUploadForm() {
   const handleReset = () => {
     setPreviewUrls([]);
     setFiles([]);
-    setFormKey(Date.now()); // Re-mount the form to clear file inputs and reset action state
+    setState(undefined);
+    formRef.current?.reset();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      const result = await handleImageAnalysisAction(formData);
+      setState(result);
+    });
   };
 
   const hasFiles = previewUrls.length > 0;
@@ -398,7 +409,7 @@ export function ImageUploadForm() {
       <Card className="shadow-lg relative overflow-hidden">
         <Lights className="absolute top-0 left-0 w-full h-full" />
         <div className="relative z-10">
-            <form action={formAction} key={formKey}>
+            <form ref={formRef} onSubmit={handleSubmit}>
             <CardHeader>
                 <CardTitle className="font-headline text-xl flex items-center gap-2"><BarChartHorizontal className="text-primary h-5 mr-2 w-5"/>Multi-Timeframe Analysis</CardTitle>
                 <CardDescription>{getHelperText()}</CardDescription>
@@ -456,7 +467,7 @@ export function ImageUploadForm() {
                 <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isPending}>
                     Reset
                 </Button>
-                <SubmitButton isAuthDisabled={interactionDisabledForAuth || !canAnalyze || isPending} hasFiles={hasFiles} />
+                <SubmitButton isAuthDisabled={interactionDisabledForAuth || !canAnalyze || isPending} hasFiles={hasFiles} isPending={isPending} />
                 </div>
             </CardFooter>
             </form>

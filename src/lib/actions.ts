@@ -38,7 +38,6 @@ async function fileToDataUri(file: File): Promise<string> {
 }
 
 export async function handleImageAnalysisAction(
-  prevState: AnalysisResult | undefined,
   formData: FormData
 ): Promise<AnalysisResult> {
 
