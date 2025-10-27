@@ -31,7 +31,7 @@ const AnalyzeMarketDataInputSchema = z.object({
   recentHigh: z.number().describe("The most recent significant high price."),
   recentLow: z.number().describe("The most recent significant low price."),
   marketTrendDescription: z.string().describe("A brief description of the current observed trend by the user, e.g., 'short-term uptrend, consolidating near highs', 'strong downtrend after breaking support'."),
-  keyLevelsDescription: z.string().optional().describe("User's description of any nearby key support/resistance, order blocks or FVGs visually identified or known, e.g., 'approaching daily order block at 50000', 'FVG present between 48000-48200'."),
+  keyLevelsDescription: z.string().optional().describe("User's description of any nearby key support/resistance, order blocks or FVGs visually identified or known, eg., 'approaching daily order block at 50000', 'FVG present between 48000-48200'."),
   activeTradingSession: TradingSessionEnum.describe("The current active trading session as perceived by the user, e.g., 'London Open', 'New York AM'. This helps contextualize potential session-specific liquidity events or patterns like the Silver Bullet."),
   selectedTimeframe: TimeframeEnum.describe("The primary chart timeframe the user is analyzing, e.g., '15min', '1hr', 'Daily'. This guides the focus of the analysis.")
 });
@@ -60,6 +60,9 @@ const prompt = ai.definePrompt({
   name: 'analyzeMarketDataPrompt',
   input: {schema: AnalyzeMarketDataInputSchema}, 
   output: {schema: AnalyzeMarketDataOutputSchema},
+  config: {
+    model: 'googleai/gemini-pro',
+  },
   prompt: `You are an expert trading analyst. Your goal is to provide two types of analysis based on the provided market data for asset {{{assetSymbol}}}:
 1.  **ICT-Specific Analysis**: For traders familiar with Inner Circle Trader (ICT) concepts.
 2.  **Simplified Guidance**: For users less familiar with ICT, offering conceptual direction, potential price zones, and simplified reasoning.

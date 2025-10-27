@@ -15,5 +15,5 @@ if (!process.env.GOOGLE_API_KEY && !process.env.GOOGLE_APPLICATION_CREDENTIALS) 
 
 export const ai = genkit({
   plugins: [googleAI()],
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-pro',
 });
