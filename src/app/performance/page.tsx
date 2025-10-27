@@ -8,9 +8,11 @@ import type { HistoricalPrediction } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, HelpCircle } from "lucide-react";
 import PredictionCard from "@/components/performance/prediction-card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SimplePredictionCard from "@/components/performance/simple-prediction-card";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -28,6 +30,7 @@ export default function PerformancePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [lastSeenNewId, setLastSeenNewId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
 
   useEffect(() => {
@@ -161,6 +164,17 @@ export default function PerformancePage() {
                 </div>
               </CardContent>
             </Card>
+          ) : isMobile ? (
+            <div className="space-y-4">
+              {predictions.map((pred) => (
+                <SimplePredictionCard
+                  key={pred.id}
+                  prediction={pred}
+                  onFlag={handleFlagTrade}
+                  onDelete={handleDeletePrediction}
+                />
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
               {predictions.slice(0, 4).map((pred) => (
@@ -178,3 +192,4 @@ export default function PerformancePage() {
     </main>
   );
 }
+
