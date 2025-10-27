@@ -86,7 +86,7 @@ Based on core ICT principles (Liquidity Pools, Market Structure shifts (CHoCH/BO
 - Suggest what an ICT trader might be looking for NEXT as a conceptual focus (suggestedFocusICT), especially on the {{#if selectedTimeframe}}'{{selectedTimeframe}}' timeframe{{else}}appropriate short-term timeframes{{/if}} or a Lower Timeframe (LTF) for entry/confirmation.
   {{#if selectedTimeframe}}- For LTF considerations, mention how one might refine entries based on {{selectedTimeframe}} structures (e.g., "if a bullish OB forms on {{selectedTimeframe}}, look for LTF confirmation like a 1min/5min CHoCH + FVG for entry").{{/if}}
   {{#if isNewYorkAMSession}}- Given New York AM, mention conceptual "Silver Bullet" considerations potentially aligning with the {{#if selectedTimeframe}}'{{selectedTimeframe}}' timeframe{{else}}current market phase{{/if}}: liquidity sweep, displacement creating FVG, retracement to FVG.{{/if}}
-  {{#if isLondonOpenSession}}- Given London Open, mention conceptual Judas Swing from Asian range, then reversal/expansion, potential FVG entry, especially as it relates to the {{#if selectedTimeframe}}'{{selectedTimeframe}}' timeframe's structures{{else}}session's typical price action{{/if}}.{{/if}}
+  {{#if isLondonOpenSession}}- Given London Open, mention conceptual Judas Swing from Asian range, then reversal/expansion, potential FVG entry, especially as it relates to the {{#if selectedTimefame}}'{{selectedTimeframe}}' timeframe's structures{{else}}session's typical price action{{/if}}.{{/if}}
 - State your CONFIDENCE (Low, Medium, High) in this ICT-specific conceptual analysis for the given context.
 
 **Part 2: Simplified Guidance (Conceptual & Educational - NOT FINANCIAL ADVICE)**
@@ -126,4 +126,3 @@ const analyzeMarketDataFlow = ai.defineFlow(
     return output!;
   }
 );
-
