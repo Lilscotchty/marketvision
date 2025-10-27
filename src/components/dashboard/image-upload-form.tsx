@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Loader2, UploadCloud, CreditCard, X, ImagePlus, BarChartHorizontal } from "lucide-react";
+import { AlertCircle, CheckCircle, UploadCloud, CreditCard, X, ImagePlus, BarChartHorizontal } from "lucide-react";
 import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Lights } from "@/components/ui/background-lights";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnalyzeButton } from "./analyze-button";
+import Loader from "./loader";
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -384,8 +385,13 @@ export function ImageUploadForm() {
   return (
     <div className="space-y-8">
       <Card className="shadow-lg relative overflow-hidden">
+        {isPending && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-card/50 backdrop-blur-sm">
+                <Loader />
+            </div>
+        )}
         <Lights className="absolute top-0 left-0 w-full h-full" />
-        <div className="relative z-10">
+        <div className={cn("relative z-10", isPending && "blur-sm")}>
             <form ref={formRef} onSubmit={handleSubmit}>
             <CardHeader>
                 <CardTitle className="font-headline text-xl flex items-center gap-2"><BarChartHorizontal className="text-primary h-5 mr-2 w-5"/>Multi-Timeframe Analysis</CardTitle>
