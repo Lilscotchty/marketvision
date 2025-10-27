@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -14,6 +13,7 @@ import { Mail, Send, Loader2, Phone, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { sendEmailNotification } from '@/ai/flows/send-email-flow';
 import { useNotificationCenter } from '@/contexts/notification-context';
+import SocialsCard from '@/components/contact/socials-card';
 
 const contactSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -181,8 +181,8 @@ export default function ContactPage() {
               </CardContent>
             </Card>
           </div>
-          <div className="space-y-6">
-            <Card className="shadow-md">
+          <div className="space-y-8 flex flex-col items-center lg:items-start">
+            <Card className="shadow-md w-full">
               <CardHeader>
                 <CardTitle className="font-headline text-lg">Contact Information</CardTitle>
               </CardHeader>
@@ -210,6 +210,7 @@ export default function ContactPage() {
                 </div>
               </CardContent>
             </Card>
+            <SocialsCard />
           </div>
         </div>
       </div>
