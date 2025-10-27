@@ -164,7 +164,12 @@ export default function PerformancePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
               {predictions.slice(0, 4).map((pred) => (
-                <PredictionCard key={pred.id} prediction={pred} />
+                <PredictionCard 
+                  key={pred.id} 
+                  prediction={pred} 
+                  onFlag={handleFlagTrade}
+                  onDelete={handleDeletePrediction}
+                />
               ))}
             </div>
           )}

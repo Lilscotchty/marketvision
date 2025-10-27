@@ -1,23 +1,38 @@
+
 import React from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction } from '@/types';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface PredictionCardProps {
   prediction: HistoricalPrediction;
+  onFlag: (predictionId: string, flag: 'successful' | 'unsuccessful') => void;
+  onDelete: (predictionId: string) => void;
 }
 
-const PredictionCard = ({ prediction }: PredictionCardProps) => {
-  const { prediction: predData, analysis, asset, date, imagePreviewUrl } = prediction;
+const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) => {
+  const { id, prediction: predData, analysis, asset, date, imagePreviewUrl, manualFlag } = prediction;
 
   const summaryText = analysis?.summary || 'No analysis summary available.';
   const marketDirection = predData?.marketDirection || 'NEUTRAL';
 
   const DirectionIcon = 
-    marketDirection === 'UP' ? <TrendingUp className="h-5 w-5 text-green-500" /> :
-    marketDirection === 'DOWN' ? <TrendingDown className="h-5 w-5 text-red-500" /> :
-    <Minus className="h-5 w-5 text-yellow-500" />;
+    marketDirection === 'UP' ? <TrendingUp className="h-6 w-6 text-green-500" /> :
+    marketDirection === 'DOWN' ? <TrendingDown className="h-6 w-6 text-red-500" /> :
+    <Minus className="h-6 w-6 text-yellow-500" />;
+
+  const handleFlagClick = (e: React.MouseEvent, flag: 'successful' | 'unsuccessful') => {
+    e.stopPropagation();
+    e.preventDefault();
+    onFlag(id, flag);
+  };
+  
+  const handleDeleteClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      onDelete(id);
+  }
 
   return (
     <StyledWrapper>
@@ -27,6 +42,34 @@ const PredictionCard = ({ prediction }: PredictionCardProps) => {
             <div className="back-content">
               {DirectionIcon}
               <strong>{marketDirection}</strong>
+              <div className="flag-buttons">
+                <button 
+                  className="flag-btn successful" 
+                  onClick={(e) => handleFlagClick(e, 'successful')}
+                  title="Mark as Successful"
+                >
+                  <ThumbsUp size={16} />
+                </button>
+                <button 
+                  className="flag-btn unsuccessful" 
+                  onClick={(e) => handleFlagClick(e, 'unsuccessful')}
+                  title="Mark as Unsuccessful"
+                >
+                  <ThumbsDown size={16} />
+                </button>
+                 <button 
+                  className="flag-btn delete" 
+                  onClick={handleDeleteClick}
+                  title="Delete Prediction"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+               {manualFlag && (
+                <small className={`badge ${manualFlag}`}>
+                  {manualFlag.charAt(0).toUpperCase() + manualFlag.slice(1)}
+                </small>
+              )}
             </div>
           </div>
           <div className="front">
@@ -114,8 +157,64 @@ const StyledWrapper = styled.div`
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
   }
+  
+  .flag-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .flag-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: hsla(var(--muted-foreground) / 0.2);
+    color: hsl(var(--muted-foreground));
+    transition: all 0.3s ease;
+  }
+
+  .flag-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .flag-btn.successful {
+    color: #28a745; /* green */
+  }
+  .flag-btn.successful:hover {
+    background-color: rgba(40, 167, 69, 0.2);
+  }
+
+  .flag-btn.unsuccessful {
+    color: #dc3545; /* red */
+  }
+  .flag-btn.unsuccessful:hover {
+    background-color: rgba(220, 53, 69, 0.2);
+  }
+  
+  .flag-btn.delete {
+    color: hsl(var(--muted-foreground));
+  }
+  .flag-btn.delete:hover {
+    color: hsl(var(--destructive));
+    background-color: hsla(var(--destructive) / 0.2);
+  }
+  
+  .badge.successful {
+      background-color: rgba(40, 167, 69, 0.8);
+      color: white;
+  }
+  .badge.unsuccessful {
+      background-color: rgba(220, 53, 69, 0.8);
+      color: white;
+  }
+
 
   .card:hover .content {
     transform: rotateY(180deg);
@@ -133,7 +232,7 @@ const StyledWrapper = styled.div`
 
   .front {
     transform: rotateY(180deg);
-    color: white;
+    color: hsl(var(--card-foreground));
   }
 
   .front .front-content {
@@ -147,18 +246,19 @@ const StyledWrapper = styled.div`
   }
 
   .front-content .badge {
-    background-color: #00000055;
+    background-color: hsla(var(--card-foreground) / 0.5);
     padding: 2px 10px;
     border-radius: 10px;
     backdrop-filter: blur(2px);
     width: fit-content;
+    color: hsl(var(--card));
   }
 
   .description {
-    box-shadow: 0px 0px 10px 5px #00000088;
+    box-shadow: 0px 0px 10px 5px hsla(var(--card-foreground) / 0.1);
     width: 100%;
     padding: 10px;
-    background-color: #00000099;
+    background-color: hsla(var(--card-foreground) / 0.2);
     backdrop-filter: blur(5px);
     border-radius: 5px;
   }
@@ -175,7 +275,7 @@ const StyledWrapper = styled.div`
   }
 
   .card-footer {
-    color: #ffffff88;
+    color: hsla(var(--card-foreground) / 0.8);
     margin-top: 5px;
     font-size: 8px;
   }
@@ -208,7 +308,7 @@ const StyledWrapper = styled.div`
   }
 
   #right {
-    background-color: #ff2233;
+    background-color: hsl(var(--destructive));
     left: 160px;
     top: -80px;
     width: 30px;
