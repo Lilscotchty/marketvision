@@ -19,30 +19,7 @@ import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
 import { Lights } from "@/components/ui/background-lights";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface SubmitButtonProps {
-  isAuthDisabled: boolean;
-  hasFiles: boolean;
-  isPending: boolean;
-}
-
-function SubmitButton({ isAuthDisabled, hasFiles, isPending }: SubmitButtonProps) {
-  return (
-    <Button type="submit" disabled={isPending || isAuthDisabled || !hasFiles} className="w-full bg-primary hover:bg-primary/90">
-      {isPending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Analyzing...
-        </>
-      ) : (
-        <>
-          <UploadCloud className="mr-2 h-4 w-4" />
-          Analyze Charts
-        </>
-      )}
-    </Button>
-  );
-}
+import { AnalyzeButton } from "./analyze-button";
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -467,7 +444,10 @@ export function ImageUploadForm() {
                 <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isPending}>
                     Reset
                 </Button>
-                <SubmitButton isAuthDisabled={interactionDisabledForAuth || !canAnalyze || isPending} hasFiles={hasFiles} isPending={isPending} />
+                <AnalyzeButton
+                  isPending={isPending}
+                  isDisabled={interactionDisabledForAuth || !canAnalyze || isPending || !hasFiles}
+                />
                 </div>
             </CardFooter>
             </form>
