@@ -7,7 +7,6 @@ import { useTheme } from '@/contexts/theme-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
@@ -21,10 +20,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { User, Moon, Sun, Bell, ShieldAlert, Trash2, LogOut } from 'lucide-react'; // Added LogOut
+import { User, Moon, Sun, Bell, ShieldAlert, Trash2, LogOut } from 'lucide-react';
+import { ThemeSwitch } from './theme-switch'; // Import the new theme switch
 
 export function SettingsForm() {
-  const { user, loading: authLoading, logout } = useAuth(); // Added logout
+  const { user, loading: authLoading, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
@@ -122,18 +122,13 @@ export function SettingsForm() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between space-x-2 py-2">
-            <Label htmlFor="theme-toggle" className="flex flex-col space-y-1">
+            <Label htmlFor="theme-checkbox" className="flex flex-col space-y-1">
               <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
               <span className="font-normal leading-snug text-muted-foreground">
                 Switch between themes.
               </span>
             </Label>
-            <Switch
-              id="theme-toggle"
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              aria-label="Toggle theme"
-            />
+            <ThemeSwitch />
           </div>
         </CardContent>
       </Card>
@@ -179,7 +174,7 @@ export function SettingsForm() {
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2 text-destructive">
             <ShieldAlert className="text-destructive" /> Danger Zone
-          </CardTitle>
+          </-cardTitle>
           <CardDescription>Critical account actions.</CardDescription>
         </CardHeader>
         <CardContent>

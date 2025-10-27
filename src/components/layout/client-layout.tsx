@@ -105,15 +105,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   <Link href="/pricing">Subscribe</Link>
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full"
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            
+            {/* The old button is removed from here */}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                   {user ? (
