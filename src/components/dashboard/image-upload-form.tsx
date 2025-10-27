@@ -21,6 +21,7 @@ import { Lights } from "@/components/ui/background-lights";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnalyzeButton } from "./analyze-button";
 import Loader from "./loader";
+import { TypingLoaderText } from "./typing-loader-text";
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -386,8 +387,9 @@ export function ImageUploadForm() {
     <div className="space-y-8">
       <Card className="shadow-lg relative overflow-hidden">
         {isPending && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm">
                 <Loader />
+                <TypingLoaderText />
             </div>
         )}
         <Lights className="absolute top-0 left-0 w-full h-full" />
