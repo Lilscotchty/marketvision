@@ -3,14 +3,14 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
-import { PerformanceHistoryTable } from "@/components/performance/performance-history-table";
 import { PerformanceStats } from "@/components/performance/performance-stats";
 import type { HistoricalPrediction } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, HelpCircle } from "lucide-react";
+import PredictionCard from "@/components/performance/prediction-card";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -148,11 +148,26 @@ export default function PerformancePage() {
         </section>
 
         <section>
-          <PerformanceHistoryTable 
-            predictions={predictions} 
-            onFlagTrade={handleFlagTrade}
-            onDeletePrediction={handleDeletePrediction}
-          />
+          {predictions.length === 0 ? (
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="font-headline text-xl">Prediction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <HelpCircle className="h-16 w-16 text-muted-foreground mb-4" />
+                  <h3 className="text-xl font-semibold mb-2 text-foreground">No Prediction History</h3>
+                  <p className="text-muted-foreground">Your analyzed predictions will appear here.</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+              {predictions.map((pred) => (
+                <PredictionCard key={pred.id} prediction={pred} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>

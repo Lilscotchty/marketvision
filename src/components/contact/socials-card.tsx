@@ -31,8 +31,8 @@ const SocialsCard = () => {
 const StyledWrapper = styled.div`
   .card {
     position: relative;
-    width: 100%;
-    max-width: 200px; /* Constrain width on larger screens */
+    width: 300px;
+    max-width: 500px; /* Constrain width on larger screens */
     height: 200px;
     background: lightgrey;
     border-radius: var(--radius); /* Use theme radius */

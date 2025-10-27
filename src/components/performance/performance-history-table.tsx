@@ -35,6 +35,10 @@ import {
 import { PredictionResults } from "@/components/dashboard/prediction-results";
 import { cn } from "@/lib/utils";
 
+// This component is no longer directly used on the performance page,
+// but is kept in case it's needed elsewhere or for future reference.
+// The primary display is now handled by PredictionCard components in a grid.
+
 const INITIAL_DISPLAY_COUNT = 5;
 
 interface PerformanceHistoryTableProps {
