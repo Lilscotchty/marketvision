@@ -22,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { User, Moon, Sun, Bell, ShieldAlert, Trash2, LogOut } from 'lucide-react';
 import { ThemeSwitch } from './theme-switch'; // Import the new theme switch
+import { Switch } from '../ui/switch';
 
 export function SettingsForm() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -174,7 +175,7 @@ export function SettingsForm() {
         <CardHeader>
           <CardTitle className="font-headline text-xl flex items-center gap-2 text-destructive">
             <ShieldAlert className="text-destructive" /> Danger Zone
-          </-cardTitle>
+          </CardTitle>
           <CardDescription>Critical account actions.</CardDescription>
         </CardHeader>
         <CardContent>
