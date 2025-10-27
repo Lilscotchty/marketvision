@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -30,14 +31,16 @@ const SocialsCard = () => {
 const StyledWrapper = styled.div`
   .card {
     position: relative;
-    width: 200px;
+    width: 100%;
+    max-width: 200px; /* Constrain width on larger screens */
     height: 200px;
     background: lightgrey;
-    border-radius: 30px;
+    border-radius: var(--radius); /* Use theme radius */
     overflow: hidden;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
     transition: all 1s ease-in-out;
     border: 2px solid rgb(255, 255, 255);
+    margin: 0 auto; /* Center the card */
   }
 
   .background {
