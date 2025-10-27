@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   input: {schema: PredictMarketMovementInputSchema},
   output: {schema: PredictMarketMovementOutputSchema},
   config: {
-    model: 'googleai/gemini-1.5-flash-latest',
+    model: 'googleai/gemini-2.5-flash',
   },
   prompt: `You are an expert financial analyst and trader specializing in technical analysis from candlestick charts. Your task is to analyze the provided chart image and generate a conceptual trade idea.
 
