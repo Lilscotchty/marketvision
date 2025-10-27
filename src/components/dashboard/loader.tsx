@@ -43,6 +43,10 @@ const StyledWrapper = styled.div`
       0 0 25px 0 var(--color-three),
       0 20px 50px 0 var(--color-four);
     animation: colorize calc(var(--time-animation) * 3) ease-in-out infinite;
+
+    @media (max-width: 768px) {
+      --size: 0.75;
+    }
   }
 
   .loader::before {
