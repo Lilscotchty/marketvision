@@ -211,22 +211,13 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
       opacity: 1;
       background: ${({ direction }) =>
         direction === 'UP'
-          ? `linear-gradient(to bottom, hsla(var(--primary) / 0.8), transparent)`
+          ? `linear-gradient(to bottom, hsla(var(--primary) / 0.6), transparent)`
           : direction === 'DOWN'
-          ? `linear-gradient(to bottom, hsla(var(--destructive) / 0.8), transparent)`
+          ? `linear-gradient(to bottom, hsla(var(--destructive) / 0.6), transparent)`
           : 'transparent'};
-    }
-    .text, .icons {
-      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'color: white;'}
-    }
-    .subtitle {
-      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'color: rgba(255, 255, 255, 0.7);'}
     }
     .svg-icon {
        ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'stroke: white;'}
-    }
-    .manual-flag {
-      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'background-color: rgba(255,255,255,0.2); color: white;'}
     }
   }
   
@@ -367,5 +358,3 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 `;
 
 export default SimplePredictionCard;
-
-    
