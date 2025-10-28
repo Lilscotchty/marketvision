@@ -28,9 +28,9 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
   const marketDirection = predData?.marketDirection || 'NEUTRAL';
 
   const DirectionIcon = 
-    marketDirection === 'UP' ? <TrendingUp className="h-6 w-6 text-green-500" /> :
-    marketDirection === 'DOWN' ? <TrendingDown className="h-6 w-6 text-red-500" /> :
-    <Minus className="h-6 w-6 text-yellow-500" />;
+    marketDirection === 'UP' ? <TrendingUp className="h-6 w-6" /> :
+    marketDirection === 'DOWN' ? <TrendingDown className="h-6 w-6" /> :
+    <Minus className="h-6 w-6" />;
     
   const getBackgroundImage = () => {
     switch (marketDirection) {
@@ -66,7 +66,6 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
         useCORS: true, 
         backgroundColor: null,
         onclone: (document) => {
-          // Hide the buttons on the cloned element for the screenshot
           const clonedCard = document.querySelector('.card');
           if (clonedCard) {
             const actionButtons = clonedCard.querySelector('.action-buttons');
@@ -105,7 +104,7 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
           </div>
           <div className="front">
             <div className="img">
-              <Image src={getBackgroundImage()} alt={asset || 'chart'} layout="fill" objectFit="cover" />
+               <Image src={getBackgroundImage()} alt={asset || 'chart'} layout="fill" objectFit="cover" />
               <div className="circle"></div>
               <div className="circle" id="right"></div>
               <div className="circle" id="bottom"></div>
@@ -305,7 +304,7 @@ const StyledWrapper = styled.div`
     width: 99%;
     height: 99%;
     background-color: hsl(var(--card));
-    border-radius: 5px;
+    border-radius: var(--radius);
     color: hsl(var(--card-foreground));
     display: flex;
     flex-direction: column;
@@ -355,12 +354,13 @@ const StyledWrapper = styled.div`
   }
   
   .front-content .badge {
-    background-color: hsla(var(--card), 0.5);
+    background-color: hsla(var(--background) / 0.5);
     padding: 2px 10px;
     border-radius: 10px;
     backdrop-filter: blur(2px);
     width: fit-content;
-    color: hsl(var(--card-foreground));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border) / 0.5);
   }
   
   .badge-sm {
@@ -385,14 +385,12 @@ const StyledWrapper = styled.div`
 
 
   .description {
-    box-shadow: 0px 0px 10px 5px hsla(var(--card), 0.1);
+    box-shadow: 0px 0px 10px 5px hsla(var(--background), 0.1);
     width: 100%;
     padding: 10px;
-    background-color: hsla(var(--card), 0.2);
+    background-color: hsla(var(--background), 0.2);
     backdrop-filter: blur(5px);
     border-radius: 5px;
-    display: flex;
-    flex-direction: column;
   }
 
   .title {
@@ -403,7 +401,8 @@ const StyledWrapper = styled.div`
   }
 
   .title p {
-    width: 50%;
+    width: 100%;
+    color: hsl(var(--card));
   }
 
   .card-footer {
@@ -502,6 +501,3 @@ const StyledWrapper = styled.div`
       transform: translateY(0px);
     }
   }
-`;
-
-export default PredictionCard;
