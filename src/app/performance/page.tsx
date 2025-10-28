@@ -136,7 +136,7 @@ export default function PerformancePage() {
     return null; // Return null to prevent rendering while redirecting
   }
 
-  const displayedPredictions = showAll ? predictions : predictions.slice(0, 3);
+  const displayedPredictions = showAll ? predictions : predictions.slice(0, 4);
 
   return (
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
@@ -178,7 +178,7 @@ export default function PerformancePage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
                   {displayedPredictions.map((pred) => (
                     <PredictionCard 
                       key={pred.id} 
@@ -189,7 +189,7 @@ export default function PerformancePage() {
                   ))}
                 </div>
               )}
-              {!showAll && predictions.length > 3 && !isMobile && (
+              {!showAll && predictions.length > 4 && !isMobile && (
                 <div className="mt-8 text-center">
                   <Button onClick={() => setShowAll(true)}>
                     Load More
