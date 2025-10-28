@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction, AnalysisOutput } from '@/types';
-import { ThumbsUp, ThumbsDown, Trash2, Eye } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Trash2, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
@@ -23,7 +23,7 @@ interface SimplePredictionCardProps {
 }
 
 const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePredictionCardProps) => {
-  const { id, asset, date, manualFlag, analysis } = prediction;
+  const { id, asset, date, manualFlag, analysis, prediction: predData } = prediction;
   const [open, setOpen] = useState(false);
   
   const dailyBiasReasoning = analysis?.dailyBiasReasoning;
@@ -32,8 +32,12 @@ const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePrediction
 
 
   return (
-    <StyledWrapper>
+    <StyledWrapper manualFlag={manualFlag} direction={predData?.marketDirection}>
       <div className="card">
+        <div className="hover-background"></div>
+        <div className="hover-arrow">
+          {manualFlag === 'successful' ? <ArrowUpRight /> : <ArrowDownRight />}
+        </div>
         <div className="text">
           <span>{asset}</span>
           <p className="subtitle">{format(new Date(date), 'MMM dd, yyyy, hh:mm a')}</p>
@@ -153,7 +157,7 @@ const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePrediction
   );
 }
 
-const StyledWrapper = styled.div`
+const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', direction?: 'UP' | 'DOWN' | 'NEUTRAL' }>`
   .card {
     width: 100%;
     max-width: 300px;
@@ -167,8 +171,65 @@ const StyledWrapper = styled.div`
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: transform 0.3s ease;
   }
 
+  .hover-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 0;
+  }
+
+  .hover-arrow {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: white;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s ease;
+    z-index: 2;
+    & > svg {
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    .hover-arrow {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+    .hover-background {
+      opacity: 1;
+      background: ${({ manualFlag }) =>
+        manualFlag === 'successful'
+          ? 'linear-gradient(135deg, hsla(var(--primary), 0.7) 0%, hsla(var(--primary), 0.9) 100%)'
+          : manualFlag === 'unsuccessful'
+          ? 'linear-gradient(135deg, hsla(var(--destructive), 0.7) 0%, hsla(var(--destructive), 0.9) 100%)'
+          : 'transparent'};
+    }
+    .text, .icons {
+      ${({ manualFlag }) => manualFlag && 'color: white;'}
+    }
+    .subtitle {
+      ${({ manualFlag }) => manualFlag && 'color: rgba(255, 255, 255, 0.7);'}
+    }
+    .svg-icon {
+       ${({ manualFlag }) => manualFlag && 'stroke: white;'}
+    }
+    .manual-flag {
+      ${({ manualFlag }) => manualFlag && 'background-color: rgba(255,255,255,0.2); color: white;'}
+    }
+  }
+  
   .card::before {
     content: "";
     height: 100px;
@@ -180,6 +241,7 @@ const StyledWrapper = styled.div`
     border: 35px solid hsla(var(--primary) / 0.1);
     transition: all .8s ease;
     filter: blur(.5rem);
+    z-index: 1;
   }
 
   .text {
@@ -190,6 +252,8 @@ const StyledWrapper = styled.div`
     color: hsl(var(--card-foreground));
     font-weight: 900;
     font-size: 1.1em;
+    position: relative;
+    z-index: 1;
   }
 
   .subtitle {
@@ -224,6 +288,8 @@ const StyledWrapper = styled.div`
     align-items: center;
     width: 100%;
     border-top: 1px solid hsl(var(--border));
+    position: relative;
+    z-index: 1;
   }
 
   .btn {
@@ -291,6 +357,7 @@ const StyledWrapper = styled.div`
     opacity: 0;
     transform: scale(0.8);
     transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 2;
   }
 
   .card:hover .details-btn {
