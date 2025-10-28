@@ -31,6 +31,18 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
     marketDirection === 'UP' ? <TrendingUp className="h-6 w-6 text-green-500" /> :
     marketDirection === 'DOWN' ? <TrendingDown className="h-6 w-6 text-red-500" /> :
     <Minus className="h-6 w-6 text-yellow-500" />;
+    
+  const getBackgroundImage = () => {
+    switch (marketDirection) {
+      case 'UP':
+        return 'https://i.ibb.co/TMBtJqwp/Bulish.jpg';
+      case 'DOWN':
+        return 'https://i.ibb.co/zHF6zFhf/Bearish.png';
+      default:
+        return imagePreviewUrl || 'https://placehold.co/190x254/151515/a8a8a8.png?text=Chart';
+    }
+  };
+
 
   const handleFlagClick = (e: React.MouseEvent, flag: 'successful' | 'unsuccessful') => {
     e.stopPropagation();
@@ -93,7 +105,7 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
           </div>
           <div className="front">
             <div className="img">
-              {imagePreviewUrl && <Image src={imagePreviewUrl} alt={asset || 'chart'} layout="fill" objectFit="cover" />}
+              <Image src={getBackgroundImage()} alt={asset || 'chart'} layout="fill" objectFit="cover" />
               <div className="circle"></div>
               <div className="circle" id="right"></div>
               <div className="circle" id="bottom"></div>
