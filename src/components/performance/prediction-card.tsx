@@ -330,7 +330,7 @@ const StyledWrapper = styled.div`
 
   .front {
     transform: rotateY(180deg);
-    color: hsl(var(--card-foreground));
+    color: hsl(var(--card));
   }
 
   .front .front-content {
@@ -355,12 +355,12 @@ const StyledWrapper = styled.div`
   }
   
   .front-content .badge {
-    background-color: hsla(var(--card-foreground) / 0.5);
+    background-color: hsla(var(--card), 0.5);
     padding: 2px 10px;
     border-radius: 10px;
     backdrop-filter: blur(2px);
     width: fit-content;
-    color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
   }
   
   .badge-sm {
@@ -385,10 +385,10 @@ const StyledWrapper = styled.div`
 
 
   .description {
-    box-shadow: 0px 0px 10px 5px hsla(var(--card-foreground) / 0.1);
+    box-shadow: 0px 0px 10px 5px hsla(var(--card), 0.1);
     width: 100%;
     padding: 10px;
-    background-color: hsla(var(--card-foreground) / 0.2);
+    background-color: hsla(var(--card), 0.2);
     backdrop-filter: blur(5px);
     border-radius: 5px;
     display: flex;
@@ -407,7 +407,7 @@ const StyledWrapper = styled.div`
   }
 
   .card-footer {
-    color: hsla(var(--card-foreground) / 0.8);
+    color: hsla(var(--card), 0.8);
     margin-top: 5px;
     font-size: 8px;
     min-height: 24px; /* Ensure space for 3 lines */
