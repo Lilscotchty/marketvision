@@ -36,7 +36,7 @@ const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePrediction
       <div className="card">
         <div className="hover-background"></div>
         <div className="hover-arrow">
-          {manualFlag === 'successful' ? <ArrowUpRight /> : <ArrowDownRight />}
+          {predData?.marketDirection === 'UP' ? <ArrowUpRight /> : <ArrowDownRight />}
         </div>
         <div className="text">
           <span>{asset}</span>
@@ -209,24 +209,24 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
     }
     .hover-background {
       opacity: 1;
-      background: ${({ manualFlag }) =>
-        manualFlag === 'successful'
+      background: ${({ direction }) =>
+        direction === 'UP'
           ? 'linear-gradient(135deg, hsla(var(--primary), 0.7) 0%, hsla(var(--primary), 0.9) 100%)'
-          : manualFlag === 'unsuccessful'
+          : direction === 'DOWN'
           ? 'linear-gradient(135deg, hsla(var(--destructive), 0.7) 0%, hsla(var(--destructive), 0.9) 100%)'
           : 'transparent'};
     }
     .text, .icons {
-      ${({ manualFlag }) => manualFlag && 'color: white;'}
+      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'color: white;'}
     }
     .subtitle {
-      ${({ manualFlag }) => manualFlag && 'color: rgba(255, 255, 255, 0.7);'}
+      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'color: rgba(255, 255, 255, 0.7);'}
     }
     .svg-icon {
-       ${({ manualFlag }) => manualFlag && 'stroke: white;'}
+       ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'stroke: white;'}
     }
     .manual-flag {
-      ${({ manualFlag }) => manualFlag && 'background-color: rgba(255,255,255,0.2); color: white;'}
+      ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'background-color: rgba(255,255,255,0.2); color: white;'}
     }
   }
   
@@ -367,5 +367,3 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 `;
 
 export default SimplePredictionCard;
-
-    
