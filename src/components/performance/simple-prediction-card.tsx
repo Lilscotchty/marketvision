@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import type { HistoricalPrediction, AnalysisOutput } from '@/types';
+import type { HistoricalPrediction } from '@/types';
 import { ThumbsUp, ThumbsDown, Trash2, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
@@ -180,9 +180,9 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
     left: 0;
     right: 0;
     bottom: 0;
-    background: transparent;
+    background-color: transparent;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.4s ease, background-color 0.4s ease;
     z-index: 0;
   }
 
@@ -208,12 +208,12 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
       transform: scale(1);
     }
     .hover-background {
-      opacity: 1;
-      background: ${({ direction }) =>
+      opacity: 0.85;
+      background-color: ${({ direction }) =>
         direction === 'UP'
-          ? 'linear-gradient(135deg, hsla(var(--primary), 0.7) 0%, hsla(var(--primary), 0.9) 100%)'
+          ? 'hsl(var(--primary))'
           : direction === 'DOWN'
-          ? 'linear-gradient(135deg, hsla(var(--destructive), 0.7) 0%, hsla(var(--destructive), 0.9) 100%)'
+          ? 'hsl(var(--destructive))'
           : 'transparent'};
     }
     .text, .icons {
@@ -367,3 +367,4 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 `;
 
 export default SimplePredictionCard;
+
