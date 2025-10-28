@@ -3,18 +3,17 @@
 
 import React, { useRef } from 'react';
 import styled from 'styled-components';
-import type { HistoricalPrediction, AnalysisOutput } from '@/types';
-import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, Trash2, Share2, MoreHorizontal, GalleryHorizontal, BarChart2, Lightbulb, Zap, Workflow, Layers3, Compass, BookOpen, Target, Activity, Info, ShieldCheck, Crosshair, PackageOpen } from 'lucide-react';
+import type { HistoricalPrediction } from '@/types';
+import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, Trash2, Share2, MoreHorizontal, GalleryHorizontal, Lightbulb, Zap, Workflow, Layers3, Compass, BookOpen, Target, Activity, Info, ShieldCheck, Crosshair, PackageOpen } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label"; // Import the Label component
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from '../ui/scroll-area';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-
 
 interface PredictionCardProps {
   prediction: HistoricalPrediction;
@@ -44,7 +43,6 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
         return imagePreviewUrl || 'https://placehold.co/190x254/151515/a8a8a8.png?text=Chart';
     }
   };
-
 
   const handleFlagClick = (e: React.MouseEvent, flag: 'successful' | 'unsuccessful') => {
     e.stopPropagation();
@@ -93,7 +91,6 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
   const sniperEntry = analysis?.sniperEntrySetup;
   const displayImages = prediction.imagePreviewUrls?.filter(Boolean) as string[] || (prediction.imagePreviewUrl ? [prediction.imagePreviewUrl] : []);
 
-
   return (
     <StyledWrapper ref={cardRef}>
       <div className="card">
@@ -105,7 +102,7 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
             </div>
           </div>
           <div className="front">
-            <div className="img">
+             <div className="img">
                <Image src={getBackgroundImage()} alt={asset || 'chart'} layout="fill" objectFit="cover" />
               <div className="circle"></div>
               <div className="circle" id="right"></div>
@@ -115,10 +112,10 @@ const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) =
               <div className="card-header">
                 <small className="badge">{asset}</small>
                 <div className="action-buttons">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" title="Share as Image" onClick={handleShareClick}><Share2 size={12} /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" title="Share as Image" onClick={handleShareClick}><Share2 size={12} /></Button>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" title="More Details"><MoreHorizontal size={14} /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" title="More Details"><MoreHorizontal size={14} /></Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-3xl">
                             <DialogHeader>
@@ -385,12 +382,11 @@ const StyledWrapper = styled.div`
       background-color: rgba(220, 53, 69, 0.7);
   }
 
-
   .description {
-    box-shadow: 0px 0px 10px 5px hsla(var(--background), 0.1);
+    box-shadow: 0px 0px 10px 5px hsla(var(--background) / 0.2);
     width: 100%;
     padding: 10px;
-    background-color: hsla(var(--background), 0.2);
+    background-color: hsla(var(--background) / 0.4);
     backdrop-filter: blur(5px);
     border-radius: 5px;
   }
@@ -411,7 +407,7 @@ const StyledWrapper = styled.div`
     color: hsla(var(--card), 0.8);
     margin-top: 5px;
     font-size: 8px;
-    min-height: 24px; /* Ensure space for 3 lines */
+    min-height: 24px;
   }
 
   .flag-buttons {

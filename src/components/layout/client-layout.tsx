@@ -9,14 +9,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { CustomDropdown, type CustomDropdownMenuItem } from '@/components/ui/custom-dropdown';
 import { useTheme } from '@/contexts/theme-context';
 import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
@@ -82,6 +75,23 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   
   const hasSubscription = userData?.hasActiveSubscription;
 
+  const userDropdownItems: CustomDropdownMenuItem[][] = user
+    ? [
+        [
+          { icon: <Settings />, label: "Settings", onClick: () => window.location.href = '/settings' },
+          { icon: <Bell />, label: "Notifications", onClick: () => window.location.href = '/notifications' },
+        ],
+        [
+          { icon: <LogOut />, label: "Logout", onClick: handleLogout, isDelete: true },
+        ],
+      ]
+    : [
+        [
+          { icon: <LogIn />, label: "Login", onClick: () => window.location.href = '/login' },
+          { icon: <UserPlus />, label: "Sign Up", onClick: () => window.location.href = '/signup', isSpecial: true },
+        ],
+      ];
+
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
        {isClient && <SidebarTrigger />}
@@ -106,88 +116,47 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               </Button>
             )}
             
-            {/* The old button is removed from here */}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                  {user ? (
-                    hasSubscription ? (
-                        <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
-                            <Avatar className="h-6 w-6">
-                                {user?.photoURL ? (
-                                <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
-                                ) : (
-                                <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
-                                    {getInitials(user?.email)}
-                                </AvatarFallback>
-                                )}
-                            </Avatar>
-                            <span>PRO</span>
-                        </button>
-                    ) : (
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <Avatar className="h-8 w-8">
-                                {user?.photoURL ? (
-                                <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
-                                ) : (
-                                <AvatarFallback className="bg-primary text-primary-foreground">
-                                    {getInitials(user?.email)}
-                                </AvatarFallback>
-                                )}
-                            </Avatar>
-                        </Button>
-                    )
+            <CustomDropdown
+              items={userDropdownItems}
+              trigger={
+                user ? (
+                  hasSubscription ? (
+                    <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
+                      <Avatar className="h-6 w-6">
+                        {user?.photoURL ? (
+                          <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                        ) : (
+                          <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
+                            {getInitials(user?.email)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span>PRO</span>
+                    </button>
                   ) : (
-                     <Button variant="ghost" size="icon" className="rounded-full">
-                        <Avatar className="h-8 w-8">
-                             <AvatarFallback className="bg-muted text-muted-foreground">
-                                <User className="h-4 w-4"/>
-                             </AvatarFallback>
-                        </Avatar>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <Avatar className="h-8 w-8">
+                        {user?.photoURL ? (
+                          <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                        ) : (
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {getInitials(user?.email)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
                     </Button>
-                  )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {user ? (
-                  <>
-                    <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <Link href="/settings" passHref>
-                      <DropdownMenuItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/notifications" passHref>
-                      <DropdownMenuItem>
-                        <Bell className="mr-2 h-4 w-4" />
-                        <span>Notifications</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </>
+                  )
                 ) : (
-                  <>
-                    <Link href="/login" passHref>
-                      <DropdownMenuItem>
-                        <LogIn className="mr-2 h-4 w-4" />
-                        <span>Login</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/signup" passHref>
-                      <DropdownMenuItem>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Sign Up</span>
-                      </DropdownMenuItem>
-                    </Link>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-muted text-muted-foreground">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                )
+              }
+            />
           </>
         )}
       </div>
