@@ -13,6 +13,7 @@ import { Loader2, HelpCircle } from "lucide-react";
 import PredictionCard from "@/components/performance/prediction-card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SimplePredictionCard from "@/components/performance/simple-prediction-card";
+import { Button } from "@/components/ui/button";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -31,6 +32,7 @@ export default function PerformancePage() {
   const router = useRouter();
   const [lastSeenNewId, setLastSeenNewId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const [showAll, setShowAll] = useState(false);
 
 
   useEffect(() => {
@@ -134,6 +136,8 @@ export default function PerformancePage() {
     return null; // Return null to prevent rendering while redirecting
   }
 
+  const displayedPredictions = showAll ? predictions : predictions.slice(0, 3);
+
   return (
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
       <div className="container mx-auto py-8 space-y-12">
@@ -151,45 +155,51 @@ export default function PerformancePage() {
         </section>
 
         <section>
-          {predictions.length === 0 ? (
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="font-headline text-xl">Prediction History</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="font-headline text-xl">Prediction History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {predictions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <HelpCircle className="h-16 w-16 text-muted-foreground mb-4" />
                   <h3 className="text-xl font-semibold mb-2 text-foreground">No Prediction History</h3>
                   <p className="text-muted-foreground">Your analyzed predictions will appear here.</p>
                 </div>
-              </CardContent>
-            </Card>
-          ) : isMobile ? (
-            <div className="space-y-4">
-              {predictions.map((pred) => (
-                <SimplePredictionCard
-                  key={pred.id}
-                  prediction={pred}
-                  onFlag={handleFlagTrade}
-                  onDelete={handleDeletePrediction}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
-              {predictions.slice(0, 4).map((pred) => (
-                <PredictionCard 
-                  key={pred.id} 
-                  prediction={pred} 
-                  onFlag={handleFlagTrade}
-                  onDelete={handleDeletePrediction}
-                />
-              ))}
-            </div>
-          )}
+              ) : isMobile ? (
+                <div className="space-y-4">
+                  {predictions.map((pred) => (
+                    <SimplePredictionCard
+                      key={pred.id}
+                      prediction={pred}
+                      onFlag={handleFlagTrade}
+                      onDelete={handleDeletePrediction}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+                  {displayedPredictions.map((pred) => (
+                    <PredictionCard 
+                      key={pred.id} 
+                      prediction={pred} 
+                      onFlag={handleFlagTrade}
+                      onDelete={handleDeletePrediction}
+                    />
+                  ))}
+                </div>
+              )}
+              {!showAll && predictions.length > 3 && !isMobile && (
+                <div className="mt-8 text-center">
+                  <Button onClick={() => setShowAll(true)}>
+                    Load More
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </section>
       </div>
     </main>
   );
 }
-
