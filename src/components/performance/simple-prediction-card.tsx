@@ -180,9 +180,9 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: transparent;
+    background: transparent;
     opacity: 0;
-    transition: opacity 0.4s ease, background-color 0.4s ease;
+    transition: opacity 0.4s ease, background 0.4s ease;
     z-index: 0;
   }
 
@@ -208,12 +208,12 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
       transform: scale(1);
     }
     .hover-background {
-      opacity: 0.85;
-      background-color: ${({ direction }) =>
+      opacity: 1;
+      background: ${({ direction }) =>
         direction === 'UP'
-          ? 'hsl(var(--primary))'
+          ? `linear-gradient(to bottom, hsla(var(--primary) / 0.8), transparent)`
           : direction === 'DOWN'
-          ? 'hsl(var(--destructive))'
+          ? `linear-gradient(to bottom, hsla(var(--destructive) / 0.8), transparent)`
           : 'transparent'};
     }
     .text, .icons {
@@ -368,3 +368,4 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 
 export default SimplePredictionCard;
 
+    
