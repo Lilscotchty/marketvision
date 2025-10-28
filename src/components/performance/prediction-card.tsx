@@ -1,4 +1,6 @@
 
+"use client";
+
 import React, { useRef } from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction, AnalysisOutput } from '@/types';
@@ -8,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Import the Label component
 import { ScrollArea } from '../ui/scroll-area';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -359,7 +361,7 @@ const StyledWrapper = styled.div`
     border-radius: 10px;
     backdrop-filter: blur(2px);
     width: fit-content;
-    color: hsl(var(--foreground));
+    color: hsl(var(--card));
     border: 1px solid hsl(var(--border) / 0.5);
   }
   
@@ -501,3 +503,6 @@ const StyledWrapper = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+export default PredictionCard;
