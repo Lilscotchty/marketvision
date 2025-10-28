@@ -216,9 +216,6 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
           ? `linear-gradient(to bottom, hsla(var(--destructive) / 0.6), transparent)`
           : 'transparent'};
     }
-    .svg-icon {
-       ${({ direction }) => (direction === 'UP' || direction === 'DOWN') && 'stroke: white;'}
-    }
   }
   
   .card::before {
@@ -358,3 +355,5 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 `;
 
 export default SimplePredictionCard;
+
+    
