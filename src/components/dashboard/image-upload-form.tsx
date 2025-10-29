@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, UploadCloud, CreditCard, X, ImagePlus, BarChartHorizontal } from "lucide-react";
+import { AlertCircle, CheckCircle, UploadCloud, CreditCard, X, ImagePlus, BarChartHorizontal, Loader2 } from "lucide-react";
 import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
@@ -19,7 +19,6 @@ import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
 import { Lights } from "@/components/ui/background-lights";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AnalyzeButton } from "./analyze-button";
 import Loader from "./loader";
 import { TypingLoaderText } from "./typing-loader-text";
 
@@ -392,7 +391,6 @@ export function ImageUploadForm() {
                 <TypingLoaderText />
             </div>
         )}
-        <Lights className="absolute top-0 left-0 w-full h-full" />
         <div className={cn("relative z-10", isPending && "blur-sm")}>
             <form ref={formRef} onSubmit={handleSubmit}>
             <CardHeader>
@@ -452,10 +450,20 @@ export function ImageUploadForm() {
                 <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isPending}>
                     Reset
                 </Button>
-                <AnalyzeButton
-                  isPending={isPending}
-                  isDisabled={interactionDisabledForAuth || !canAnalyze || isPending || !hasFiles}
-                />
+                <Button
+                  type="submit"
+                  disabled={interactionDisabledForAuth || !canAnalyze || isPending || !hasFiles}
+                  className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    "Analyze Charts"
+                  )}
+                </Button>
                 </div>
             </CardFooter>
             </form>
