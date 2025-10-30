@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 // Dynamically import the TradingView chart to prevent SSR issues and improve initial load.
 const TradingViewAdvancedChartWidget = dynamic(
@@ -56,20 +56,20 @@ export default function LiveAnalysisPage() {
           </h1>
         </header>
         
-        <section id="live-trading-chart" className="relative" ref={chartContainerRef}>
+        <section id="live-trading-chart">
           <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
-          {!isMobile && (
-             <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-14 right-4 z-10 bg-background/50 hover:bg-background/80"
-                onClick={toggleFullScreen}
-                title="Toggle Fullscreen"
-              >
-                <Maximize className="h-5 w-5" />
-              </Button>
-          )}
-          <div className="h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden bg-card">
+          <div className="relative h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden bg-card" ref={chartContainerRef}>
+            {!isMobile && (
+              <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10 bg-background/50 hover:bg-background/80"
+                  onClick={toggleFullScreen}
+                  title="Toggle Fullscreen"
+                >
+                  <Maximize className="h-5 w-5" />
+                </Button>
+            )}
             <TradingViewAdvancedChartWidget />
           </div>
         </section>
