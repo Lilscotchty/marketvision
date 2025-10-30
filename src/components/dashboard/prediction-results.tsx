@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label"; // Import the Label component
+import { SniperEntryCard } from "./sniper-entry-card";
 
 
 interface PredictionResultsProps {
@@ -288,19 +289,28 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
             {sniperEntry.tradeManagement && (sniperEntry.tradeManagement.entryPrice || sniperEntry.tradeManagement.stopLossPrice || sniperEntry.tradeManagement.takeProfitPrice) && (
               <div className="space-y-3">
                  <h4 className="font-semibold flex items-center gap-2 text-md"><ShieldCheck className="h-5 w-5 text-accent"/>Precise Trade Management</h4>
-                 <div className="p-4 border rounded-lg bg-muted/40 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <Label className="text-xs text-muted-foreground">Entry Price</Label>
-                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.entryPrice.toLocaleString()}</p>
-                    </div>
-                     <div>
-                        <Label className="text-xs text-red-500">Stop Loss</Label>
-                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.stopLossPrice.toLocaleString()}</p>
-                    </div>
-                     <div>
-                        <Label className="text-xs text-green-500">Take Profit</Label>
-                        <p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.takeProfitPrice.toLocaleString()}</p>
-                    </div>
+                 <div className="p-4 border rounded-lg bg-muted/40 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center justify-items-center">
+                    <SniperEntryCard
+                        title="Entry Price"
+                        value={sniperEntry.tradeManagement.entryPrice.toLocaleString()}
+                        footerText="Optimal Entry"
+                    />
+                    <SniperEntryCard
+                        title="Stop Loss"
+                        value={sniperEntry.tradeManagement.stopLossPrice.toLocaleString()}
+                        footerText="Risk Limit"
+                        bgColor="bg-red-400"
+                        gradientFrom="from-red-500"
+                        gradientTo="to-orange-300"
+                    />
+                    <SniperEntryCard
+                        title="Take Profit"
+                        value={sniperEntry.tradeManagement.takeProfitPrice.toLocaleString()}
+                        footerText="Price Target"
+                        bgColor="bg-green-400"
+                        gradientFrom="from-green-500"
+                        gradientTo="to-blue-300"
+                    />
                  </div>
               </div>
             )}
@@ -310,11 +320,3 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    
