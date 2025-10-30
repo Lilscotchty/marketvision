@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, memo } from 'react';
@@ -42,7 +41,7 @@ function TradingViewWidget() {
           "popup_width": "1000",
           "studies": [],
           "autosize": true,
-          "fullscreen": true
+          "fullscreen": false
         });
         container.current.appendChild(script);
         scriptExists.current = true;

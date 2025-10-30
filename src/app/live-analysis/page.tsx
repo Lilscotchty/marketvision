@@ -1,10 +1,10 @@
 'use client'
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiveMarketDataDisplay } from "@/components/live-analysis/live-market-data-display";
 import { Separator } from "@/components/ui/separator";
-import { BarChart, Bot, PlusCircle } from "lucide-react";
+import { BarChart, Bot, PlusCircle, Maximize } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,6 +23,20 @@ const TradingViewAdvancedChartWidget = dynamic(
 export default function LiveAnalysisPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullScreen = () => {
+    const elem = chartContainerRef.current;
+    if (elem) {
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => {
+          alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
   
   const FormContainer = isMobile ? Sheet : Dialog;
   const FormContainerTrigger = isMobile ? SheetTrigger : DialogTrigger;
@@ -42,9 +56,20 @@ export default function LiveAnalysisPage() {
           </h1>
         </header>
         
-        <section id="live-trading-chart">
+        <section id="live-trading-chart" className="relative" ref={chartContainerRef}>
           <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
-          <div className="h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden">
+          {!isMobile && (
+             <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-14 right-4 z-10 bg-background/50 hover:bg-background/80"
+                onClick={toggleFullScreen}
+                title="Toggle Fullscreen"
+              >
+                <Maximize className="h-5 w-5" />
+              </Button>
+          )}
+          <div className="h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden bg-card">
             <TradingViewAdvancedChartWidget />
           </div>
         </section>
