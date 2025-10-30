@@ -1,6 +1,8 @@
 
 import type { AnalyzeCandlestickChartOutput } from '@/ai/flows/analyze-candlestick-chart';
 import type { PredictMarketMovementOutput } from '@/ai/flows/predict-market-movement';
+import type { CategorizeAssetOutput } from '@/ai/flows/categorize-asset-flow';
+
 // Import the TYPES directly from the flow file, not the schema objects
 import type { 
   AnalyzeMarketDataInput as FlowAnalyzeMarketDataInput, 
@@ -9,6 +11,7 @@ import type {
 import { z } from 'zod';
 import type { MessageData } from 'genkit';
 
+export type AssetCategory = CategorizeAssetOutput['category'];
 
 export interface UploadedImageAnalysis {
   id: string;
@@ -30,6 +33,7 @@ export interface AlertConfig {
   isActive: boolean;
   createdAt: string; // ISO string for when the alert was created
   originalPrice?: number; // The price of the asset when the alert was created
+  category?: AssetCategory; // Optional: To store the category
 }
 
 export type PredictionOutput = PredictMarketMovementOutput['prediction'];

@@ -4,7 +4,8 @@
 import { z } from 'zod';
 import { predictMarketMovement } from '@/ai/flows/predict-market-movement';
 import { analyzeCandlestickChart } from '@/ai/flows/analyze-candlestick-chart';
-import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote, MarketNewsItem } from '@/types';
+import { categorizeAsset } from '@/ai/flows/categorize-asset-flow';
+import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote, MarketNewsItem, AssetCategory } from '@/types';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -117,15 +118,16 @@ function determineAssetType(symbol: string): AssetInfo {
   const upperSymbol = symbol.toUpperCase().trim();
   const originalSymbol = symbol;
 
+  // New Forex check for 6-char pairs like EURUSD
+  if (/^[A-Z]{6}$/.test(upperSymbol)) {
+      return { type: 'forex', fromCurrency: upperSymbol.substring(0, 3), toCurrency: upperSymbol.substring(3), apiSymbol: '', originalSymbol: `${upperSymbol.substring(0, 3)}/${upperSymbol.substring(3)}` };
+  }
+  
   if (upperSymbol.includes('/') && upperSymbol.length === 7) {
     const parts = upperSymbol.split('/');
     if (parts.length === 2 && parts[0].length === 3 && parts[1].length === 3 && /^[A-Z]{3}$/.test(parts[0]) && /^[A-Z]{3}$/.test(parts[1])) {
       return { type: 'forex', fromCurrency: parts[0], toCurrency: parts[1], apiSymbol: '', originalSymbol: `${parts[0]}/${parts[1]}` };
     }
-  } else if (upperSymbol.length === 6 && !upperSymbol.includes('/') && /^[A-Z]{6}$/.test(upperSymbol)) {
-    const from = upperSymbol.substring(0, 3);
-    const to = upperSymbol.substring(3, 6);
-    return { type: 'forex', fromCurrency: from, toCurrency: to, apiSymbol: '', originalSymbol: `${from}/${to}` };
   }
 
   const commonFiats = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CNY', 'INR', 'USDT', 'USDC', 'BUSD'];
@@ -346,5 +348,19 @@ export async function fetchMarketNews(): Promise<FetchNewsResult> {
   } catch (error) {
     console.error(`Failed to fetch market news:`, error);
     return { error: error instanceof Error ? error.message : 'An unexpected error occurred while fetching news.' };
+  }
+}
+
+
+// New Server Action for Asset Categorization
+export async function categorizeAssetAction(symbol: string): Promise<{ category: AssetCategory; error?: null } | { error: string; category?: null }> {
+  try {
+    const result = await categorizeAsset({ symbol });
+    return { category: result.category };
+  } catch (error) {
+    console.error('Asset categorization failed:', error);
+    return {
+      error: error instanceof Error ? error.message : 'An unexpected error occurred during categorization.',
+    };
   }
 }

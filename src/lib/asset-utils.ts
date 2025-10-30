@@ -1,54 +1,10 @@
 
 "use client";
 
-export type AssetCategory = 'Forex' | 'Crypto' | 'Stock' | 'Index' | 'Commodity' | 'Unknown';
+// This file is no longer used for primary categorization logic but can be kept for color mappings or other client-side utilities.
+// The primary logic is now handled by the `categorize-asset-flow` AI flow.
 
-// A simplified version of the server-side `determineAssetType` for client-side category tagging.
-export function getAssetCategory(symbol: string): AssetCategory {
-    if (!symbol) return 'Unknown';
-    const upperSymbol = symbol.toUpperCase().trim();
-
-    // Forex check (e.g., EUR/USD, GBP_JPY, EURUSD)
-    if ((upperSymbol.includes('/') || upperSymbol.includes('_')) && upperSymbol.length >= 7) {
-        const parts = upperSymbol.split(/\/|_/);
-        if (parts.length === 2 && parts[0].length === 3 && parts[1].length === 3) {
-            return 'Forex';
-        }
-    }
-    // Check for 6-character forex pairs without separator, e.g., EURUSD
-    if (upperSymbol.length === 6 && /^[A-Z]{6}$/.test(upperSymbol)) {
-        return 'Forex';
-    }
-    
-    // Index check (common prefixes/suffixes)
-    if (['SPX', 'NSX', 'DJI', 'DAX', 'UKX', 'NDX', 'VIX'].some(ix => upperSymbol.includes(ix)) || upperSymbol.startsWith('^')) {
-        return 'Index';
-    }
-
-    // Commodity check (crude oil, gold, silver)
-    if (['XAU', 'XAG', 'WTI', 'BRENT', 'USO'].some(cmd => upperSymbol.includes(cmd)) || upperSymbol.startsWith('GC=')) {
-        return 'Commodity';
-    }
-
-    // Crypto check
-    const commonFiats = ['USD', 'EUR', 'GBP', 'JPY', 'USDT', 'USDC', 'BUSD'];
-    for (const fiat of commonFiats) {
-        if (upperSymbol.endsWith(fiat)) {
-            const cryptoPart = upperSymbol.substring(0, upperSymbol.length - fiat.length);
-            if (cryptoPart.length >= 2 && cryptoPart.length <= 5) {
-                return 'Crypto';
-            }
-        }
-    }
-    if (['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA'].includes(upperSymbol)) return 'Crypto';
-
-    // Stock check (alphanumeric, 1-5 chars)
-    if (/^[A-Z0-9\.]{1,5}$/.test(upperSymbol)) {
-        return 'Stock';
-    }
-
-    return 'Unknown';
-}
+import type { AssetCategory } from "@/types";
 
 export const categoryColors: Record<AssetCategory, string> = {
     Forex: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border-green-500/30",
