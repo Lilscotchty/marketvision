@@ -12,9 +12,28 @@ import { useAuth } from "@/contexts/auth-context";
 import { sendEmailNotification } from "@/ai/flows/send-email-flow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, BellRing, Plus } from "lucide-react";
 import { useFinnhubTrades } from "@/hooks/use-finnhub-trades";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger
+} from "@/components/ui/sheet";
 
 const IS_BROWSER = typeof window !== 'undefined';
 
@@ -28,6 +47,8 @@ export default function AlertsPage() {
   const { addNotification } = useNotificationCenter();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -66,7 +87,7 @@ export default function AlertsPage() {
           title: "Email Alert Sent",
           message: `An email confirmation for "${alert.name}" was sent to ${user.email}.`,
           type: 'info',
-          iconName: 'BellRing', 
+          iconName: 'Mail', 
           relatedLink: `/alerts#${alert.id}`
         });
       } catch (error) {
@@ -83,7 +104,6 @@ export default function AlertsPage() {
     alerts.filter(a => a.isActive).map(a => a.asset),
     (trade) => {
         const { s: symbol, p: price } = trade;
-
         const activeAlertsForSymbol = alerts.filter(a => 
             a.isActive && 
             a.asset.toUpperCase() === symbol.toUpperCase() && 
@@ -99,17 +119,13 @@ export default function AlertsPage() {
             let shouldTrigger = false;
             
             if (originalPrice !== undefined) {
-                // Precise crossover check using original price
                 if (originalPrice > targetPrice && price <= targetPrice) {
-                    // Price was above, crossed below target
                     shouldTrigger = true;
                 } else if (originalPrice < targetPrice && price >= targetPrice) {
-                    // Price was below, crossed above target
                     shouldTrigger = true;
                 }
             } else {
-                // Fallback for old alerts without originalPrice: trigger if it's in range
-                if (price >= targetPrice) { // Simple check if no original price context
+                if (price >= targetPrice) { 
                     shouldTrigger = true;
                 }
             }
@@ -121,23 +137,9 @@ export default function AlertsPage() {
     }
   );
 
-
   const handleAddAlert = (newAlert: AlertConfig) => {
     setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
-  };
-
-  const handleToggleAlert = (alertId: string) => {
-    const alert = alerts.find(a => a.id === alertId);
-    if (alert) {
-      setAlerts((prevAlerts) =>
-        prevAlerts.map((a) =>
-          a.id === alertId ? { ...a, isActive: !a.isActive } : a
-        )
-      );
-      toast({
-        title: `Alert "${alert.name}" ${!alert.isActive ? "Activated" : "Deactivated"}`,
-      });
-    }
+    setIsFormOpen(false); // Close the dialog/sheet after adding
   };
 
   const handleDeleteAlert = (alertId: string) => {
@@ -152,47 +154,47 @@ export default function AlertsPage() {
     }
   };
 
-
   if (loading) {
     return (
-      <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
-        <div className="container mx-auto py-8 space-y-12">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                   <Skeleton className="h-10 w-full" />
-                </div>
-              </CardContent>
-            </Card>
+      <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-16 md:pb-8">
+        <div className="container mx-auto py-8">
+          <Skeleton className="h-10 w-48 mb-4" />
+          <Skeleton className="h-8 w-full max-w-md mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
         </div>
       </main>
     );
   }
 
   if (!user) {
-    return null; // Return null to prevent rendering while redirecting
+    return null;
   }
 
+  const activeAlerts = alerts.filter(a => a.isActive);
+  const inactiveAlerts = alerts.filter(a => !a.isActive);
+  
+  const FormDialog = isMobile ? Sheet : Dialog;
+  const FormDialogTrigger = isMobile ? SheetTrigger : DialogTrigger;
+  const FormDialogContent = isMobile ? SheetContent : DialogContent;
+  const FormDialogHeader = isMobile ? SheetHeader : DialogHeader;
+  const FormDialogTitle = isMobile ? SheetTitle : DialogTitle;
+  const FormDialogDescription = isMobile ? SheetDescription : DialogDescription;
+
+
   return (
-    <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
-      <div className="container mx-auto py-8 space-y-12">
-        <header className="text-center">
-          <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl">
-            Alert <span className="text-accent">System</span>
+    <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-24 md:pb-8">
+      <div className="container mx-auto py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl font-headline font-bold tracking-tight">
+            Alerts Feed
           </h1>
-          <div className="mt-3 flex justify-center items-center gap-2">
+          <div className="mt-1 flex justify-between items-center">
             <p className="text-lg text-muted-foreground">
-              Create and manage custom market alerts.
+              Manage your custom market alerts.
             </p>
              <Badge variant={
                 connectionStatus === 'connected' ? 'default' : 
@@ -205,17 +207,51 @@ export default function AlertsPage() {
           </div>
         </header>
 
-        <section>
-          <AlertConfigForm onAddAlert={handleAddAlert} />
-        </section>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="inactive">Inactive</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <AlertListDisplay
+              alerts={alerts}
+              onDeleteAlert={handleDeleteAlert}
+            />
+          </TabsContent>
+          <TabsContent value="active" className="mt-6">
+            <AlertListDisplay
+              alerts={activeAlerts}
+              onDeleteAlert={handleDeleteAlert}
+            />
+          </TabsContent>
+          <TabsContent value="inactive" className="mt-6">
+             <AlertListDisplay
+              alerts={inactiveAlerts}
+              onDeleteAlert={handleDeleteAlert}
+            />
+          </TabsContent>
+        </Tabs>
 
-        <section>
-          <AlertListDisplay
-            alerts={alerts}
-            onToggleAlert={handleToggleAlert}
-            onDeleteAlert={handleDeleteAlert}
-          />
-        </section>
+        <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <FormDialogTrigger asChild>
+            <Button className="fixed bottom-20 right-6 md:bottom-8 md:right-8 h-14 w-14 rounded-full shadow-lg z-50">
+              <Plus className="h-6 w-6" />
+              <span className="sr-only">Add Alert</span>
+            </Button>
+          </FormDialogTrigger>
+          <FormDialogContent side={isMobile ? 'bottom' : undefined} className={isMobile ? 'h-[90vh]' : 'sm:max-w-[425px]'}>
+            <FormDialogHeader>
+              <FormDialogTitle>Create a New Alert</FormDialogTitle>
+              <FormDialogDescription>
+                Set up a new market event notification. It will appear in your feed.
+              </FormDialogDescription>
+            </FormDialogHeader>
+            <div className={isMobile ? 'overflow-y-auto' : ''}>
+              <AlertConfigForm onAddAlert={handleAddAlert} />
+            </div>
+          </FormDialogContent>
+        </FormDialog>
       </div>
     </main>
   );
