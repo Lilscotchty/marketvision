@@ -16,8 +16,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import { getAssetCategory, categoryColors } from '@/lib/asset-utils';
 
 interface AlertListDisplayProps {
   alerts: AlertConfig[];
@@ -49,47 +51,57 @@ export function AlertListDisplay({ alerts, onDeleteAlert }: AlertListDisplayProp
 
   return (
     <div className="space-y-4">
-      {alerts.map((alert) => (
-        <div key={alert.id} id={alert.id} className={cn("relative bg-card text-card-foreground rounded-lg p-4 border-l-4 transition-all hover:shadow-md", getBorderColor(alert.isActive, alert.conditionType))}>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Delete alert</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete the alert "{alert.name}". This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onDeleteAlert(alert.id)} className="bg-destructive hover:bg-destructive/90">
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold text-muted-foreground pr-8">{alert.asset}</p>
-            <p className="text-3xl font-bold tracking-tight">
-                {typeof alert.value === 'number' ? `$${alert.value.toLocaleString()}` : alert.value}
-            </p>
-            <div className="flex justify-between items-end">
-              <p className="text-xs text-muted-foreground">
-                {alert.isActive ? `Price target set at ${alert.value}` : `Alert triggered` }
+      {alerts.map((alert) => {
+        const category = getAssetCategory(alert.asset);
+        const categoryColor = categoryColors[category];
+        
+        return (
+          <div key={alert.id} id={alert.id} className={cn("relative bg-card text-card-foreground rounded-lg p-4 border-l-4 transition-all hover:shadow-md", getBorderColor(alert.isActive, alert.conditionType))}>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Delete alert</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete the alert "{alert.name}". This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDeleteAlert(alert.id)} className="bg-destructive hover:bg-destructive/90">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-muted-foreground pr-8">{alert.asset}</p>
+                <Badge variant="outline" className={cn("text-xs py-0.5", categoryColor)}>{category}</Badge>
+              </div>
+              <p className="text-3xl font-bold tracking-tight">
+                  {typeof alert.value === 'number' ? `$${alert.value.toLocaleString()}` : alert.value}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {alert.createdAt && formatDistanceToNow(parseISO(alert.createdAt), { addSuffix: true })}
-              </p>
+              <div className="flex justify-between items-end">
+                <p className="text-xs text-muted-foreground">
+                  {alert.isActive ? `Price target set at ${alert.value}` : `Alert triggered` }
+                </p>
+                {alert.createdAt && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(parseISO(alert.createdAt), { addSuffix: true })}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   );
 }
