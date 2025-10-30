@@ -74,6 +74,19 @@ const AlertCard = ({ alert, onDeleteAlert }: { alert: AlertConfig; onDeleteAlert
   };
 
   const colorClass = category ? categoryColors[category] : categoryColors.Unknown;
+  
+  const formattedValue = (val: string | number) => {
+    const num = typeof val === 'number' ? val : parseFloat(val);
+    if (!isNaN(num)) {
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 5,
+      });
+    }
+    return val;
+  };
+  
+  const displayValue = formattedValue(alert.value);
 
   return (
     <div key={alert.id} id={alert.id} className={cn("relative bg-card text-card-foreground rounded-lg p-4 border-l-4 transition-all hover:shadow-md", getBorderColor(alert.isActive, alert.conditionType))}>
@@ -110,11 +123,11 @@ const AlertCard = ({ alert, onDeleteAlert }: { alert: AlertConfig; onDeleteAlert
           )}
         </div>
         <p className="text-3xl font-bold tracking-tight">
-          {typeof alert.value === 'number' ? `$${alert.value.toLocaleString()}` : alert.value}
+          ${displayValue}
         </p>
         <div className="flex justify-between items-end">
           <p className="text-xs text-muted-foreground">
-            {alert.isActive ? `Price target set at ${alert.value}` : `Alert triggered`}
+            {alert.isActive ? `Price target set at ${displayValue}` : `Alert triggered`}
           </p>
           {alert.createdAt && (
             <p className="text-xs text-muted-foreground">
