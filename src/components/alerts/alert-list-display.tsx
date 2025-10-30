@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 
 interface AlertListDisplayProps {
   alerts: AlertConfig[];
@@ -84,7 +84,7 @@ export function AlertListDisplay({ alerts, onDeleteAlert }: AlertListDisplayProp
                 {alert.isActive ? `Price target set at ${alert.value}` : `Alert triggered` }
               </p>
               <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(parseISO(alert.createdAt), { addSuffix: true })}
               </p>
             </div>
           </div>
