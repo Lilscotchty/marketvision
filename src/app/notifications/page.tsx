@@ -3,60 +3,13 @@
 
 import React from "react";
 import { useNotificationCenter } from "@/contexts/notification-context";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { formatDistanceToNow, parseISO } from 'date-fns';
-import { Bell, CheckCheck, Trash2, Info, AlertTriangle, ServerCog, BellRing, FileText, Sparkles, BellOff, Mail } from "lucide-react";
-import type { AppNotification, NotificationType } from "@/types";
+import { Bell, CheckCheck, Trash2, BellOff } from "lucide-react";
+import type { AppNotification } from "@/types";
 import { cn } from "@/lib/utils";
-
-const iconMap: Record<string, React.ElementType> = {
-  BellRing,
-  Info,
-  AlertTriangle,
-  ServerCog,
-  Sparkles,
-  FileText,
-  Mail,
-};
-
-const NotificationIcon = ({ type, iconName }: { type: NotificationType; iconName?: string }) => {
-  let SpecificIcon: React.ElementType = Bell;
-
-  if (iconName && iconMap[iconName]) {
-    SpecificIcon = iconMap[iconName];
-  } else {
-    switch (type) {
-      case 'alert_trigger':
-        SpecificIcon = BellRing;
-        break;
-      case 'site_message':
-        SpecificIcon = Info;
-        break;
-      case 'system_update':
-        SpecificIcon = ServerCog;
-        break;
-      case 'info':
-        SpecificIcon = Info;
-        break;
-      default:
-        SpecificIcon = Bell;
-    }
-  }
-
-  const iconColorClass =
-    type === 'alert_trigger' ? 'text-accent' :
-    type === 'system_update' ? 'text-orange-500' :
-    type === 'site_message' ? 'text-blue-500' :
-    type === 'info' ? 'text-sky-500' :
-    'text-muted-foreground';
-
-  return <SpecificIcon className={cn("h-5 w-5 mr-3 flex-shrink-0", iconColorClass)} />;
-};
-
+import { NotificationCard } from "@/components/notifications/notification-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function NotificationsPage() {
   const { 
@@ -68,118 +21,69 @@ export default function NotificationsPage() {
     unreadCount 
   } = useNotificationCenter();
 
+  const unreadNotifications = notifications.filter(n => !n.read);
+
+  const EmptyState = () => (
+    <div className="text-center py-24">
+      <BellOff className="h-24 w-24 text-muted-foreground/30 mx-auto mb-6" />
+      <h3 className="text-2xl font-semibold mb-2 text-foreground">No records found</h3>
+      <p className="text-muted-foreground">There are no notifications in this category.</p>
+    </div>
+  );
+
+  const NotificationList = ({ items }: { items: AppNotification[] }) => (
+    <div className="space-y-4">
+      {items.length === 0 ? (
+        <EmptyState />
+      ) : (
+        items.map((notification) => (
+          <NotificationCard 
+            key={notification.id} 
+            notification={notification}
+            onMarkAsRead={markAsRead}
+            onDelete={deleteNotification}
+          />
+        ))
+      )}
+    </div>
+  );
+
   return (
-    <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
-      <div className="container mx-auto py-8 space-y-12">
-        <header className="text-center">
-          <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl flex items-center justify-center">
-            <Bell className="mr-3 h-10 w-10 text-accent"/>
-            Notification <span className="text-accent">Center</span>
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-            Manage your recent notifications.
-          </p>
-        </header>
-        
-        <Card>
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle className="font-headline text-xl">Your Notifications</CardTitle>
-              <CardDescription>
-                {notifications.length > 0 
-                  ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}.`
-                  : "No notifications yet."}
-              </CardDescription>
+    <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-24 md:pb-8">
+      <div className="container mx-auto py-8">
+        <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-headline font-bold tracking-tight">
+              Notification Center
+            </h1>
+            <p className="mt-1 text-lg text-muted-foreground">
+              Manage your recent notifications. {unreadCount > 0 && `You have ${unreadCount} unread.`}
+            </p>
+          </div>
+          {notifications.length > 0 && (
+            <div className="flex gap-2 items-center flex-shrink-0">
+              <Button variant="outline" size="sm" onClick={markAllAsRead} disabled={unreadCount === 0}>
+                <CheckCheck className="mr-2 h-4 w-4" /> Mark All Read
+              </Button>
+              <Button variant="destructive" size="sm" onClick={clearAllNotifications}>
+                <Trash2 className="mr-2 h-4 w-4" /> Clear All
+              </Button>
             </div>
-            {notifications.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center sm:ml-2 flex-shrink-0">
-                <Button variant="outline" size="sm" onClick={markAllAsRead} disabled={unreadCount === 0} className="w-full sm:w-auto">
-                  <CheckCheck className="mr-2 h-4 w-4" /> Mark All Read
-                </Button>
-                <Button variant="destructive" size="sm" onClick={clearAllNotifications} className="w-full sm:w-auto">
-                  <Trash2 className="mr-2 h-4 w-4" /> Clear All
-                </Button>
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            {notifications.length === 0 ? (
-              <div className="text-center py-16">
-                <BellOff className="h-20 w-20 text-muted-foreground/50 mx-auto mb-6" />
-                <p className="text-xl font-semibold text-muted-foreground mb-2">It's quiet in here...</p>
-                <p className="text-muted-foreground">You have no notifications.</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-[calc(100vh-20rem)] max-h-[500px] pr-4">
-                <div className="space-y-3">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      id={notification.id} 
-                      className={cn(
-                        "p-4 rounded-lg flex items-start space-x-3 transition-colors duration-150",
-                        notification.read 
-                          ? "bg-card hover:bg-muted/40" 
-                          : "bg-primary/5 hover:bg-primary/10 "
-                      )}
-                    >
-                      <NotificationIcon type={notification.type} iconName={notification.iconName} />
-                      <div className="flex-grow">
-                        <div className="flex justify-between items-start mb-0.5">
-                          <h3 className={cn(
-                            "font-semibold text-sm leading-tight",
-                            !notification.read && "text-foreground"
-                          )}>
-                            {notification.title}
-                          </h3>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                            {formatDistanceToNow(parseISO(notification.timestamp), { addSuffix: true })}
-                          </span>
-                        </div>
-                        <p className={cn(
-                          "text-xs mt-0.5",
-                          notification.read ? "text-muted-foreground" : "text-foreground/90"
-                        )}>
-                          {notification.message}
-                        </p>
-                         {notification.relatedLink && (
-                          <a 
-                              href={notification.relatedLink} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-accent hover:text-accent/80 hover:underline mt-1.5 inline-block font-medium"
-                          >
-                              View Details
-                          </a>
-                         )}
-                         <div className="mt-2.5 flex gap-1.5">
-                          {!notification.read && (
-                             <Button 
-                               variant="ghost" 
-                               size="sm" 
-                               onClick={() => markAsRead(notification.id)} 
-                               className="text-xs h-auto py-0.5 px-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                             >
-                              Mark as Read
-                            </Button>
-                          )}
-                           <Button 
-                             variant="ghost" 
-                             size="sm" 
-                             onClick={() => deleteNotification(notification.id)} 
-                             className="text-xs h-auto py-0.5 px-1.5 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                           >
-                              Delete
-                            </Button>
-                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </header>
+
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-sm">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="unread">Unread</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <NotificationList items={notifications} />
+          </TabsContent>
+          <TabsContent value="unread" className="mt-6">
+            <NotificationList items={unreadNotifications} />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
