@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as ShadcnFormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Loader2, Activity, Brain, Clock, Search, Info, Lightbulb, TrendingUp, TrendingDown, ShieldAlert, CircleDot, Target, StopCircle, CalendarClock, Timer, CreditCard, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Activity, Brain, Clock, Search, Info, Lightbulb, TrendingUp, TrendingDown, ShieldAlert, CircleDot, Target, StopCircle, CalendarClock, Timer, CreditCard, Lock, RefreshCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeMarketData, type AnalyzeMarketDataOutput } from "@/ai/flows/analyze-market-data-flow";
 import { fetchMarketDataFromAV, type FetchMarketDataResult } from "@/lib/actions"; 
@@ -21,6 +22,7 @@ import type { TradingSession, AlphaVantageGlobalQuote, AnalyzeMarketDataInput, T
 import { availableTimeframes } from "@/types"; 
 import { useAuth } from "@/contexts/auth-context";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
+import { ScrollArea } from "../ui/scroll-area";
 
 const LocalTradingSessionEnum = z.enum([
   "None/Overlap",
@@ -56,7 +58,12 @@ const tradingSessionsDisplay: NonNullable<TradingSession>[] = [
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 
-export function LiveMarketDataDisplay() {
+interface LiveMarketDataDisplayProps {
+  onAnalysisComplete: () => void;
+}
+
+
+export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisplayProps) {
   const { toast } = useToast();
   const [analysisResult, setAnalysisResult] = useState<AnalyzeMarketDataOutput | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -174,6 +181,7 @@ export function LiveMarketDataDisplay() {
         title: "Analysis Complete",
         description: "Conceptual analysis has been generated.",
       });
+      onAnalysisComplete();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       setAnalysisError(errorMessage);
@@ -186,87 +194,191 @@ export function LiveMarketDataDisplay() {
       setIsAnalyzing(false);
     }
   };
+  
+  const handleReset = () => {
+    setAnalysisResult(null);
+    setAnalysisError(null);
+  };
 
   if (authLoading) {
     return (
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl">Loading Tools...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-40 animate-pulse bg-muted rounded-md flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <Card className="shadow-lg text-center">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl flex items-center justify-center gap-2"><Lock className="text-accent" />Access Denied</CardTitle>
-          <CardDescription>This is a premium feature.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">
-            Please{' '}
-            <Link href="/login" className="font-semibold text-accent hover:underline">
-              log in
-            </Link>{' '}
-            or{' '}
-            <Link href="/signup" className="font-semibold text-accent hover:underline">
-              sign up
-            </Link>{' '}
-            to access live analysis.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="text-center p-8">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl flex items-center justify-center gap-2"><Lock className="text-accent" />Access Denied</CardTitle>
+            <CardDescription>This is a premium feature.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              Please{' '}
+              <Link href="/login" className="font-semibold text-accent hover:underline">
+                log in
+              </Link>{' '}
+              or{' '}
+              <Link href="/signup" className="font-semibold text-accent hover:underline">
+                sign up
+              </Link>{' '}
+              to access live analysis.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
   
   if (!hasSubscription) {
     return (
-      <Card className="shadow-lg text-center">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl flex items-center justify-center gap-2"><CreditCard className="text-accent" />Subscription Required</CardTitle>
-          <CardDescription>Live market analysis is a premium feature.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">
-            An active subscription is required to access this feature.
-          </p>
-          <Button onClick={() => setIsSubscriptionModalOpen(true)} className="bg-primary hover:bg-primary/80">
-            Subscribe Now
-          </Button>
-        </CardContent>
-         <SubscriptionModal
-            isOpen={isSubscriptionModalOpen}
-            onClose={() => setIsSubscriptionModalOpen(false)}
-            onSimulateSuccess={() => {
-              activateSubscription();
-              toast({ title: "Subscription Activated", description: "You now have premium access!" });
-            }}
-            paymentLink={KORAPAY_TEST_PAYMENT_LINK}
-         />
-      </Card>
+      <div className="text-center p-8">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="font-headline text-xl flex items-center justify-center gap-2"><CreditCard className="text-accent" />Subscription Required</CardTitle>
+            <CardDescription>Live market analysis is a premium feature.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              An active subscription is required to access this feature.
+            </p>
+            <Button onClick={() => setIsSubscriptionModalOpen(true)} className="bg-primary hover:bg-primary/80">
+              Subscribe Now
+            </Button>
+          </CardContent>
+           <SubscriptionModal
+              isOpen={isSubscriptionModalOpen}
+              onClose={() => setIsSubscriptionModalOpen(false)}
+              onSimulateSuccess={() => {
+                activateSubscription();
+                toast({ title: "Subscription Activated", description: "You now have premium access!" });
+              }}
+              paymentLink={KORAPAY_TEST_PAYMENT_LINK}
+           />
+        </Card>
+      </div>
     );
+  }
+  
+  if (isAnalyzing) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 font-semibold text-lg">Running Analysis...</p>
+            <p className="text-muted-foreground">The AI is processing your input.</p>
+        </div>
+      )
+  }
+  
+  if (analysisResult) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+             <Button onClick={handleReset} variant="outline">
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Start New Analysis
+            </Button>
+          </div>
+          {/* Simplified Guidance Section */}
+          <Card className="shadow-lg border-accent">
+            <CardHeader>
+              <CardTitle className="font-headline text-xl flex items-center gap-2"><Lightbulb className="text-accent" /> Simplified Conceptual Guidance</CardTitle>
+              <CardDescription>AI-generated signals for educational purposes. Not financial advice.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md">
+                  <div className="flex items-start">
+                    <ShieldAlert className="h-5 w-5 text-destructive mr-2 mt-0.5" />
+                    <p className="text-sm text-destructive-foreground">
+                      <strong>Disclaimer:</strong> These signals are for informational purposes only and are not financial advice.
+                    </p>
+                  </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  {analysisResult.suggestedActionDirection === "Buy" ? <TrendingUp className="h-4 w-4 text-green-500"/> : 
+                   analysisResult.suggestedActionDirection === "Sell" ? <TrendingDown className="h-4 w-4 text-red-500"/> :
+                   <CircleDot className="h-4 w-4 text-yellow-500"/> 
+                  }
+                  Suggested Direction
+                </Label>
+                <p className="text-lg font-semibold">{analysisResult.suggestedActionDirection}</p>
+              </div>
+              
+              {analysisResult.potentialEntryZone && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4"/>Conceptual Entry Zone</Label>
+                  <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialEntryZone}</p>
+                </div>
+              )}
+              
+              <div className="grid sm:grid-cols-2 gap-4">
+                {analysisResult.potentialTakeProfitZone && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4 text-green-500"/>Conceptual Take Profit</Label>
+                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialTakeProfitZone}</p>
+                  </div>
+                )}
+                {analysisResult.potentialStopLossLevel && (
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><StopCircle className="h-4 w-4 text-red-500"/>Conceptual Stop Loss</Label>
+                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialStopLossLevel}</p>
+                  </div>
+                )}
+              </div>
+
+              {analysisResult.conceptualTimeframe && (
+                 <div>
+                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><CalendarClock className="h-4 w-4"/>Conceptual Timeframe</Label>
+                  <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.conceptualTimeframe}</p>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Info className="h-4 w-4"/>Simplified Reasoning</Label>
+                <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">{analysisResult.reasoningForNonICTUser}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ICT-Specific Analysis Section */}
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="font-headline text-xl flex items-center gap-2"><Brain className="text-primary"/>ICT-Specific Analysis</CardTitle>
+              <CardDescription>Detailed conceptual insights for ICT traders.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Potential Bias</Label>
+                <p className="text-lg font-semibold">{analysisResult.potentialBias} (Confidence: {analysisResult.confidence})</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Key Observations</Label>
+                <ul className="list-disc pl-5 space-y-1 mt-1">
+                  {analysisResult.keyObservations.map((obs, index) => (
+                    <li key={index} className="text-sm">{obs}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Suggested Focus</Label>
+                <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">{analysisResult.suggestedFocusICT}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
   }
 
   return (
-    <div className="space-y-8">
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl flex items-center gap-2"><Activity className="text-accent" />Market Data & Observations</CardTitle>
-          <CardDescription>
-            Fetch a live quote or manually enter data for AI analysis.
-          </CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitAnalysis)}>
-            <CardContent className="space-y-6 pt-4">
-
+    <div className="p-1">
+      <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmitAnalysis)} className="space-y-6">
               <div className="border p-4 rounded-md space-y-4 bg-gradient-to-br from-card to-muted">
                 <FormField
                   control={form.control}
@@ -443,126 +555,30 @@ export function LiveMarketDataDisplay() {
                   </FormItem>
                 )}
               />
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={isAnalyzing} className="w-full bg-primary hover:bg-primary/90">
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="mr-2 h-4 w-4" />
-                    Get Conceptual Analysis
-                  </>
-                )}
-              </Button>
-            </CardFooter>
+              {analysisError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <ShadcnAlertTitle>Analysis Error</ShadcnAlertTitle>
+                  <ShadcnAlertDescription>{analysisError}</ShadcnAlertDescription>
+                </Alert>
+              )}
+              <div className="pt-4">
+                <Button type="submit" disabled={isAnalyzing} className="w-full bg-primary hover:bg-primary/90">
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Get Conceptual Analysis
+                    </>
+                  )}
+                </Button>
+              </div>
           </form>
         </Form>
-      </Card>
-
-      {analysisError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <ShadcnAlertTitle>Analysis Error</ShadcnAlertTitle>
-          <ShadcnAlertDescription>{analysisError}</ShadcnAlertDescription>
-        </Alert>
-      )}
-
-      {analysisResult && (
-        <div className="space-y-6">
-          {/* Simplified Guidance Section */}
-          <Card className="shadow-lg border-accent">
-            <CardHeader>
-              <CardTitle className="font-headline text-xl flex items-center gap-2"><Lightbulb className="text-accent" /> Simplified Conceptual Guidance</CardTitle>
-              <CardDescription>AI-generated signals for educational purposes. Not financial advice.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md">
-                  <div className="flex items-start">
-                    <ShieldAlert className="h-5 w-5 text-destructive mr-2 mt-0.5" />
-                    <p className="text-sm text-destructive-foreground">
-                      <strong>Disclaimer:</strong> These signals are for informational purposes only and are not financial advice.
-                    </p>
-                  </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                  {analysisResult.suggestedActionDirection === "Buy" ? <TrendingUp className="h-4 w-4 text-green-500"/> : 
-                   analysisResult.suggestedActionDirection === "Sell" ? <TrendingDown className="h-4 w-4 text-red-500"/> :
-                   <CircleDot className="h-4 w-4 text-yellow-500"/> 
-                  }
-                  Suggested Direction
-                </Label>
-                <p className="text-lg font-semibold">{analysisResult.suggestedActionDirection}</p>
-              </div>
-              
-              {analysisResult.potentialEntryZone && (
-                <div>
-                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4"/>Conceptual Entry Zone</Label>
-                  <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialEntryZone}</p>
-                </div>
-              )}
-              
-              <div className="grid sm:grid-cols-2 gap-4">
-                {analysisResult.potentialTakeProfitZone && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Target className="h-4 w-4 text-green-500"/>Conceptual Take Profit</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialTakeProfitZone}</p>
-                  </div>
-                )}
-                {analysisResult.potentialStopLossLevel && (
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><StopCircle className="h-4 w-4 text-red-500"/>Conceptual Stop Loss</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.potentialStopLossLevel}</p>
-                  </div>
-                )}
-              </div>
-
-              {analysisResult.conceptualTimeframe && (
-                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><CalendarClock className="h-4 w-4"/>Conceptual Timeframe</Label>
-                  <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{analysisResult.conceptualTimeframe}</p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground flex items-center gap-1"><Info className="h-4 w-4"/>Simplified Reasoning</Label>
-                <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">{analysisResult.reasoningForNonICTUser}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* ICT-Specific Analysis Section */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="font-headline text-xl flex items-center gap-2"><Brain className="text-primary"/>ICT-Specific Analysis</CardTitle>
-              <CardDescription>Detailed conceptual insights for ICT traders.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Potential Bias</Label>
-                <p className="text-lg font-semibold">{analysisResult.potentialBias} (Confidence: {analysisResult.confidence})</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Key Observations</Label>
-                <ul className="list-disc pl-5 space-y-1 mt-1">
-                  {analysisResult.keyObservations.map((obs, index) => (
-                    <li key={index} className="text-sm">{obs}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground">Suggested Focus</Label>
-                <p className="text-sm mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">{analysisResult.suggestedFocusICT}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
