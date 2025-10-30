@@ -84,7 +84,7 @@ export function AlertListDisplay({ alerts, onDeleteAlert }: AlertListDisplayProp
                 {alert.isActive ? `Price target set at ${alert.value}` : `Alert triggered` }
               </p>
               <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(parseISO(alert.createdAt), { addSuffix: true })}
+                {alert.createdAt && formatDistanceToNow(parseISO(alert.createdAt), { addSuffix: true })}
               </p>
             </div>
           </div>
