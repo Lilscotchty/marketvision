@@ -1,13 +1,11 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useNotificationCenter } from "@/contexts/notification-context";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, CheckCheck, Trash2, BellOff } from "lucide-react";
+import { BellOff, CheckCheck, Trash2 } from "lucide-react";
 import type { AppNotification } from "@/types";
-import { cn } from "@/lib/utils";
 import { NotificationCard } from "@/components/notifications/notification-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -21,30 +19,22 @@ export default function NotificationsPage() {
     unreadCount 
   } = useNotificationCenter();
 
-  const unreadNotifications = notifications.filter(n => !n.read);
+  const [activeTab, setActiveTab] = useState("all");
+
+  const getFilteredNotifications = () => {
+    if (activeTab === 'unread') {
+      return notifications.filter(n => !n.read);
+    }
+    return notifications;
+  };
+
+  const filteredNotifications = getFilteredNotifications();
 
   const EmptyState = () => (
     <div className="text-center py-24">
       <BellOff className="h-24 w-24 text-muted-foreground/30 mx-auto mb-6" />
       <h3 className="text-2xl font-semibold mb-2 text-foreground">No records found</h3>
       <p className="text-muted-foreground">There are no notifications in this category.</p>
-    </div>
-  );
-
-  const NotificationList = ({ items }: { items: AppNotification[] }) => (
-    <div className="space-y-4">
-      {items.length === 0 ? (
-        <EmptyState />
-      ) : (
-        items.map((notification) => (
-          <NotificationCard 
-            key={notification.id} 
-            notification={notification}
-            onMarkAsRead={markAsRead}
-            onDelete={deleteNotification}
-          />
-        ))
-      )}
     </div>
   );
 
@@ -72,16 +62,26 @@ export default function NotificationsPage() {
           )}
         </header>
 
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 max-w-sm">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
           </TabsList>
-          <TabsContent value="all" className="mt-6">
-            <NotificationList items={notifications} />
-          </TabsContent>
-          <TabsContent value="unread" className="mt-6">
-            <NotificationList items={unreadNotifications} />
+          <TabsContent value={activeTab} className="mt-6">
+             {filteredNotifications.length > 0 ? (
+                <div className="space-y-4">
+                    {filteredNotifications.map((notification) => (
+                        <NotificationCard 
+                            key={notification.id} 
+                            notification={notification}
+                            onMarkAsRead={markAsRead}
+                            onDelete={deleteNotification}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <EmptyState />
+            )}
           </TabsContent>
         </Tabs>
       </div>

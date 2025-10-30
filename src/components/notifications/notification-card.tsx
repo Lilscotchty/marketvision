@@ -7,11 +7,15 @@ import { Bell, Info, AlertTriangle, ServerCog, BellRing, FileText, Sparkles, Mai
 import type { AppNotification, NotificationType } from "@/types";
 import { cn } from "@/lib/utils";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -55,71 +59,95 @@ interface NotificationCardProps {
 }
 
 export const NotificationCard = ({ notification, onMarkAsRead, onDelete }: NotificationCardProps) => {
-  return (
-    <div 
-        className={cn(
-            "bg-card text-card-foreground rounded-lg p-4 border-l-4 transition-all hover:shadow-md relative",
-            notification.read ? "border-muted-foreground/30" : "border-primary"
-        )}
-    >
-        <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive"
-            onClick={(e) => {
-                e.stopPropagation();
-                onDelete(notification.id);
-            }}
-        >
-            <X className="h-4 w-4" />
-        </Button>
+  const [isOpen, setIsOpen] = React.useState(false);
 
-        <Accordion type="single" collapsible>
-            <AccordionItem value={notification.id} className="border-b-0">
-                <AccordionTrigger className="hover:no-underline p-0">
-                    <div className="flex items-start gap-4 text-left w-full pr-8">
-                        <NotificationIcon type={notification.type} iconName={notification.iconName} />
-                        <div className="flex-grow">
-                            <h3 className={cn(
-                                "font-semibold text-sm leading-tight",
-                                !notification.read && "text-foreground"
-                            )}>
-                                {notification.title}
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                {formatDistanceToNow(parseISO(notification.timestamp), { addSuffix: true })}
-                            </p>
-                        </div>
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-0">
-                    <div className="pl-9 space-y-4">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{notification.message}</p>
-                        <div className="flex gap-2">
-                            {!notification.read && (
-                                <Button 
-                                    variant="outline" 
-                                    size="sm" 
-                                    onClick={() => onMarkAsRead(notification.id)}
-                                >
-                                    Mark as Read
-                                </Button>
-                            )}
-                            {notification.relatedLink && (
-                                <a href={notification.relatedLink} target="_blank" rel="noopener noreferrer">
-                                    <Button variant="secondary" size="sm">
-                                        View Details
-                                    </Button>
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-    </div>
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <div 
+            className={cn(
+                "group bg-card text-card-foreground rounded-lg p-4 border-l-4 transition-all hover:shadow-md relative cursor-pointer",
+                notification.read ? "border-muted-foreground/30" : "border-primary"
+            )}
+        >
+            <div className="flex items-start gap-4 text-left w-full pr-8">
+                <NotificationIcon type={notification.type} iconName={notification.iconName} />
+                <div className="flex-grow">
+                    <h3 className={cn(
+                        "font-semibold text-sm leading-tight",
+                        !notification.read && "text-foreground"
+                    )}>
+                        {notification.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                        {notification.message}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                        {formatDistanceToNow(parseISO(notification.timestamp), { addSuffix: true })}
+                    </p>
+                </div>
+            </div>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(notification.id);
+                }}
+            >
+                <X className="h-4 w-4" />
+            </Button>
+        </div>
+      </DialogTrigger>
+      
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-start gap-3">
+             <NotificationIcon type={notification.type} iconName={notification.iconName} />
+             <span>{notification.title}</span>
+          </DialogTitle>
+          <DialogDescription className="pl-8 pt-1">
+            {formatDistanceToNow(parseISO(notification.timestamp), { addSuffix: true })}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="py-4 text-sm text-muted-foreground whitespace-pre-wrap">
+            {notification.message}
+        </div>
+        
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+          {!notification.read && (
+            <Button 
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                    onMarkAsRead(notification.id);
+                    setIsOpen(false);
+                }}
+            >
+                Mark as Read
+            </Button>
+          )}
+          {notification.relatedLink && (
+            <a href={notification.relatedLink} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                <Button variant="secondary" className="w-full">
+                    View Details
+                </Button>
+            </a>
+          )}
+           <Button 
+                variant="destructive"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                    onDelete(notification.id);
+                    setIsOpen(false);
+                }}
+            >
+              Delete
+            </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
