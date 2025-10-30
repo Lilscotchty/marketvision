@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import type { AlertConfig } from "@/types";
+import type { AlertConfig, AssetCategory } from "@/types";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchMarketDataFromAV, type FetchMarketDataResult } from "@/lib/actions";
+import { categorizeAssetAction } from "@/lib/actions";
 
 const alertSchema = z.object({
   name: z.string().min(3, "Alert name must be at least 3 characters"),
@@ -47,6 +48,18 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
   async function onSubmit(values: z.infer<typeof alertSchema>) {
     setIsSubmitting(true);
     let originalPrice: number | undefined = undefined;
+    let category: AssetCategory | undefined = undefined;
+    
+    // Categorize the asset first
+    try {
+        const catResult = await categorizeAssetAction(values.asset);
+        if (catResult && !catResult.error) {
+            category = catResult.category;
+        }
+    } catch (error) {
+        console.warn("Could not categorize asset on creation:", error);
+        // We can proceed without the category, it will be fetched on display as a fallback.
+    }
     
     if (values.conditionType === 'price_target') {
       try {
@@ -69,6 +82,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
       originalPrice: originalPrice,
+      category: category,
       ...values,
     };
 

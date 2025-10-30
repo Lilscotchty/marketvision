@@ -40,13 +40,15 @@ const AlertCard = ({ alert, onDeleteAlert }: { alert: AlertConfig; onDeleteAlert
   const [category, setCategory] = useState<AssetCategory | null>(alert.category || null);
   const [isLoadingCategory, setIsLoadingCategory] = useState(!alert.category);
 
+  // Fallback fetching for alerts created before category was saved
   useEffect(() => {
-    if (!alert.category) {
+    if (!alert.category && isLoadingCategory) {
       const fetchCategory = async () => {
         try {
           const result = await categorizeAssetAction(alert.asset);
           if (result && !result.error) {
             setCategory(result.category as AssetCategory);
+            // Here you could optionally update localStorage to persist the fetched category
           } else {
             setCategory('Unknown');
           }
@@ -58,8 +60,10 @@ const AlertCard = ({ alert, onDeleteAlert }: { alert: AlertConfig; onDeleteAlert
         }
       };
       fetchCategory();
+    } else if (alert.category) {
+        setIsLoadingCategory(false);
     }
-  }, [alert.asset, alert.category]);
+  }, [alert.asset, alert.category, isLoadingCategory]);
 
   const getBorderColor = (isActive: boolean, conditionType: string) => {
     if (!isActive) return 'border-muted-foreground/30';
