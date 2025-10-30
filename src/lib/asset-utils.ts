@@ -8,12 +8,16 @@ export function getAssetCategory(symbol: string): AssetCategory {
     if (!symbol) return 'Unknown';
     const upperSymbol = symbol.toUpperCase().trim();
 
-    // Forex check (e.g., EUR/USD, GBP_JPY)
+    // Forex check (e.g., EUR/USD, GBP_JPY, EURUSD)
     if ((upperSymbol.includes('/') || upperSymbol.includes('_')) && upperSymbol.length >= 7) {
         const parts = upperSymbol.split(/\/|_/);
         if (parts.length === 2 && parts[0].length === 3 && parts[1].length === 3) {
             return 'Forex';
         }
+    }
+    // Check for 6-character forex pairs without separator, e.g., EURUSD
+    if (upperSymbol.length === 6 && /^[A-Z]{6}$/.test(upperSymbol)) {
+        return 'Forex';
     }
     
     // Index check (common prefixes/suffixes)
