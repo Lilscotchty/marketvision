@@ -41,7 +41,8 @@ function TradingViewWidget() {
           "popup_height": "650",
           "popup_width": "1000",
           "studies": [],
-          "autosize": true
+          "autosize": true,
+          "fullscreen": true
         });
         container.current.appendChild(script);
         scriptExists.current = true;
