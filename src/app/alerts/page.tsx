@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -36,6 +37,20 @@ import {
 
 const IS_BROWSER = typeof window !== 'undefined';
 
+function finnhubToDisplaySymbol(finnhubSymbol: string): string {
+    if (finnhubSymbol.startsWith('OANDA:')) {
+        return finnhubSymbol.replace('OANDA:', '').replace('_', '/');
+    }
+    if (finnhubSymbol.startsWith('BINANCE:')) {
+        const base = finnhubSymbol.replace('BINANCE:', '');
+        if (base.endsWith('USDT')) {
+            return `${base.slice(0, -4)}/USD`;
+        }
+    }
+    return finnhubSymbol;
+}
+
+
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertConfig[]>(() => {
     if (!IS_BROWSER) return [];
@@ -48,6 +63,7 @@ export default function AlertsPage() {
   const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
+  const activeAlerts = alerts.filter(a => a.isActive);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -100,12 +116,13 @@ export default function AlertsPage() {
 
 
   const { connectionStatus } = useFinnhubTrades(
-    alerts.filter(a => a.isActive).map(a => a.asset),
+    activeAlerts,
     (trade) => {
-        const { s: symbol, p: price } = trade;
+        const displaySymbol = finnhubToDisplaySymbol(trade.s);
+        const { p: price } = trade;
         const activeAlertsForSymbol = alerts.filter(a => 
             a.isActive && 
-            a.asset.toUpperCase() === symbol.toUpperCase() && 
+            a.asset.toUpperCase() === displaySymbol.toUpperCase() && 
             a.conditionType === 'price_target'
         );
 
@@ -173,7 +190,6 @@ export default function AlertsPage() {
     return null;
   }
 
-  const activeAlerts = alerts.filter(a => a.isActive);
   const inactiveAlerts = alerts.filter(a => !a.isActive);
   
   const FormDialog = isMobile ? Sheet : Dialog;
