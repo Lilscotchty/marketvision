@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { AlertConfigForm } from "@/components/alerts/alert-config-form";
 import { AlertListDisplay } from "@/components/alerts/alert-list-display";
@@ -11,10 +11,7 @@ import { useNotificationCenter } from "@/contexts/notification-context";
 import { useAuth } from "@/contexts/auth-context";
 import { sendEmailNotification } from "@/ai/flows/send-email-flow";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Loader2, BellRing, Plus } from "lucide-react";
-import { useFinnhubTrades } from "@/hooks/use-finnhub-trades";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -34,22 +31,10 @@ import {
   SheetDescription,
   SheetTrigger
 } from "@/components/ui/sheet";
+import { fetchMarketDataFromAV } from "@/lib/actions";
 
 const IS_BROWSER = typeof window !== 'undefined';
-
-function finnhubToDisplaySymbol(finnhubSymbol: string): string {
-    if (finnhubSymbol.startsWith('OANDA:')) {
-        return finnhubSymbol.replace('OANDA:', '').replace('_', '/');
-    }
-    if (finnhubSymbol.startsWith('BINANCE:')) {
-        const base = finnhubSymbol.replace('BINANCE:', '');
-        if (base.endsWith('USDT')) {
-            return `${base.slice(0, -4)}/USD`;
-        }
-    }
-    return finnhubSymbol;
-}
-
+const POLLING_INTERVAL = 30000; // 30 seconds
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertConfig[]>(() => {
@@ -64,6 +49,8 @@ export default function AlertsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
   const activeAlerts = alerts.filter(a => a.isActive);
+  const pollingRef = useRef<NodeJS.Timeout>();
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -109,49 +96,85 @@ export default function AlertsPage() {
          console.error("Failed to send email notification:", error);
       }
     }
-     // Deactivate alert after it has been triggered
+    // Deactivate alert after it has been triggered
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isActive: false } : a));
 
   }, [addNotification, user?.email]);
 
 
-  const { connectionStatus } = useFinnhubTrades(
-    activeAlerts,
-    (trade) => {
-        const displaySymbol = finnhubToDisplaySymbol(trade.s);
-        const { p: price } = trade;
-        const activeAlertsForSymbol = alerts.filter(a => 
-            a.isActive && 
-            a.asset.toUpperCase() === displaySymbol.toUpperCase() && 
-            a.conditionType === 'price_target'
-        );
+  // Polling logic
+  useEffect(() => {
+    const checkAlerts = async () => {
+      const activePriceAlerts = alerts.filter(a => a.isActive && a.conditionType === 'price_target');
+      if (activePriceAlerts.length === 0) return;
 
-        for (const alert of activeAlertsForSymbol) {
-            const targetPrice = Number(alert.value);
-            if (isNaN(targetPrice)) continue;
+      // Create a map to fetch price for each unique symbol only once
+      const symbolPriceMap = new Map<string, number>();
 
-            const originalPrice = alert.originalPrice;
-
-            let shouldTrigger = false;
-            
-            if (originalPrice !== undefined) {
-                if (originalPrice > targetPrice && price <= targetPrice) {
-                    shouldTrigger = true;
-                } else if (originalPrice < targetPrice && price >= targetPrice) {
-                    shouldTrigger = true;
-                }
+      for (const alert of activePriceAlerts) {
+        try {
+          let price: number | undefined = symbolPriceMap.get(alert.asset.toUpperCase());
+          
+          if (price === undefined) {
+            const result = await fetchMarketDataFromAV(alert.asset);
+            if (result.data) {
+              price = result.data.price;
+              symbolPriceMap.set(alert.asset.toUpperCase(), price);
             } else {
-                if (price >= targetPrice) { 
-                    shouldTrigger = true;
-                }
+              console.warn(`Could not fetch price for ${alert.asset}: ${result.error}`);
+              continue; // Skip this alert if price fetch fails
             }
+          }
+          
+          const targetPrice = Number(alert.value);
+          if (isNaN(targetPrice) || price === undefined) continue;
 
-            if (shouldTrigger) {
-                 triggerAlertNotification(alert, price);
+          const originalPrice = alert.originalPrice;
+          let shouldTrigger = false;
+
+          if (originalPrice !== undefined) {
+            // If original price is known, trigger only when crossing the target
+            if (originalPrice > targetPrice && price <= targetPrice) {
+              shouldTrigger = true;
+            } else if (originalPrice < targetPrice && price >= targetPrice) {
+              shouldTrigger = true;
             }
+          } else {
+            // Fallback for older alerts without originalPrice
+            if (price >= targetPrice) { // Simple "at or above" check
+              shouldTrigger = true;
+            }
+          }
+
+          if (shouldTrigger) {
+            triggerAlertNotification(alert, price);
+          }
+
+        } catch (error) {
+          console.error(`Error checking alert for ${alert.asset}:`, error);
         }
+      }
+    };
+    
+    // Clear any existing interval
+    if (pollingRef.current) {
+        clearInterval(pollingRef.current);
     }
-  );
+
+    // Start new interval if there are active alerts
+    if (activeAlerts.length > 0) {
+        // Run once immediately, then start interval
+        checkAlerts();
+        pollingRef.current = setInterval(checkAlerts, POLLING_INTERVAL);
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, [alerts, triggerAlertNotification, activeAlerts.length]); // Rerun when alerts change
 
   const handleAddAlert = (newAlert: AlertConfig) => {
     setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
@@ -211,14 +234,6 @@ export default function AlertsPage() {
             <p className="text-lg text-muted-foreground">
               Manage your custom market alerts.
             </p>
-             <Badge variant={
-                connectionStatus === 'connected' ? 'default' : 
-                connectionStatus === 'disconnected' ? 'destructive' : 'secondary'
-              } className={
-                connectionStatus === 'connected' ? 'bg-green-600 hover:bg-green-700' : ''
-              }>
-                {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
-              </Badge>
           </div>
         </header>
 
