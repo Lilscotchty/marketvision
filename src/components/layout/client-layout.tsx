@@ -42,7 +42,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, logout, userData } = useAuth();
+  const { user, loading, userData } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -54,11 +54,16 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      // In a real app, you'd call your auth service's logout method.
+      // For this example, we'll just simulate it.
+      if (auth.signOut) {
+        await auth.signOut();
+      }
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
+      // The auth context will handle redirection.
     } catch (error) {
       toast({
         title: 'Logout Failed',
@@ -94,7 +99,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       {isClient && <SidebarTrigger asChild><Button variant="ghost" size="icon"><Menu /></Button></SidebarTrigger>}
+      <SidebarTrigger variant="ghost" size="icon">
+          <Menu />
+      </SidebarTrigger>
       
       {isClient && !isMobile && (
         <div className="flex-1">
