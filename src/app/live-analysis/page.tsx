@@ -63,7 +63,7 @@ export default function LiveAnalysisPage() {
               <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute top-2 right-2 z-10 bg-background/50 hover:bg-background/80"
+                  className="absolute top-0 right-20 z-10 bg-background/50 hover:bg-background/80"
                   onClick={toggleFullScreen}
                   title="Toggle Fullscreen"
                 >
