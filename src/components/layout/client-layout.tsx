@@ -193,6 +193,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <Sheet open={openMobile} onOpenChange={setOpenMobile}>
             <SheetContent side="left" className="p-0">
                <SidebarHeader className="h-16 flex items-center justify-center border-b">
+                 <VisuallyHidden>
+                    <SheetTitle>Main Menu</SheetTitle>
+                 </VisuallyHidden>
                 <Link href="/" className="flex items-center gap-2 font-semibold">
                   <BotIcon className="h-7 w-7 text-accent" />
                   <h1 className="text-xl font-headline font-semibold">
