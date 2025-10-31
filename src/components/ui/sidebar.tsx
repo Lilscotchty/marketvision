@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -97,10 +97,11 @@ const SidebarProvider = React.forwardRef<
       // For desktop, it toggles the collapsible sidebar state.
       if (isMobile) {
         setOpenMobile((current) => !current); 
+        if (setOpenProp) setOpenProp(!openMobile);
       } else {
         setOpen((current) => !current);
       }
-    }, [isMobile, setOpen, setOpenMobile])
+    }, [isMobile, setOpen, setOpenMobile, openMobile, setOpenProp])
 
 
     // Adds a keyboard shortcut to toggle the sidebar.
@@ -243,7 +244,7 @@ Sidebar.displayName = "Sidebar"
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
+>(({ className, onClick, children, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -259,7 +260,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <PanelLeft />
+      {children}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -751,5 +752,3 @@ export {
   SidebarTrigger,
   useSidebar,
 }
-
-    

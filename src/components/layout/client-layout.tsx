@@ -4,14 +4,13 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText } from 'lucide-react';
+import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomDropdown, type CustomDropdownMenuItem } from '@/components/ui/custom-dropdown';
 import { useTheme } from '@/contexts/theme-context';
-import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { navItems, type NavItem } from './sidebar-nav';
@@ -47,6 +46,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
+  const [openMobile, setOpenMobile] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -94,7 +94,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       {isClient && <SidebarTrigger />}
+       {isClient && <SidebarTrigger asChild><Button variant="ghost" size="icon"><Menu /></Button></SidebarTrigger>}
       
       {isClient && !isMobile && (
         <div className="flex-1">
@@ -164,7 +164,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-     <SidebarProvider>
+     <SidebarProvider onOpenChange={(open) => isMobile && setOpenMobile(open)}>
         <Sidebar>
           <SidebarHeader className="h-16 flex items-center justify-center">
             <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -175,12 +175,30 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
            <SidebarContent>
-              <SidebarNav items={mobileSidebarNavItems} />
+              <SidebarNav items={navItems.filter(item => !item.guestOnly && item.href !== '/pricing')} />
            </SidebarContent>
           <SidebarFooter>
             <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
           </SidebarFooter>
         </Sidebar>
+
+        {isMobile && (
+          <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+            <SheetContent side="left" className="p-0">
+               <SidebarHeader className="h-16 flex items-center justify-center border-b">
+                <Link href="/" className="flex items-center gap-2 font-semibold">
+                  <BotIcon className="h-7 w-7 text-accent" />
+                  <h1 className="text-xl font-headline font-semibold">
+                    FinSight <span className="text-primary">AI</span>
+                  </h1>
+                </Link>
+              </SidebarHeader>
+              <div className="p-4">
+                 <SidebarNav items={mobileSidebarNavItems} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
 
       <SidebarInset>
           <Header />
