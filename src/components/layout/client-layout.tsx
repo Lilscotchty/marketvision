@@ -182,7 +182,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
            <SidebarContent>
-              <SidebarNav items={navItems} />
+              <SidebarNav items={mobileSidebarNavItems} />
            </SidebarContent>
           <SidebarFooter>
             <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
