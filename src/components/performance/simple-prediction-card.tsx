@@ -32,7 +32,7 @@ const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePrediction
 
 
   return (
-    <StyledWrapper manualFlag={manualFlag} direction={predData?.marketDirection}>
+    <StyledWrapper $manualFlag={manualFlag} direction={predData?.marketDirection}>
       <div className="card">
         <div className="hover-background"></div>
         <div className="hover-arrow">
@@ -157,7 +157,7 @@ const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePrediction
   );
 }
 
-const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', direction?: 'UP' | 'DOWN' | 'NEUTRAL' }>`
+const StyledWrapper = styled.div<{ $manualFlag?: 'successful' | 'unsuccessful', direction?: 'UP' | 'DOWN' | 'NEUTRAL' }>`
   .card {
     width: 100%;
     max-width: 300px;
@@ -355,5 +355,3 @@ const StyledWrapper = styled.div<{ manualFlag?: 'successful' | 'unsuccessful', d
 `;
 
 export default SimplePredictionCard;
-
-    
