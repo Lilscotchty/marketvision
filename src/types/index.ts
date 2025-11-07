@@ -13,6 +13,10 @@ import type { MessageData } from 'genkit';
 
 export type AssetCategory = CategorizeAssetOutput['category'];
 
+export const availableRoles = ["Owner", "Developer", "User Manager", "Financial Manager", "User"] as const;
+export type Role = typeof availableRoles[number];
+
+
 export interface UploadedImageAnalysis {
   id: string;
   imageName: string;
@@ -96,14 +100,14 @@ export interface UserAppData {
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
-  isDeveloper?: boolean;
+  roles: Role[];
 }
 
 // User profile for management UI
 export interface UserManagementProfile {
   uid: string;
   email: string;
-  isDeveloper: boolean;
+  roles: Role[];
 }
 
 

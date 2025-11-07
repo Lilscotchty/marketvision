@@ -6,10 +6,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode, useCall
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import type { UserAppData } from '@/types';
+import type { UserAppData, Role } from '@/types';
 
-// List of developer emails with full access
-const DEVELOPER_EMAILS = ['pb7552212@gmail.com', 'dev@example.com'];
+// The owner of the application
+const OWNER_EMAIL = 'pb7552212@gmail.com';
 const INITIAL_TRIAL_POINTS = 5;
 
 interface AuthContextType {
@@ -17,6 +17,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   userData: UserAppData | null; // This will now be a snapshot, not for direct mutation
+  hasRole: (role: Role) => boolean; // Helper function to check roles
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,53 +34,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    const isDeveloper = DEVELOPER_EMAILS.includes(firebaseUser.email || '');
+    // Check if the user is the owner
+    const isOwner = firebaseUser.email === OWNER_EMAIL;
 
-    if (isDeveloper) {
+    if (isOwner) {
       setUserData({
         userId: firebaseUser.uid,
         email: firebaseUser.email || '',
         chartAnalysisTrialPoints: 9999,
         hasActiveSubscription: true,
-        isDeveloper: true,
+        roles: ['Owner', 'Developer'],
       });
       return;
     }
 
     try {
       const storedUserDataString = localStorage.getItem(`userData-${firebaseUser.uid}`);
+      let finalUserData: UserAppData;
+
       if (storedUserDataString) {
-        const storedUserData = JSON.parse(storedUserDataString) as UserAppData;
-        if (typeof storedUserData.chartAnalysisTrialPoints === 'undefined') {
-          storedUserData.chartAnalysisTrialPoints = INITIAL_TRIAL_POINTS;
-        }
-         if (storedUserData.chartAnalysisTrialPoints < 0) {
-          storedUserData.chartAnalysisTrialPoints = 0;
-        }
-        if (typeof storedUserData.hasActiveSubscription === 'undefined') {
-          storedUserData.hasActiveSubscription = false;
-        }
-        storedUserData.isDeveloper = false; // Ensure non-devs are marked as such
-        setUserData(storedUserData);
+        const storedUserData = JSON.parse(storedUserDataString) as Partial<UserAppData>;
+        finalUserData = {
+          userId: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          chartAnalysisTrialPoints: storedUserData.chartAnalysisTrialPoints ?? INITIAL_TRIAL_POINTS,
+          hasActiveSubscription: storedUserData.hasActiveSubscription ?? false,
+          roles: storedUserData.roles && Array.isArray(storedUserData.roles) && storedUserData.roles.length > 0 ? storedUserData.roles : ['User'],
+        };
       } else {
-        const newUser: UserAppData = {
+        // Initialize for a new user
+        finalUserData = {
           userId: firebaseUser.uid,
           email: firebaseUser.email || '',
           chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
           hasActiveSubscription: false,
-          isDeveloper: false,
+          roles: ['User'],
         };
-        setUserData(newUser);
-        localStorage.setItem(`userData-${firebaseUser.uid}`, JSON.stringify(newUser));
       }
+      
+       // Sanitize data
+      if (finalUserData.chartAnalysisTrialPoints < 0) finalUserData.chartAnalysisTrialPoints = 0;
+      
+      setUserData(finalUserData);
+      localStorage.setItem(`userData-${firebaseUser.uid}`, JSON.stringify(finalUserData));
+
     } catch (e) {
       console.error("Failed to parse user data from localStorage", e);
+      // Fallback in case of parsing error
       setUserData({
         userId: firebaseUser.uid,
         email: firebaseUser.email || '',
         chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
         hasActiveSubscription: false,
-        isDeveloper: false,
+        roles: ['User'],
       });
     }
   }, []);
@@ -120,8 +127,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const hasRole = (role: Role): boolean => {
+    return userData?.roles?.includes(role) ?? false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout, userData }}>
+    <AuthContext.Provider value={{ user, loading, logout, userData, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

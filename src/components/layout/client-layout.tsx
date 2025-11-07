@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText, Menu, PanelLeft } from 'lucide-react';
+import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText, Menu, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -31,8 +31,8 @@ const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradi
 const mobileSidebarNavItems: NavItem[] = [
   { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
   { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
-  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false, href: "/support" },
-  { href: "/contact", label: "Contact", icon: Mail, authRequired: false, href: "/contact" },
+  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false },
+  { href: "/contact", label: "Contact", icon: Mail, authRequired: false },
   { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
   { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
   { href: "/terms", label: "Terms & Conditions", icon: FileText, authRequired: false },
@@ -42,7 +42,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, userData } = useAuth();
+  const { user, loading, userData, hasRole } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -79,6 +79,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   };
   
   const hasSubscription = userData?.hasActiveSubscription;
+  const isDeveloper = hasRole('Developer');
 
   const userDropdownItems: CustomDropdownMenuItem[][] = user
     ? [
@@ -86,10 +87,13 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           { icon: <Settings />, label: "Settings", onClick: () => window.location.href = '/settings' },
           { icon: <Bell />, label: "Notifications", onClick: () => window.location.href = '/notifications' },
         ],
+        isDeveloper ? [
+          { icon: <ShieldCheck />, label: "Admin Panel", onClick: () => window.location.href = '/admin' }
+        ] : [],
         [
           { icon: <LogOut />, label: "Logout", onClick: handleLogout, isDelete: true },
         ],
-      ]
+      ].filter(group => group.length > 0)
     : [
         [
           { icon: <LogIn />, label: "Login", onClick: () => window.location.href = '/login' },
@@ -138,7 +142,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <span>PRO</span>
+                      <div className="flex items-center gap-1">
+                        <span>PRO</span>
+                        {hasRole('Owner') && <Crown className="h-4 w-4" />}
+                      </div>
                     </button>
                   ) : (
                     <Button variant="ghost" size="icon" className="rounded-full">

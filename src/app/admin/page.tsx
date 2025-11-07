@@ -5,13 +5,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, CreditCard, BarChart, ShieldCheck, UserPlus, UserMinus, Crown } from 'lucide-react';
+import { Users, CreditCard, BarChart, ShieldCheck, UserPlus, UserCog, Crown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { UserManagementProfile } from '@/types';
+import type { UserManagementProfile, Role } from '@/types';
+import { availableRoles } from '@/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +22,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 // This is a simulation. In a real app, this would be fetched from a secure backend.
 const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
@@ -36,7 +47,7 @@ const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
         users.push({
           uid: userData.userId,
           email: userData.email,
-          isDeveloper: userData.isDeveloper || false,
+          roles: userData.roles || ['User'],
         });
       } catch (error) {
         console.error(`Failed to parse user data for key ${key}:`, error);
@@ -57,7 +68,7 @@ const findUserByEmail = (email: string): UserManagementProfile | null => {
                     return {
                         uid: userData.userId,
                         email: userData.email,
-                        isDeveloper: userData.isDeveloper || false,
+                        roles: userData.roles || ['User'],
                     };
                 }
             } catch (e) { /* ignore */ }
@@ -68,55 +79,61 @@ const findUserByEmail = (email: string): UserManagementProfile | null => {
 
 
 const AdminDashboardPage = () => {
-  const { user, userData, loading } = useAuth();
+  const { user, hasRole, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [managedUsers, setManagedUsers] = useState<UserManagementProfile[]>([]);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [userToAdd, setUserToAdd] = useState<UserManagementProfile | null>(null);
   const [isConfirmAddUserOpen, setIsConfirmAddUserOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [selectedUserForRoles, setSelectedUserForRoles] = useState<UserManagementProfile | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<Set<Role>>(new Set());
+
+  const isOwner = hasRole('Owner');
 
   useEffect(() => {
-    if (!loading && (!user || !userData?.isDeveloper)) {
+    if (!loading && !hasRole('Developer')) {
       router.push('/');
     }
-  }, [user, userData, loading, router]);
+  }, [hasRole, loading, router]);
   
   useEffect(() => {
     // Only load users if the current user is a developer
-    if (userData?.isDeveloper) {
+    if (hasRole('Developer')) {
       setManagedUsers(getAllUsersFromLocalStorage());
     }
-  }, [userData?.isDeveloper]);
+  }, [hasRole]);
   
   const refreshUsers = () => {
     setManagedUsers(getAllUsersFromLocalStorage());
   };
 
-  const handleUpdateRole = (uid: string, isDeveloper: boolean) => {
+  const handleUpdateRoles = (uid: string, newRoles: Role[]) => {
     const key = `userData-${uid}`;
     try {
       const userDataString = localStorage.getItem(key);
       if (userDataString) {
         const userData = JSON.parse(userDataString);
         
-        // Prevent lead developer from being demoted
-        if (userData.email === 'pb7552212@gmail.com' && !isDeveloper) {
+        // Prevent owner from having Owner role removed
+        if (userData.email === 'pb7552212@gmail.com' && !newRoles.includes('Owner')) {
           toast({
             title: "Action Forbidden",
-            description: "The lead developer's role cannot be changed.",
+            description: "The Owner's 'Owner' role cannot be removed.",
             variant: "destructive",
           });
           return;
         }
 
-        userData.isDeveloper = isDeveloper;
+        userData.roles = newRoles;
         localStorage.setItem(key, JSON.stringify(userData));
         toast({
-          title: "Role Updated",
-          description: `User role has been set to ${isDeveloper ? 'Developer' : 'User'}.`,
+          title: "Roles Updated",
+          description: `User roles have been updated.`,
         });
         refreshUsers();
+        setIsRoleModalOpen(false);
       } else {
          toast({
           title: "Update Failed",
@@ -128,7 +145,7 @@ const AdminDashboardPage = () => {
       console.error("Failed to update role:", error);
       toast({
         title: "Error",
-        description: "An error occurred while updating the role.",
+        description: "An error occurred while updating roles.",
         variant: "destructive",
       });
     }
@@ -142,16 +159,11 @@ const AdminDashboardPage = () => {
 
     const existingUser = findUserByEmail(newUserEmail);
     if (existingUser) {
-        // If user exists and is not a developer, promote them
-        if (!existingUser.isDeveloper) {
-            handleUpdateRole(existingUser.uid, true);
-            setNewUserEmail('');
-        } else {
-            toast({ title: "Already a Developer", description: `${newUserEmail} already has developer privileges.`});
-        }
+        // If user exists, open role management for them
+        openRoleManagement(existingUser);
     } else {
         // If user does not exist, trigger confirmation dialog
-        setUserToAdd({ uid: `new-${Date.now()}`, email: newUserEmail, isDeveloper: true });
+        setUserToAdd({ uid: `new-${Date.now()}`, email: newUserEmail, roles: ['User'] });
         setIsConfirmAddUserOpen(true);
     }
   };
@@ -159,23 +171,49 @@ const AdminDashboardPage = () => {
   const handleConfirmAddUser = () => {
     if (!userToAdd) return;
     // This is a simulation. In a real app, you'd create a user in your backend.
-    // Here, we just create a new entry in local storage.
     const newUserEntry = {
         userId: userToAdd.uid,
         email: userToAdd.email,
         chartAnalysisTrialPoints: 0,
         hasActiveSubscription: false,
-        isDeveloper: true,
+        roles: ['User'], // Default new user to 'User' role
     };
     localStorage.setItem(`userData-${userToAdd.uid}`, JSON.stringify(newUserEntry));
-    toast({ title: "User Added", description: `${userToAdd.email} has been added as a developer.` });
+    toast({ title: "User Added", description: `${userToAdd.email} has been added.` });
     refreshUsers();
     setNewUserEmail('');
     setUserToAdd(null);
     setIsConfirmAddUserOpen(false);
+    // Optionally open role management for the new user
+    openRoleManagement({uid: newUserEntry.userId, email: newUserEntry.email, roles: newUserEntry.roles});
+  };
+  
+  const openRoleManagement = (userToManage: UserManagementProfile) => {
+    setSelectedUserForRoles(userToManage);
+    setSelectedRoles(new Set(userToManage.roles));
+    setIsRoleModalOpen(true);
+  };
+  
+  const onRoleCheckboxChange = (role: Role, checked: boolean) => {
+    setSelectedRoles(prev => {
+        const newRoles = new Set(prev);
+        if (checked) {
+            newRoles.add(role);
+        } else {
+            newRoles.delete(role);
+        }
+        return newRoles;
+    });
   };
 
-  if (loading || !user || !userData?.isDeveloper) {
+  const saveRoles = () => {
+      if (selectedUserForRoles) {
+          handleUpdateRoles(selectedUserForRoles.uid, Array.from(selectedRoles));
+      }
+  };
+
+
+  if (loading || !hasRole('Developer')) {
     return (
       <main className="flex-1 p-6">
         <div className="space-y-4">
@@ -250,42 +288,42 @@ const AdminDashboardPage = () => {
                  <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">User Role Management</CardTitle>
-                        <CardDescription>Promote existing users or add new developers. This is a prototype and only affects browser storage.</CardDescription>
+                        <CardDescription>Add, find, and manage user roles. Only the Owner can assign roles.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="flex gap-2">
-                                <Input
-                                    type="email"
-                                    placeholder="Enter user's email"
-                                    value={newUserEmail}
-                                    onChange={(e) => setNewUserEmail(e.target.value)}
-                                />
-                                <Button onClick={handleAddUserInitiate}>Add User</Button>
-                            </div>
+                            {isOwner && (
+                              <div className="flex gap-2">
+                                  <Input
+                                      type="email"
+                                      placeholder="Find or add user by email"
+                                      value={newUserEmail}
+                                      onChange={(e) => setNewUserEmail(e.target.value)}
+                                  />
+                                  <Button onClick={handleAddUserInitiate}><UserPlus className="h-4 w-4 mr-2"/>Find/Add</Button>
+                              </div>
+                            )}
                             <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                               {managedUsers.map((mUser) => (
-                                  <div key={mUser.uid} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                      <div className="flex flex-col">
+                                  <div key={mUser.uid} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
+                                      <div className="flex flex-col gap-1.5">
                                         <span className="text-sm font-medium flex items-center gap-1.5">
                                           {mUser.email}
-                                          {mUser.email === 'pb7552212@gmail.com' && <Crown className="h-4 w-4 text-amber-500" title="Lead Developer"/>}
+                                          {mUser.roles.includes('Owner') && <Crown className="h-4 w-4 text-amber-500" title="Owner"/>}
                                         </span>
-                                        <Badge variant={mUser.isDeveloper ? "default" : "secondary"} className="w-fit mt-1">
-                                            {mUser.isDeveloper ? 'Developer' : 'User'}
-                                        </Badge>
+                                        <div className="flex flex-wrap gap-1">
+                                            {mUser.roles.map(role => (
+                                                <Badge key={role} variant={role === 'Developer' ? "default" : "secondary"} className="text-xs">
+                                                    {role}
+                                                </Badge>
+                                            ))}
+                                        </div>
                                       </div>
-                                      <div className="flex gap-2">
-                                          {!mUser.isDeveloper ? (
-                                              <Button size="sm" variant="outline" onClick={() => handleUpdateRole(mUser.uid, true)}>
-                                                  <UserPlus className="h-4 w-4 mr-1" /> Promote
-                                              </Button>
-                                          ) : (
-                                              <Button size="sm" variant="destructive" onClick={() => handleUpdateRole(mUser.uid, false)} disabled={mUser.email === 'pb7552212@gmail.com'}>
-                                                  <UserMinus className="h-4 w-4 mr-1" /> Demote
-                                              </Button>
-                                          )}
-                                      </div>
+                                      {isOwner && (
+                                        <Button size="sm" variant="outline" onClick={() => openRoleManagement(mUser)}>
+                                            <UserCog className="h-4 w-4 mr-1" /> Manage
+                                        </Button>
+                                      )}
                                   </div>
                               ))}
                             </div>
@@ -309,7 +347,7 @@ const AdminDashboardPage = () => {
                 <AlertDialogHeader>
                     <AlertDialogTitle>User Not Found</AlertDialogTitle>
                     <AlertDialogDescription>
-                        The user "{userToAdd?.email}" does not exist in the local storage database. Would you like to create a new developer entry for this email?
+                        The user "{userToAdd?.email}" does not exist. Would you like to create a new user entry for this email?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -321,10 +359,38 @@ const AdminDashboardPage = () => {
             </AlertDialogContent>
         </AlertDialog>
 
+        <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Manage Roles for {selectedUserForRoles?.email}</DialogTitle>
+                    <DialogDescription>
+                        Assign or revoke roles. The 'Owner' role cannot be removed from the application owner.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 grid grid-cols-2 gap-4">
+                    {availableRoles.map(role => (
+                        <div key={role} className="flex items-center space-x-2">
+                           <Checkbox 
+                                id={`role-${role}`}
+                                checked={selectedRoles.has(role)}
+                                onCheckedChange={(checked) => onRoleCheckboxChange(role, Boolean(checked))}
+                                disabled={role === 'Owner' && selectedUserForRoles?.email === 'pb7552212@gmail.com'}
+                            />
+                            <Label htmlFor={`role-${role}`} className="font-medium">{role}</Label>
+                        </div>
+                    ))}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={saveRoles}>Save Changes</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
     </main>
   );
 };
 
 export default AdminDashboardPage;
-
-    

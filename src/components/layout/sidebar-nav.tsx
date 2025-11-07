@@ -41,14 +41,14 @@ export const navItems: NavItem[] = [
 
 export function SidebarNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
-  const { user, userData, loading } = useAuth();
+  const { user, hasRole, loading } = useAuth();
   const { unreadCount } = useNotificationCenter();
 
   const filteredItems = items.filter(item => {
     if (loading) return false;
     if (item.authRequired && !user) return false;
     if (item.guestOnly && user) return false;
-    if (item.developerOnly && !userData?.isDeveloper) return false;
+    if (item.developerOnly && !hasRole('Developer')) return false;
     return true;
   });
 
