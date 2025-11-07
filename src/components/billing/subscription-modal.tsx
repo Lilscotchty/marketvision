@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ExternalLink, CheckCircle, Smartphone, Bitcoin, CircleDollarSign, Repeat, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast'; // Import useToast
+import SubscribeButton from '../pricing/subscribe-button';
 
 interface PaymentOption {
   name: string;
@@ -88,26 +89,9 @@ export function SubscriptionModal({
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-3">
-          {paymentOptions.map((option) => (
-            <Button
-              key={option.name}
-              variant="outline"
-              className="w-full justify-start text-left h-auto py-3"
-              onClick={() => handlePaymentOptionClick(option)}
-            >
-              <option.icon className="mr-3 h-5 w-5 text-primary" />
-              <div className="flex flex-col">
-                <span className="font-medium">{option.name}</span>
-                {option.actionType === 'link' && (
-                  <span className="text-xs text-muted-foreground">Proceed to secure payment</span>
-                )}
-                 {option.actionType === 'toast' && (
-                  <span className="text-xs text-muted-foreground">Currently unavailable</span>
-                )}
-              </div>
-              {option.actionType === 'link' && <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />}
-            </Button>
-          ))}
+          <div onClick={() => handlePaymentOptionClick(paymentOptions[0])}>
+            <SubscribeButton />
+          </div>
         </div>
         <div className="pt-4 border-t border-border">
           <p className="text-xs text-center text-muted-foreground pb-2">
