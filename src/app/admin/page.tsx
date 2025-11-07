@@ -12,6 +12,17 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import type { UserManagementProfile } from '@/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // This is a simulation. In a real app, this would be fetched from a secure backend.
 const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
@@ -35,12 +46,35 @@ const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
   return users;
 };
 
+// Function to find a user by email in local storage
+const findUserByEmail = (email: string): UserManagementProfile | null => {
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('userData-')) {
+            try {
+                const userData = JSON.parse(localStorage.getItem(key)!);
+                if (userData.email.toLowerCase() === email.toLowerCase()) {
+                    return {
+                        uid: userData.userId,
+                        email: userData.email,
+                        isDeveloper: userData.isDeveloper || false,
+                    };
+                }
+            } catch (e) { /* ignore */ }
+        }
+    }
+    return null;
+};
+
+
 const AdminDashboardPage = () => {
   const { user, userData, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [managedUsers, setManagedUsers] = useState<UserManagementProfile[]>([]);
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [userToAdd, setUserToAdd] = useState<UserManagementProfile | null>(null);
+  const [isConfirmAddUserOpen, setIsConfirmAddUserOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !userData?.isDeveloper)) {
@@ -100,6 +134,47 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleAddUserInitiate = () => {
+    if (!newUserEmail) {
+        toast({ title: "Email required", description: "Please enter an email address."});
+        return;
+    }
+
+    const existingUser = findUserByEmail(newUserEmail);
+    if (existingUser) {
+        // If user exists and is not a developer, promote them
+        if (!existingUser.isDeveloper) {
+            handleUpdateRole(existingUser.uid, true);
+            setNewUserEmail('');
+        } else {
+            toast({ title: "Already a Developer", description: `${newUserEmail} already has developer privileges.`});
+        }
+    } else {
+        // If user does not exist, trigger confirmation dialog
+        setUserToAdd({ uid: `new-${Date.now()}`, email: newUserEmail, isDeveloper: true });
+        setIsConfirmAddUserOpen(true);
+    }
+  };
+
+  const handleConfirmAddUser = () => {
+    if (!userToAdd) return;
+    // This is a simulation. In a real app, you'd create a user in your backend.
+    // Here, we just create a new entry in local storage.
+    const newUserEntry = {
+        userId: userToAdd.uid,
+        email: userToAdd.email,
+        chartAnalysisTrialPoints: 0,
+        hasActiveSubscription: false,
+        isDeveloper: true,
+    };
+    localStorage.setItem(`userData-${userToAdd.uid}`, JSON.stringify(newUserEntry));
+    toast({ title: "User Added", description: `${userToAdd.email} has been added as a developer.` });
+    refreshUsers();
+    setNewUserEmail('');
+    setUserToAdd(null);
+    setIsConfirmAddUserOpen(false);
+  };
+
   if (loading || !user || !userData?.isDeveloper) {
     return (
       <main className="flex-1 p-6">
@@ -125,7 +200,7 @@ const AdminDashboardPage = () => {
                     Admin Dashboard
                 </h1>
                 <p className="text-lg text-muted-foreground">
-                    Application metrics and management.
+                    Application metrics and user management.
                 </p>
             </header>
 
@@ -172,6 +247,51 @@ const AdminDashboardPage = () => {
                 </Card>
             </div>
              <div className="mt-8 grid gap-8 md:grid-cols-2">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">User Role Management</CardTitle>
+                        <CardDescription>Promote existing users or add new developers. This is a prototype and only affects browser storage.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <Input
+                                    type="email"
+                                    placeholder="Enter user's email"
+                                    value={newUserEmail}
+                                    onChange={(e) => setNewUserEmail(e.target.value)}
+                                />
+                                <Button onClick={handleAddUserInitiate}>Add User</Button>
+                            </div>
+                            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                              {managedUsers.map((mUser) => (
+                                  <div key={mUser.uid} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-medium flex items-center gap-1.5">
+                                          {mUser.email}
+                                          {mUser.email === 'pb7552212@gmail.com' && <Crown className="h-4 w-4 text-amber-500" title="Lead Developer"/>}
+                                        </span>
+                                        <Badge variant={mUser.isDeveloper ? "default" : "secondary"} className="w-fit mt-1">
+                                            {mUser.isDeveloper ? 'Developer' : 'User'}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex gap-2">
+                                          {!mUser.isDeveloper ? (
+                                              <Button size="sm" variant="outline" onClick={() => handleUpdateRole(mUser.uid, true)}>
+                                                  <UserPlus className="h-4 w-4 mr-1" /> Promote
+                                              </Button>
+                                          ) : (
+                                              <Button size="sm" variant="destructive" onClick={() => handleUpdateRole(mUser.uid, false)} disabled={mUser.email === 'pb7552212@gmail.com'}>
+                                                  <UserMinus className="h-4 w-4 mr-1" /> Demote
+                                              </Button>
+                                          )}
+                                      </div>
+                                  </div>
+                              ))}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <CardTitle>Recent Activity</CardTitle>
@@ -181,44 +301,30 @@ const AdminDashboardPage = () => {
                         <p>Activity Log Coming Soon</p>
                     </CardContent>
                 </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">User Role Management</CardTitle>
-                        <CardDescription>Promote or demote users to developer status. This is a prototype and only affects browser storage.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {managedUsers.map((mUser) => (
-                                <div key={mUser.uid} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                    <div className="flex flex-col">
-                                       <span className="text-sm font-medium flex items-center gap-1.5">
-                                         {mUser.email}
-                                         {mUser.email === 'pb7552212@gmail.com' && <Crown className="h-4 w-4 text-amber-500" />}
-                                       </span>
-                                       <Badge variant={mUser.isDeveloper ? "default" : "secondary"} className="w-fit mt-1">
-                                          {mUser.isDeveloper ? 'Developer' : 'User'}
-                                       </Badge>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {!mUser.isDeveloper ? (
-                                            <Button size="sm" variant="outline" onClick={() => handleUpdateRole(mUser.uid, true)}>
-                                                <UserPlus className="h-4 w-4 mr-1" /> Promote
-                                            </Button>
-                                        ) : (
-                                            <Button size="sm" variant="destructive" onClick={() => handleUpdateRole(mUser.uid, false)} disabled={mUser.email === 'pb7552212@gmail.com'}>
-                                                <UserMinus className="h-4 w-4 mr-1" /> Demote
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
              </div>
         </div>
+
+        <AlertDialog open={isConfirmAddUserOpen} onOpenChange={setIsConfirmAddUserOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>User Not Found</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        The user "{userToAdd?.email}" does not exist in the local storage database. Would you like to create a new developer entry for this email?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setUserToAdd(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmAddUser}>
+                        Yes, Add User
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
     </main>
   );
 };
 
 export default AdminDashboardPage;
+
+    
