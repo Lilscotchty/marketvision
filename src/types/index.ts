@@ -96,8 +96,7 @@ export interface UserAppData {
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
-  isDeveloper?: boolean; // Add this line
-  // Future: notificationPreferences, etc.
+  isDeveloper?: boolean;
 }
 
 // --- Email Flow Types ---
