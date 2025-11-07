@@ -1,3 +1,4 @@
+
 import type { AnalyzeCandlestickChartOutput } from '@/ai/flows/analyze-candlestick-chart';
 import type { PredictMarketMovementOutput } from '@/ai/flows/predict-market-movement';
 import type { CategorizeAssetOutput } from '@/ai/flows/categorize-asset-flow';
@@ -95,6 +96,7 @@ export interface UserAppData {
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
+  isDeveloper?: boolean; // Add this line
   // Future: notificationPreferences, etc.
 }
 

@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import type { UserAppData } from '@/types';
 
 // List of developer emails with full access
-const DEVELOPER_EMAILS = ['pb7552212@gmail.com'];
+const DEVELOPER_EMAILS = ['pb7552212@gmail.com', 'dev@example.com'];
 const INITIAL_TRIAL_POINTS = 5;
 
 interface AuthContextType {
@@ -32,13 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserData(null);
       return;
     }
+    
+    const isDeveloper = DEVELOPER_EMAILS.includes(firebaseUser.email || '');
 
-    if (DEVELOPER_EMAILS.includes(firebaseUser.email || '')) {
+    if (isDeveloper) {
       setUserData({
         userId: firebaseUser.uid,
         email: firebaseUser.email || '',
         chartAnalysisTrialPoints: 9999,
         hasActiveSubscription: true,
+        isDeveloper: true,
       });
       return;
     }
@@ -56,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (typeof storedUserData.hasActiveSubscription === 'undefined') {
           storedUserData.hasActiveSubscription = false;
         }
+        storedUserData.isDeveloper = false; // Ensure non-devs are marked as such
         setUserData(storedUserData);
       } else {
         const newUser: UserAppData = {
@@ -63,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: firebaseUser.email || '',
           chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
           hasActiveSubscription: false,
+          isDeveloper: false,
         };
         setUserData(newUser);
         localStorage.setItem(`userData-${firebaseUser.uid}`, JSON.stringify(newUser));
@@ -74,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: firebaseUser.email || '',
         chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
         hasActiveSubscription: false,
+        isDeveloper: false,
       });
     }
   }, []);
