@@ -99,6 +99,14 @@ export interface UserAppData {
   isDeveloper?: boolean;
 }
 
+// User profile for management UI
+export interface UserManagementProfile {
+  uid: string;
+  email: string;
+  isDeveloper: boolean;
+}
+
+
 // --- Email Flow Types ---
 export const SendEmailInputSchema = z.object({
   to: z.string().email().describe('The email address of the recipient.'),
