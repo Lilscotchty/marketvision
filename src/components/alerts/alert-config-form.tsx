@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -52,7 +53,7 @@ export function AlertConfigForm({ onAddAlert }: AlertConfigFormProps) {
     // Categorize the asset first
     try {
         const catResult = await categorizeAssetAction(values.asset);
-        if (catResult && !catResult.error) {
+        if (catResult && !catResult.error && catResult.category) {
             category = catResult.category;
         }
     } catch (error) {
