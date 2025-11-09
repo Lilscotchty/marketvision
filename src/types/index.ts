@@ -89,9 +89,9 @@ export interface AppNotification {
   iconName?: string; // Optional: Lucide icon name for visual cue e.g. "BellRing", "Info"
 }
 
-// --- ADDED THIS ---
 // Define the user roles
-export type Role = 'User' | 'Developer' | 'Owner';
+export const availableRoles = ['User', 'Developer', 'Owner'] as const;
+export type Role = typeof availableRoles[number];
 
 // User-specific application data, managed by AuthContext
 export interface UserAppData {
@@ -99,8 +99,16 @@ export interface UserAppData {
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
-  roles: Role[]; // <-- ADDED THIS
+  roles: Role[];
 }
+
+// Simplified profile for user management in admin
+export interface UserManagementProfile {
+    uid: string;
+    email: string;
+    roles: Role[];
+}
+
 
 // --- Email Flow Types ---
 export const SendEmailInputSchema = z.object({
