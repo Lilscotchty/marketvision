@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-// This line merges the duplicate imports and removes Crown (which isn't in this file)
+// This line merges the duplicate imports
 import { 
   BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
-  UserPlus, LifeBuoy, Mail, FileText, Menu, PanelLeft, ChevronsLeft, Crown
+  UserPlus, LifeBuoy, Mail, FileText, Menu, PanelLeft, ChevronsLeft, Crown 
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
-import { auth } from '@/lib/firebase/config'; // Added this import, it was missing
+import { auth } from '@/lib/firebase/config'; // Added this missing import
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -44,7 +44,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, userData, hasRole } = useAuth(); // Kept your new version
+  const { user, loading, userData, hasRole } = useAuth(); // Correctly destructures hasRole
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -63,7 +63,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-      // The auth context will handle redirection.
     } catch (error) {
       toast({
         title: 'Logout Failed',
@@ -79,9 +78,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   };
   
   const hasSubscription = userData?.hasActiveSubscription;
-  const isDeveloper = hasRole('Developer'); // Kept your new version
+  const isDeveloper = hasRole('Developer'); // This line is now safe
 
-  // Kept your new logic for 'isDeveloper'
   const userDropdownItems: CustomDropdownMenuItem[][] = user
     ? [
         [
@@ -127,7 +125,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               trigger={
                 user ? (
                   hasSubscription ? (
-                    // Kept your new version with the Crown icon
                     <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
                       <Avatar className="h-6 w-6">
                         {user?.photoURL ? (
