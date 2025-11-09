@@ -1,18 +1,17 @@
-
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth, GoogleAuthProvider } from 'firebase/auth';
 
 // Your web app's Firebase configuration
+// NOW loads from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDLfpHD6tKlxekkYLH6IFRkZxmp2pwhmyM",
-  authDomain: "marketvision-ai-26nvv.firebaseapp.com",
-  projectId: "marketvision-ai-26nvv",
-  storageBucket: "marketvision-ai-26nvv.appspot.com",
-  messagingSenderId: "988146260477",
-  appId: "1:988146260477:web:df3078ad6c25421825e194"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
-
 
 let app: FirebaseApp;
 

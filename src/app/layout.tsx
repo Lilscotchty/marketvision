@@ -6,7 +6,8 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider } from '@/contexts/theme-context';
-import { NotificationProvider } from '@/contexts/notification-context'; // Import NotificationProvider
+import { NotificationProvider } from '@/contexts/notification-context';
+import StyledComponentsRegistry from './registry'; // <-- 1. Import the registry
 
 export const metadata: Metadata = {
   title: 'FinSight AI',
@@ -23,13 +24,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning> 
       <body className={`${inter.variable} font-body antialiased`}>
-        <ThemeProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <AppLayout>{children}</AppLayout>
-            </NotificationProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <StyledComponentsRegistry> {/* <-- 2. Wrap your providers */}
+          <ThemeProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <AppLayout>{children}</AppLayout>
+              </NotificationProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </StyledComponentsRegistry>
         <Toaster />
       </body>
     </html>

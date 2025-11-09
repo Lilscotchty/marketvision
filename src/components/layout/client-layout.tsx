@@ -1,10 +1,12 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, UserPlus, LifeBuoy, Mail, FileText, Menu, Crown } from 'lucide-react';
+import { 
+  BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
+  UserPlus, LifeBuoy, Mail, FileText, Menu, PanelLeft, ChevronsLeft, Crown 
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -20,8 +22,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
-import { NavBar } from './nav';
-
+import { auth } from '@/lib/firebase/config'; // <-- This was missing from your provided snippet but is needed
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -42,7 +43,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, userData, hasRole } = useAuth();
+  const { user, loading, userData, hasRole } = useAuth(); // <-- Kept your version with hasRole
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -54,8 +55,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      // In a real app, you'd call your auth service's logout method.
-      // For this example, we'll just simulate it.
       if (auth.signOut) {
         await auth.signOut();
       }
@@ -79,8 +78,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   };
   
   const hasSubscription = userData?.hasActiveSubscription;
-  const isDeveloper = hasRole('Developer');
+  const isDeveloper = hasRole('Developer'); // <-- Kept your version
 
+  // <-- Kept your version with isDeveloper logic
   const userDropdownItems: CustomDropdownMenuItem[][] = user
     ? [
         [
@@ -103,15 +103,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-      <SidebarTrigger variant="ghost" size="icon">
+       <SidebarTrigger variant="ghost" size="icon">
           <Menu />
-      </SidebarTrigger>
-      
-      {isClient && !isMobile && (
-        <div className="flex-1">
-          <NavBar tabs={navItems} />
-        </div>
-      )}
+       </SidebarTrigger>
      
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         {isClient && (
@@ -132,6 +126,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               trigger={
                 user ? (
                   hasSubscription ? (
+                    // <-- Kept your version with Crown icon
                     <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
                       <Avatar className="h-6 w-6">
                         {user?.photoURL ? (
@@ -189,17 +184,20 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
            <SidebarContent>
-              <SidebarNav items={mobileSidebarNavItems} />
+              <SidebarNav items={navItems} />
            </SidebarContent>
           <SidebarFooter>
-            <SidebarNav items={[{ href: '/settings', label: 'Settings', icon: Settings, authRequired: true }]} />
+            <SidebarTrigger variant="ghost" className="w-full justify-start">
+               <ChevronsLeft className="mr-2 h-4 w-4 transition-transform duration-300 group-data-[collapsible=icon]:rotate-180" />
+               <span className="group-data-[collapsible=icon]:hidden">Collapse</span>
+            </SidebarTrigger>
           </SidebarFooter>
         </Sidebar>
 
         {isMobile && (
           <Sheet open={openMobile} onOpenChange={setOpenMobile}>
             <SheetContent side="left" className="p-0">
-               <SidebarHeader className="h-16 flex items-center justify-center border-b">
+               <SheetHeader className="h-16 flex items-center justify-center border-b">
                  <VisuallyHidden>
                     <SheetTitle>Main Menu</SheetTitle>
                  </VisuallyHidden>
@@ -209,7 +207,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                     FinSight <span className="text-primary">AI</span>
                   </h1>
                 </Link>
-              </SidebarHeader>
+              </SheetHeader>
               <div className="p-4">
                  <SidebarNav items={mobileSidebarNavItems} />
               </div>
