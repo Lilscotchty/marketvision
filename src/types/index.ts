@@ -1,4 +1,3 @@
-
 import type { AnalyzeCandlestickChartOutput } from '@/ai/flows/analyze-candlestick-chart';
 import type { PredictMarketMovementOutput } from '@/ai/flows/predict-market-movement';
 import type { CategorizeAssetOutput } from '@/ai/flows/categorize-asset-flow';
@@ -12,10 +11,6 @@ import { z } from 'zod';
 import type { MessageData } from 'genkit';
 
 export type AssetCategory = CategorizeAssetOutput['category'];
-
-export const availableRoles = ["Owner", "Developer", "User Manager", "Financial Manager", "User"] as const;
-export type Role = typeof availableRoles[number];
-
 
 export interface UploadedImageAnalysis {
   id: string;
@@ -94,22 +89,18 @@ export interface AppNotification {
   iconName?: string; // Optional: Lucide icon name for visual cue e.g. "BellRing", "Info"
 }
 
+// --- ADDED THIS ---
+// Define the user roles
+export type Role = 'User' | 'Developer' | 'Owner';
+
 // User-specific application data, managed by AuthContext
 export interface UserAppData {
   userId: string;
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
-  roles: Role[];
+  roles: Role[]; // <-- ADDED THIS
 }
-
-// User profile for management UI
-export interface UserManagementProfile {
-  uid: string;
-  email: string;
-  roles: Role[];
-}
-
 
 // --- Email Flow Types ---
 export const SendEmailInputSchema = z.object({
