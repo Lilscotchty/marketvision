@@ -1,3 +1,5 @@
+// src/types/index.ts
+
 import type { AnalyzeCandlestickChartOutput } from '@/ai/flows/analyze-candlestick-chart';
 import type { PredictMarketMovementOutput } from '@/ai/flows/predict-market-movement';
 import type { CategorizeAssetOutput } from '@/ai/flows/categorize-asset-flow';
@@ -89,9 +91,9 @@ export interface AppNotification {
   iconName?: string; // Optional: Lucide icon name for visual cue e.g. "BellRing", "Info"
 }
 
+// --- ADDED THIS ---
 // Define the user roles
-export const availableRoles = ['User', 'Developer', 'Owner'] as const;
-export type Role = typeof availableRoles[number];
+export type Role = 'User' | 'Developer' | 'Owner';
 
 // User-specific application data, managed by AuthContext
 export interface UserAppData {
@@ -99,16 +101,8 @@ export interface UserAppData {
   email: string;
   chartAnalysisTrialPoints: number;
   hasActiveSubscription: boolean;
-  roles: Role[];
+  roles: Role[]; // <-- ADDED THIS
 }
-
-// Simplified profile for user management in admin
-export interface UserManagementProfile {
-    uid: string;
-    email: string;
-    roles: Role[];
-}
-
 
 // --- Email Flow Types ---
 export const SendEmailInputSchema = z.object({

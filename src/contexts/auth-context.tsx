@@ -128,8 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: Role): boolean => {
-    return userData?.roles?.includes(role) ?? false;
-  };
+    return userData?.roles?.includes(role) ?? false;  };
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, userData, hasRole }}>
