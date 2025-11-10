@@ -15,7 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
-import type { HistoricalPrediction, UserAppData } from "@/types";
+// --- FIX 1: Add Role to import ---
+import type { HistoricalPrediction, UserAppData, Role } from "@/types";
 import { cn } from "@/lib/utils";
 import { Lights } from "@/components/ui/background-lights";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,24 +64,32 @@ export function ImageUploadForm() {
         if (typeof parsedData.hasActiveSubscription === 'undefined') {
           parsedData.hasActiveSubscription = false;
         }
+        // Ensure roles exist
+        if (typeof parsedData.roles === 'undefined') {
+          parsedData.roles = ['User'] as Role[];
+        }
         setUserData(parsedData);
       } catch (error) {
         console.error("Failed to parse user data:", error)
         // Set default if parsing fails
+        // --- FIX 2: Add roles property (THIS WAS YOUR ERROR) ---
         setUserData({
             userId: user.uid,
             email: user.email || '',
             chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
             hasActiveSubscription: false,
+            roles: ['User'] as Role[],
         });
       }
     } else {
       // Initialize for a new user
+      // --- FIX 3: Add roles property ---
       const newUser: UserAppData = {
         userId: user.uid,
         email: user.email || '',
         chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
         hasActiveSubscription: false,
+        roles: ['User'] as Role[],
       };
       setUserData(newUser);
       localStorage.setItem(`userData-${user.uid}`, JSON.stringify(newUser));
