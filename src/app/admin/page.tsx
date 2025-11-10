@@ -49,14 +49,15 @@ const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
     if (key && key.startsWith('userData-')) {
       try {
         const userData = JSON.parse(localStorage.getItem(key)!);
-        users.push({
-          userId: userData.userId, 
-          email: userData.email,
-          // --- FIX 1: Added 'as Role[]' ---
-          roles: userData.roles || (['User'] as Role[]),
-          hasActiveSubscription: userData.hasActiveSubscription ?? false, 
-          chartAnalysisTrialPoints: userData.chartAnalysisTrialPoints ?? 0, 
-        });
+        if (userData.userId && userData.email) { // Ensure basic user data exists
+          users.push({
+            userId: userData.userId, 
+            email: userData.email,
+            roles: userData.roles || ['User'],
+            hasActiveSubscription: userData.hasActiveSubscription ?? false, 
+            chartAnalysisTrialPoints: userData.chartAnalysisTrialPoints ?? 0, 
+          });
+        }
       } catch (error) {
         console.error(`Failed to parse user data for key ${key}:`, error);
       }
@@ -72,12 +73,11 @@ const findUserByEmail = (email: string): UserManagementProfile | null => {
         if (key && key.startsWith('userData-')) {
             try {
                 const userData = JSON.parse(localStorage.getItem(key)!);
-                if (userData.email.toLowerCase() === email.toLowerCase()) {
+                if (userData.email && userData.email.toLowerCase() === email.toLowerCase()) {
                     return {
                         userId: userData.userId, 
                         email: userData.email,
-                        // --- FIX 2: Added 'as Role[]' ---
-                        roles: userData.roles || (['User'] as Role[]),
+                        roles: userData.roles || ['User'],
                         hasActiveSubscription: userData.hasActiveSubscription ?? false, 
                         chartAnalysisTrialPoints: userData.chartAnalysisTrialPoints ?? 0, 
                     };
@@ -105,16 +105,20 @@ const AdminDashboardPage = () => {
 
   useEffect(() => {
     if (!loading && !hasRole('Developer')) {
+      toast({
+        title: "Access Denied",
+        description: "You do not have permission to view this page.",
+        variant: "destructive"
+      });
       router.push('/');
     }
-  }, [hasRole, loading, router]);
+  }, [hasRole, loading, router, toast]);
   
   useEffect(() => {
-    // Only load users if the current user is a developer
-    if (hasRole('Developer')) {
+    if (!loading && hasRole('Developer')) {
       setManagedUsers(getAllUsersFromLocalStorage());
     }
-  }, [hasRole]);
+  }, [hasRole, loading]);
   
   const refreshUsers = () => {
     setManagedUsers(getAllUsersFromLocalStorage());
@@ -174,8 +178,7 @@ const AdminDashboardPage = () => {
         setUserToAdd({ 
             userId: `new-${Date.now()}`, 
             email: newUserEmail, 
-            // --- FIX 3: Added 'as Role[]' ---
-            roles: ['User'] as Role[],
+            roles: ['User'],
             hasActiveSubscription: false, 
             chartAnalysisTrialPoints: 0, 
         });
@@ -191,7 +194,6 @@ const AdminDashboardPage = () => {
         email: userToAdd.email,
         chartAnalysisTrialPoints: 0,
         hasActiveSubscription: false,
-        // --- FIX 4: Added 'as Role[]' ---
         roles: ['User'] as Role[], 
     };
     localStorage.setItem(`userData-${userToAdd.userId}`, JSON.stringify(newUserEntry)); 
@@ -201,13 +203,10 @@ const AdminDashboardPage = () => {
     setUserToAdd(null);
     setIsConfirmAddUserOpen(false);
     
-    openRoleManagement({
-        userId: newUserEntry.userId,
-        email: newUserEntry.email,
-        roles: newUserEntry.roles,
-        hasActiveSubscription: newUserEntry.hasActiveSubscription,
-        chartAnalysisTrialPoints: newUserEntry.chartAnalysisTrialPoints
-    });
+    const addedUser = findUserByEmail(newUserEntry.email);
+    if (addedUser) {
+      openRoleManagement(addedUser);
+    }
   };
   
   const openRoleManagement = (userToManage: UserManagementProfile) => {
@@ -253,7 +252,7 @@ const AdminDashboardPage = () => {
 
   return (
     <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
-        <TooltipProvider> {/* Added TooltipProvider to wrap the whole component */}
+        <TooltipProvider>
             <div className="container mx-auto py-8">
                 <header className="mb-8">
                     <h1 className="text-3xl font-headline font-bold tracking-tight flex items-center gap-2">
@@ -346,7 +345,7 @@ const AdminDashboardPage = () => {
                                             </span>
                                             <div className="flex flex-wrap gap-1">
                                                 {mUser.roles.map(role => (
-                                                    <Badge key={role} variant={role === 'Developer' ? "default" : "secondary"} className="text-xs">
+                                                    <Badge key={role} variant={role === 'Developer' || role === 'Owner' ? "default" : "secondary"} className="text-xs">
                                                         {role}
                                                     </Badge> 
                                                 ))}
@@ -421,7 +420,7 @@ const AdminDashboardPage = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </TooltipProvider> {/* Closed the TooltipProvider */}
+        </TooltipProvider>
     </main>
   );
 };

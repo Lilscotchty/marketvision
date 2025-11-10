@@ -91,13 +91,11 @@ export interface AppNotification {
   iconName?: string; // Optional: Lucide icon name for visual cue e.g. "BellRing", "Info"
 }
 
-// --- THIS IS THE NEW/FIXED PART ---
+// --- Roles and User Data ---
 export type Role = 'User' | 'Developer' | 'Owner';
 
-// This is the new constant your admin page needs
 export const availableRoles: Role[] = ['User', 'Developer', 'Owner'];
 
-// User-specific application data, managed by AuthContext
 export interface UserAppData {
   userId: string;
   email: string;
@@ -106,17 +104,14 @@ export interface UserAppData {
   roles: Role[];
 }
 
-// This is the new type your admin page needs
 export interface UserManagementProfile {
   userId: string;
   email: string;
   roles: Role[];
   hasActiveSubscription: boolean;
   chartAnalysisTrialPoints: number;
-  lastLogin?: string; // Example: Add any other fields your admin page might need
+  lastLogin?: string;
 }
-// --- END OF FIX ---
-
 
 // --- Email Flow Types ---
 export const SendEmailInputSchema = z.object({

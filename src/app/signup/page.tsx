@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -7,8 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, signInWithPopup, FacebookAuthProvider } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase/config';
+import { createClient } from '@/lib/supabase/client';
 import { AuthFormWrapper } from '@/components/auth/auth-form-wrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +14,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UserPlus, Lock } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -46,9 +43,7 @@ const FacebookIcon = () => (
     </svg>
 );
 
-
 const signupSchema = z.object({
-  username: z.string().min(3, { message: 'Username must be at least 3 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long.' }),
   confirmPassword: z.string(),
@@ -64,56 +59,56 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
+  const supabase = createClient();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState<null | 'google' | 'facebook'>(null);
 
-  const form = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      terms: false,
-    },
-  });
-
   const handleSocialSignIn = async (provider: 'google' | 'facebook') => {
     setIsSocialLoading(provider);
-    try {
-      const authProvider = provider === 'google' ? googleProvider : new FacebookAuthProvider();
-      await signInWithPopup(auth, authProvider);
-      toast({
-        title: 'Account Created',
-        description: `Your account has been successfully created with ${provider.charAt(0).toUpperCase() + provider.slice(1)}.`,
-      });
-      router.push('/');
-    } catch (error: any) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${location.origin}/api/auth/callback`,
+      },
+    });
+
+    if (error) {
       toast({
         title: 'Sign Up Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: error.message,
         variant: 'destructive',
       });
-    } finally {
       setIsSocialLoading(null);
     }
+    // On success, Supabase redirects to the callback, so no further client-side action is needed.
   };
 
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, data.email, data.password);
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${location.origin}/api/auth/callback`,
+      },
+    });
+
+    if (error) {
       toast({
-        title: 'Account Created',
-        description: 'Your account has been successfully created. You are now logged in.',
+        title: 'Sign Up Failed',
+        description: error.message,
+        variant: 'destructive',
       });
-      router.push('/');
-    } catch (error: any) {
-      // ... (error handling as before)
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: 'Confirm Your Email',
+        description: 'We sent a confirmation link to your email address.',
+      });
+      // Don't redirect immediately. User needs to confirm their email.
+      // You can show a success message or another component.
     }
+    setIsLoading(false);
   };
 
   const isButtonDisabled = isLoading || isSocialLoading !== null;
@@ -145,19 +140,6 @@ export default function SignupPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username <span className="text-destructive">*</span></FormLabel>
-                <FormControl>
-                  <Input placeholder="Choose a username" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="email"
@@ -217,7 +199,7 @@ export default function SignupPage() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-base font-semibold" disabled={isButtonDisabled} style={{background: 'linear-gradient(90deg,rgb(99, 13, 248),rgb(27, 2, 126))'}}>
+          <Button type="submit" className="w-full shiny-button text-base font-semibold" disabled={isButtonDisabled}>
             {isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
@@ -231,7 +213,7 @@ export default function SignupPage() {
       </Form>
       
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?
+        Already have an account?{' '}
         <Link href="/login" className="font-medium text-primary hover:underline">
           Sign in here
         </Link>

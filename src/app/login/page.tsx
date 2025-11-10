@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -7,16 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase/config';
+import { createClient } from '@/lib/supabase/client';
 import { AuthFormWrapper } from '@/components/auth/auth-form-wrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -49,6 +45,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -63,57 +60,46 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (error) {
+      toast({
+        title: 'Login Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
       toast({
         title: 'Login Successful',
         description: "You're now logged in.",
       });
-      router.push('/'); // Redirect to dashboard or desired page
-    } catch (error: any) {
-      let errorMessage = 'An unexpected error occurred. Please try again.';
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/user-not-found':
-          case 'auth/wrong-password':
-          case 'auth/invalid-credential':
-            errorMessage = 'Invalid email or password.';
-            break;
-          case 'auth/invalid-email':
-            errorMessage = 'Invalid email format.';
-            break;
-          default:
-            errorMessage = error.message || errorMessage;
-        }
-      }
-      toast({
-        title: 'Login Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      router.push('/');
+      router.refresh(); // Force a refresh to update server-side session data
     }
+    setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-      toast({
-        title: 'Login Successful',
-        description: "You're now logged in with Google.",
-      });
-      router.push('/');
-    } catch (error: any) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/api/auth/callback`,
+      },
+    });
+
+    if (error) {
       toast({
         title: 'Google Sign-In Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: error.message,
         variant: 'destructive',
       });
-    } finally {
       setIsGoogleLoading(false);
     }
+    // No need to handle success here, redirection will happen.
   };
 
   return (
@@ -149,12 +135,11 @@ export default function LoginPage() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading || isGoogleLoading} style={{background: 'linear-gradient(90deg,rgb(99, 13, 248),rgb(27, 2, 126))'}}>
-          
+          <Button type="submit" className="w-full shiny-button" disabled={isLoading || isGoogleLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signning in...
+                Signing in...
               </>
             ) : (
               <>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
@@ -51,7 +50,7 @@ export function ImageUploadForm() {
       setUserData(null);
       return;
     }
-    const storedData = localStorage.getItem(`userData-${user.uid}`);
+    const storedData = localStorage.getItem(`userData-${user.id}`);
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
@@ -72,9 +71,8 @@ export function ImageUploadForm() {
       } catch (error) {
         console.error("Failed to parse user data:", error)
         // Set default if parsing fails
-        // --- FIX 2: Add roles property (THIS WAS YOUR ERROR) ---
         setUserData({
-            userId: user.uid,
+            userId: user.id,
             email: user.email || '',
             chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
             hasActiveSubscription: false,
@@ -83,16 +81,15 @@ export function ImageUploadForm() {
       }
     } else {
       // Initialize for a new user
-      // --- FIX 3: Add roles property ---
       const newUser: UserAppData = {
-        userId: user.uid,
+        userId: user.id,
         email: user.email || '',
         chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
         hasActiveSubscription: false,
         roles: ['User'] as Role[],
       };
       setUserData(newUser);
-      localStorage.setItem(`userData-${user.uid}`, JSON.stringify(newUser));
+      localStorage.setItem(`userData-${user.id}`, JSON.stringify(newUser));
     }
   }, [user]);
 

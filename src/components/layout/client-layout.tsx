@@ -5,7 +5,7 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
-  UserPlus, LifeBuoy, Mail, FileText, Menu, PanelLeft, ChevronsLeft, Crown 
+  UserPlus, LifeBuoy, Mail, FileText, Menu, ChevronsLeft, Crown 
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -22,7 +22,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { cn } from '@/lib/utils';
-import { auth } from '@/lib/firebase/config'; 
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -42,7 +41,7 @@ const mobileSidebarNavItems: NavItem[] = [
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const { user, loading, userData, hasRole } = useAuth();
+  const { user, loading, userData, hasRole, logout } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -54,9 +53,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
-      if (auth.signOut) {
-        await auth.signOut();
-      }
+      await logout();
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -125,8 +122,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   hasSubscription ? (
                     <button className="flex items-center gap-2 bg-orange-200 text-orange-800 rounded-full p-1 pl-2 pr-4 text-sm font-semibold hover:bg-orange-300 transition-colors">
                       <Avatar className="h-6 w-6">
-                        {user?.photoURL ? (
-                          <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                        {user?.user_metadata?.avatar_url ? (
+                          <AvatarImage src={user.user_metadata.avatar_url} alt={user.email || 'User'} />
                         ) : (
                           <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
                             {getInitials(user?.email)}
@@ -141,8 +138,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                   ) : (
                     <Button variant="ghost" size="icon" className="rounded-full">
                       <Avatar className="h-8 w-8">
-                        {user?.photoURL ? (
-                          <AvatarImage src={user.photoURL} alt={user.email || 'User'} />
+                        {user?.user_metadata?.avatar_url ? (
+                          <AvatarImage src={user.user_metadata.avatar_url} alt={user.email || 'User'} />
                         ) : (
                           <AvatarFallback className="bg-primary text-primary-foreground">
                             {getInitials(user?.email)}

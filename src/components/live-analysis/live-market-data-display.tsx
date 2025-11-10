@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -87,7 +86,7 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
   const activateSubscription = () => {
     if (user) {
       const updatedUserData = { ...localUserData, hasActiveSubscription: true } as UserAppData;
-      localStorage.setItem(`userData-${user.uid}`, JSON.stringify(updatedUserData));
+      localStorage.setItem(`userData-${user.id}`, JSON.stringify(updatedUserData));
       setLocalUserData(updatedUserData);
     }
   };
@@ -259,7 +258,6 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
               }}
               paymentLink={KORAPAY_TEST_PAYMENT_LINK}
            />
-        </Card>
       </div>
     );
   }
