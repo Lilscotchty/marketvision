@@ -1,7 +1,7 @@
 
 "use client";
 import React from 'react';
-import { cn } from '@/lib/cn';
+import { cn } from '@/lib/utils';
 
 export const Lights: React.FC<{ className?: string }> = ({ className }) => (
   <div className={cn('w-full h-full overflow-hidden', className)}>

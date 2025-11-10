@@ -2,7 +2,7 @@
 import { PriceCard, OfferingWrapper, Offering, ProductName, Price, Description } from '@/components/pricing/pricing-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Star } from 'lucide-react';
+import {  Star } from 'lucide-react';
 import SubscribeButton from '@/components/pricing/subscribe-button';
 
 export default function PricingPage() {

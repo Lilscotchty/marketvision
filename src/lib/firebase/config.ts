@@ -1,5 +1,5 @@
-// src/lib/firebase/config.ts
 
+// src/lib/firebase/config.ts
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth, GoogleAuthProvider } from 'firebase/auth';
@@ -14,7 +14,6 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
-
 
 let app: FirebaseApp;
 
