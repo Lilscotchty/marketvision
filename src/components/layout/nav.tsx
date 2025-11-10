@@ -1,4 +1,3 @@
-
 "use client"
 
 import { motion } from 'framer-motion'
@@ -75,9 +74,11 @@ export const NavBar = ({ tabs }: { tabs: NavItem[] }) => {
           transition={{ duration: 0.15 }}
           style={{
             left:
-              document.querySelector(`a[href="${hoveredTab}"]`)?.offsetLeft || 0,
+              // --- THIS LINE IS FIXED ---
+              document.querySelector<HTMLAnchorElement>(`a[href="${hoveredTab}"]`)?.offsetLeft || 0,
             width:
-              document.querySelector(`a[href="${hoveredTab}"]`)?.clientWidth || 0
+              // --- THIS LINE IS FIXED ---
+              document.querySelector<HTMLAnchorElement>(`a[href="${hoveredTab}"]`)?.clientWidth || 0
           }}
         />
       )}
