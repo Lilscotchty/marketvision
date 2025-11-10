@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -116,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setLoading(true);
     try {
+      // eslint-disable-next-line no-undef
       await firebaseSignOut(auth);
       setUser(null);
       setUserData(null);
@@ -128,7 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: Role): boolean => {
-    return userData?.roles?.includes(role) ?? false;  };
+    // This is the corrected line:
+    return userData?.roles?.includes(role) ?? false;
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, userData, hasRole }}>
