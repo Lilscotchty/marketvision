@@ -1,4 +1,6 @@
 // next.config.ts
+import { config } from 'dotenv';
+config();
 
 import type {NextConfig} from 'next';
 
@@ -25,7 +27,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  // The 'env' block has been REMOVED.
 };
 
 export default nextConfig;
