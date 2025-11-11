@@ -1,148 +1,151 @@
 "use client";
 
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import type { UserAppData, Role } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-const OWNER_EMAIL = 'pb7552212@gmail.com';
-const INITIAL_TRIAL_POINTS = 5;
+// Define the shape of the user profile you'll fetch from your Supabase table
+interface UserProfile {
+  id: string;
+  email: string;
+  roles: Role[];
+  has_active_subscription: boolean;
+  chart_analysis_trial_points: number;
+}
 
 interface AuthContextType {
-  user: SupabaseUser | null;
+  supabase: SupabaseClient;
+  user: User | null;
+  userData: UserAppData | null;
   loading: boolean;
   logout: () => Promise<void>;
-  userData: UserAppData | null;
   hasRole: (role: Role) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState<UserAppData | null>(null);
-  const router = useRouter();
   const supabase = createClient();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserAppData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = useCallback(async (supabaseUser: SupabaseUser) => {
-    // Check if the user is the owner
-    const isOwner = supabaseUser.email === OWNER_EMAIL;
-    if (isOwner) {
-      const ownerData: UserAppData = {
-        userId: supabaseUser.id,
-        email: supabaseUser.email || '',
-        chartAnalysisTrialPoints: 9999,
-        hasActiveSubscription: true,
-        roles: ['Owner', 'Developer'],
-      };
-      setUserData(ownerData);
-      // In a real app, you'd upsert this to your database
-      return;
-    }
-    
-    // In a real app, this would be a single fetch from your 'profiles' table.
-    // We are simulating it with localStorage for this prototype.
+  const fetchUserProfile = useCallback(async (supabaseUser: User) => {
     try {
-        const storedUserDataString = localStorage.getItem(`userData-${supabaseUser.id}`);
-        let finalUserData: UserAppData;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-        if (storedUserDataString) {
-            const storedUserData = JSON.parse(storedUserDataString) as Partial<UserAppData>;
-            finalUserData = {
-                userId: supabaseUser.id,
-                email: supabaseUser.email || '',
-                chartAnalysisTrialPoints: storedUserData.chartAnalysisTrialPoints ?? INITIAL_TRIAL_POINTS,
-                hasActiveSubscription: storedUserData.hasActiveSubscription ?? false,
-                roles: storedUserData.roles && Array.isArray(storedUserData.roles) && storedUserData.roles.length > 0 ? storedUserData.roles : ['User'],
-            };
-        } else {
-            // Initialize for a new user
-            finalUserData = {
-                userId: supabaseUser.id,
-                email: supabaseUser.email || '',
-                chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
-                hasActiveSubscription: false,
-                roles: ['User'],
-            };
+      if (error) {
+        console.error('Error fetching user profile:', error.message);
+        // Maybe this is a new user, and the profile hasn't been created yet.
+        // We can create one here.
+        if (error.code === 'PGRST116') { // "pgrst116" = row not found
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: supabaseUser.id,
+              email: supabaseUser.email,
+              roles: ['User'],
+              has_active_subscription: false,
+              chart_analysis_trial_points: 5 // Default trial points
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError.message);
+            return null;
+          }
+          return newProfile;
         }
-
-        if (finalUserData.chartAnalysisTrialPoints < 0) finalUserData.chartAnalysisTrialPoints = 0;
-        
-        setUserData(finalUserData);
-        localStorage.setItem(`userData-${supabaseUser.id}`, JSON.stringify(finalUserData));
+        return null;
+      }
+      return data;
     } catch (e) {
-        console.error("Failed to parse user data from localStorage", e);
-        setUserData({
-            userId: supabaseUser.id,
-            email: supabaseUser.email || '',
-            chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
-            hasActiveSubscription: false,
-            roles: ['User'],
-        });
+      console.error('Exception fetching profile:', e);
+      return null;
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setLoading(true);
-      const supabaseUser = session?.user ?? null;
-      setUser(supabaseUser);
-      if (supabaseUser) {
-        await fetchUserProfile(supabaseUser);
-      } else {
-        setUserData(null);
-      }
-      setLoading(false);
-    });
-
-    // Check initial session
-    const getInitialSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const supabaseUser = session?.user ?? null;
-        setUser(supabaseUser);
-        if (supabaseUser) {
-            await fetchUserProfile(supabaseUser);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setLoading(true);
+        if (event === 'SIGNED_IN' && session) {
+          const supabaseUser = session.user;
+          setUser(supabaseUser);
+          const profile = await fetchUserProfile(supabaseUser);
+          if (profile) {
+            setUserData({
+              userId: profile.id,
+              email: profile.email,
+              roles: profile.roles,
+              hasActiveSubscription: profile.has_active_subscription,
+              chartAnalysisTrialPoints: profile.chart_analysis_trial_points,
+            });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setUserData(null);
         }
         setLoading(false);
+      }
+    );
+
+    // Check for initial session on load
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const supabaseUser = session.user;
+        setUser(supabaseUser);
+        const profile = await fetchUserProfile(supabaseUser);
+        if (profile) {
+          setUserData({
+            userId: profile.id,
+            email: profile.email,
+            roles: profile.roles,
+            hasActiveSubscription: profile.has_active_subscription,
+            chartAnalysisTrialPoints: profile.chart_analysis_trial_points,
+          });
+        }
+      }
+      setLoading(false);
     };
 
-    getInitialSession();
+    checkInitialSession();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, router, fetchUserProfile]);
+  }, [supabase, fetchUserProfile]);
 
   const logout = async () => {
-    setLoading(true);
     await supabase.auth.signOut();
     setUser(null);
     setUserData(null);
     router.push('/login');
-    router.refresh();
-    setLoading(false);
   };
 
   const hasRole = (role: Role): boolean => {
     return userData?.roles?.includes(role) ?? false;
   };
-  
-   if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
-  return (
-    <AuthContext.Provider value={{ user, loading, logout, userData, hasRole }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    supabase,
+    user,
+    userData,
+    loading,
+    logout,
+    hasRole,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
