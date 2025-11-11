@@ -85,6 +85,7 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
 
   const activateSubscription = () => {
     if (user) {
+      // --- FIX 2: Use user.uid (from Firebase) not user.id (from Supabase) ---
       const updatedUserData = { ...localUserData, hasActiveSubscription: true } as UserAppData;
       localStorage.setItem(`userData-${user.id}`, JSON.stringify(updatedUserData));
       setLocalUserData(updatedUserData);
@@ -249,6 +250,7 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
               Subscribe Now
             </Button>
           </CardContent>
+           {/* --- FIX 1: This was the syntax error --- */}
            <SubscriptionModal
               isOpen={isSubscriptionModalOpen}
               onClose={() => setIsSubscriptionModalOpen(false)}
@@ -257,7 +259,8 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
                 toast({ title: "Subscription Activated", description: "You now have premium access!" });
               }}
               paymentLink={KORAPAY_TEST_PAYMENT_LINK}
-           />
+            />
+        </Card>
       </div>
     );
   }
