@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = useCallback(async (supabaseUser: User) => {
     try {
+      // We just select the profile. The trigger handles creation.
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -42,28 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error.message);
-        // Maybe this is a new user, and the profile hasn't been created yet.
-        // We can create one here.
-        if (error.code === 'PGRST116') { // "pgrst116" = row not found
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: supabaseUser.id,
-              email: supabaseUser.email,
-              roles: ['User'],
-              has_active_subscription: false,
-              chart_analysis_trial_points: 5 // Default trial points
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('Error creating profile:', insertError.message);
-            return null;
-          }
-          return newProfile;
-        }
+        // The trigger should have created this. If it's still not found,
+        // log a more serious error.
+        console.error('Error fetching user profile (it should exist):', error.message);
         return null;
       }
       return data;
