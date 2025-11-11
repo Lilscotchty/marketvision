@@ -15,8 +15,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const AnalyzeCandlestickChartInputSchema = z.object({
-  chartDataUris: z.array(z.string()).describe(
-    "An array of candlestick chart images, as data URIs. The AI should analyze them cohesively, inferring timeframes from the context of the charts themselves."
+  chartImageUrls: z.array(z.string().url()).describe(
+    "An array of public URLs of candlestick chart images. The AI should analyze them cohesively."
   ),
 });
 export type AnalyzeCandlestickChartInput = z.infer<typeof AnalyzeCandlestickChartInputSchema>;
@@ -133,7 +133,7 @@ You have been provided with one or more candlestick chart images. Your primary g
 3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
 
 Analyze the following candlestick charts:
-{{#each chartDataUris}}
+{{#each chartImageUrls}}
 Chart: {{media url=this}}
 {{/each}}
 

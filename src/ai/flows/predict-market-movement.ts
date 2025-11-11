@@ -13,10 +13,11 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PredictMarketMovementInputSchema = z.object({
-  candlestickChartDataUri: z
+  candlestickChartImageUrl: z
     .string()
+    .url()
     .describe(
-      "A photo of a candlestick chart, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A public URL of a candlestick chart image."
     ),
 });
 export type PredictMarketMovementInput = z.infer<typeof PredictMarketMovementInputSchema>;
@@ -77,7 +78,7 @@ const prompt = ai.definePrompt({
 
 **Analyze the following candlestick chart:**
 
-Candlestick Chart: {{media url=candlestickChartDataUri}}
+Candlestick Chart: {{media url=candlestickChartImageUrl}}
 
 Output MUST be in valid JSON format according to the defined schema.
 `,

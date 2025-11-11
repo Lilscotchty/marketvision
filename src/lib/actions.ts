@@ -7,24 +7,6 @@ import { analyzeCandlestickChart } from '@/ai/flows/analyze-candlestick-chart';
 import { categorizeAsset } from '@/ai/flows/categorize-asset-flow';
 import type { PredictionOutput, AnalysisOutput, AlphaVantageGlobalQuote, MarketNewsItem, AssetCategory } from '@/types';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILES = 3;
-
-const fileSchema = z
-  .instanceof(File)
-  .refine((file) => file.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
-  .refine(
-    (file) => ALLOWED_FILE_TYPES.includes(file.type),
-    'Only .jpg, .jpeg, .png, .webp, and .gif formats are supported.'
-  );
-
-const formSchema = z.object({
-  chartImages: z.array(fileSchema)
-    .min(1, "Please upload at least one chart image.")
-    .max(MAX_FILES, `You can upload a maximum of ${MAX_FILES} images.`),
-});
-
 export interface AnalysisResult {
   prediction?: PredictionOutput;
   analysis?: AnalysisOutput;
@@ -32,41 +14,21 @@ export interface AnalysisResult {
   imagePreviewUrls?: (string | null)[];
 }
 
-async function fileToDataUri(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  return `data:${file.type};base64,${buffer.toString('base64')}`;
-}
-
 export async function handleImageAnalysisAction(
-  formData: FormData
+  chartUrls: string[]
 ): Promise<AnalysisResult> {
 
-  const files = formData.getAll('chartImages').filter(f => f instanceof File && f.size > 0) as File[];
-
-  const validatedFields = formSchema.safeParse({
-    chartImages: files,
-  });
-
-  if (!validatedFields.success) {
-    const errorMessage = validatedFields.error.flatten().fieldErrors.chartImages?.[0] 
-      || validatedFields.error.flatten().formErrors[0]
-      || "Invalid input.";
-    return { error: errorMessage };
+  if (!chartUrls || chartUrls.length === 0) {
+    return { error: "No chart images were provided." };
   }
 
-  const { chartImages } = validatedFields.data;
-
   try {
-    const dataUris = await Promise.all(chartImages.map(fileToDataUri));
-    
-    // The first image is used for the prediction, all are used for analysis.
     const predictionInput = {
-        candlestickChartDataUri: dataUris[0]
+        candlestickChartImageUrl: chartUrls[0]
     };
     
     const analysisInput = {
-        chartDataUris: dataUris
+        chartImageUrls: chartUrls
     };
     
     const [predictionResult, analysisResult] = await Promise.all([
@@ -74,14 +36,12 @@ export async function handleImageAnalysisAction(
       analyzeCandlestickChart(analysisInput)
     ]);
     
-    // Check if the AI indicated that timeframes were unclear.
     if (analysisResult.asset === 'Unclear' && analysisResult.summary === "Timeframe not visible") {
       return {
         error: 'Could not identify timeframes on the chart. Please use a screenshot of the chart window instead of a downloaded image, as it helps capture the timeframe.'
       };
     }
     
-    // Check if multiple images were uploaded but all have the same timeframe
     if (
       analysisResult.timeframesDetected &&
       analysisResult.timeframesDetected.length > 1 &&
@@ -95,7 +55,7 @@ export async function handleImageAnalysisAction(
     return {
       prediction: predictionResult.prediction,
       analysis: analysisResult,
-      imagePreviewUrls: dataUris,
+      imagePreviewUrls: chartUrls,
     };
   } catch (error) {
     console.error('AI analysis failed:', error);
@@ -118,7 +78,6 @@ function determineAssetType(symbol: string): AssetInfo {
   const upperSymbol = symbol.toUpperCase().trim();
   const originalSymbol = symbol;
 
-  // New Forex check for 6-char pairs like EURUSD
   if (/^[A-Z]{6}$/.test(upperSymbol)) {
       return { type: 'forex', fromCurrency: upperSymbol.substring(0, 3), toCurrency: upperSymbol.substring(3), apiSymbol: '', originalSymbol: `${upperSymbol.substring(0, 3)}/${upperSymbol.substring(3)}` };
   }
@@ -337,7 +296,6 @@ export async function fetchMarketNews(): Promise<FetchNewsResult> {
     }
     if (data['Note']) {
         console.warn('News service API Note:', data['Note']);
-        // If the note indicates a free tier limit, we can show a specific message
         if (data['Note'].includes('free tier')) {
             return { error: `Could not fetch news. The API limit for the free tier may have been reached.` };
         }
@@ -352,7 +310,6 @@ export async function fetchMarketNews(): Promise<FetchNewsResult> {
 }
 
 
-// New Server Action for Asset Categorization
 export async function categorizeAssetAction(symbol: string): Promise<{ category: AssetCategory; error?: null } | { error: string; category?: null }> {
   try {
     const result = await categorizeAsset({ symbol });
