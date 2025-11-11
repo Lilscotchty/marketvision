@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -6,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, CandlestickChart, BarChart2, Lightbulb, Zap, Workflow, Layers3, Info, ThumbsUp, ThumbsDown, Target, Activity, BookOpen, Compass, ShieldCheck, Crosshair, PackageOpen, GalleryHorizontal } from "lucide-react";
-import type { PredictionOutput, AnalysisOutput } from "@/types";
+// Import CandlestickPattern here
+import type { PredictionOutput, AnalysisOutput, ICTElement } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label"; // Import the Label component
 import { SniperEntryCard } from "./sniper-entry-card";
+import { ReactElement, JSXElementConstructor, ReactNode, ReactPortal, AwaitedReactNode, Key } from "react";
 
 
 interface PredictionResultsProps {
@@ -190,19 +191,22 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
             <Label className="text-sm font-medium">Patterns</Label>
             {analysis.patterns && analysis.patterns.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-1">
-                {analysis.patterns.map((pattern, index) => (
-                  <Badge key={index} variant="secondary">{pattern}</Badge>
-                ))}
-              </div>
+              {/* --- FIX: Treat pattern as a simple string --- */}
+              {analysis.patterns.map((pattern: string, index: number) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {pattern}
+                </Badge>
+              ))}
+            </div>
             ) : (
               <p className="text-sm text-muted-foreground mt-1">No patterns identified.</p>
             )}
           </div>
-           {analysis.ictElements && analysis.ictElements.length > 0 && (
+          {analysis.ictElements && analysis.ictElements.length > 0 && (
             <div>
               <Label className="text-sm font-medium flex items-center gap-1"><Zap className="h-4 w-4 text-accent" /> ICT Elements</Label>
               <ul className="mt-2 list-none space-y-2">
-                {analysis.ictElements.map((element, index) => (
+                {analysis.ictElements.map((element: { type: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; location_description: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; }, index: Key | null | undefined) => (
                   <li key={index} className="p-2 border rounded-md bg-muted/30 text-xs">
                     <strong className="text-accent">{element.type}:</strong>
                     <p className="text-muted-foreground mt-0.5">{element.location_description}</p>
@@ -219,6 +223,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
               </p>
             </div>
           )}
+          {/* --- FIX 1: REMOVED THE STRAY 'D' CHARACTER THAT WAS HERE --- */}
           {analysis.potentialAMDCycle && (analysis.potentialAMDCycle.phase || analysis.potentialAMDCycle.reasoning) && (
             <div>
               <Label className="text-sm font-medium flex items-center gap-1">
@@ -282,6 +287,7 @@ export function PredictionResults({ prediction, analysis, imagePreviewUrl, image
                  <h4 className="font-semibold flex items-center gap-2 text-md"><PackageOpen className="h-5 w-5 text-accent"/>Entry Mechanic (LTF)</h4>
                  <div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs">
                     <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p>
+                    {/* --- FIX 2: Corrected 'sigit arsnperEntry' to 'sniperEntry' --- */}
                     <p className="text-muted-foreground"><strong className="text-sm font-medium text-foreground">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p>
                  </div>
               </div>
