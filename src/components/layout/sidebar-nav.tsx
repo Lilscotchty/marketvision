@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { LucideIcon } from "lucide-react";
 import { BarChart3, BellRing, History, Activity, LogIn, UserPlus, Bell, Settings, DollarSign, Newspaper, Home, ShieldCheck } from "lucide-react";
@@ -43,6 +44,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   const { user, hasRole, loading } = useAuth();
   const { unreadCount } = useNotificationCenter();
+  const { isExpanded } = useSidebar();
 
   const filteredItems = items.filter(item => {
     if (loading) return false;
@@ -57,9 +59,9 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
       <SidebarMenu>
         {[...Array(4)].map((_, index) => (
           <SidebarMenuItem key={index}>
-            <div className="flex items-center gap-2 p-2 h-8 w-full">
-              <Skeleton className="h-4 w-4 rounded-sm" />
-              <Skeleton className="h-4 w-20 rounded-sm group-data-[collapsible=icon]:hidden" />
+             <div className="flex items-center gap-3 p-2 h-9 w-full">
+              <Skeleton className="h-5 w-5 rounded-sm" />
+              <Skeleton className="h-4 w-20 rounded-sm" />
             </div>
           </SidebarMenuItem>
         ))}
@@ -72,22 +74,24 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
       {filteredItems.map((item) => (
             <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                className="relative"
+                  asChild
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
                 >
-                <Link href={item.href}>
+                  <Link href={item.href}>
                     <item.icon />
-                    <span>{item.fullLabel || item.label}</span>
-                     {item.showBadge && unreadCount > 0 && (
+                    <span className="opacity-100 transition-opacity duration-300 group-hover/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0">
+                      {item.fullLabel || item.label}
+                    </span>
+                     {item.showBadge && unreadCount > 0 && isExpanded && (
                       <Badge 
                           variant="destructive" 
-                          className="absolute top-1.5 right-2 h-4 w-4 p-0 min-w-0 flex items-center justify-center text-[9px]"
+                          className="ml-auto"
                       >
                       {unreadCount > 9 ? '9+' : unreadCount}
                       </Badge>
                   )}
-                </Link>
+                  </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         ))}

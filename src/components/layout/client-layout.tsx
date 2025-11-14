@@ -2,7 +2,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
+import { 
+  SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarInset, SidebarTrigger,
+  useSidebar
+} from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
@@ -21,7 +24,8 @@ import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { NavBar } from './nav'; // <-- Import NavBar
+import { NavBar } from './nav'; 
+import { cn } from '@/lib/utils';
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -37,14 +41,12 @@ const mobileSidebarNavItems: NavItem[] = [
   { href: "/terms", label: "Terms & Conditions", icon: FileText, authRequired: false },
 ];
 
-
-export function ClientLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+const Header = () => {
   const { user, loading, userData, hasRole, logout } = useAuth();
   const { toast } = useToast();
+  const { isExpanded } = useSidebar();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
-  const [openMobile, setOpenMobile] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -94,20 +96,23 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         ],
       ];
 
-  const Header = () => (
+  return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       <SidebarTrigger variant="ghost" size="icon" className="md:hidden">
+       <SidebarTrigger>
           <Menu />
+          <span className="sr-only">Toggle Sidebar</span>
        </SidebarTrigger>
        
-       <div className="hidden md:flex items-center gap-4">
+       <div className={cn("items-center gap-4 hidden", !isExpanded && "md:flex")}>
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <BotIcon className="h-7 w-7 text-accent" />
-            <h1 className="text-xl font-headline font-semibold">
-              FinSight <span className="text-primary">AI</span>
-            </h1>
           </Link>
-          <NavBar tabs={navItems} />
+       </div>
+
+       <div className="flex items-center gap-4">
+        <div className="hidden md:block">
+            <NavBar tabs={navItems} />
+        </div>
        </div>
      
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
@@ -173,38 +178,47 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       </div>
     </header>
   );
+};
+
+
+const MobileSidebarSheet = () => {
+    const { openMobile, setOpenMobile } = useSidebar();
+    return (
+        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+            <SheetContent side="left" className="p-0">
+                <SheetHeader className="h-16 flex items-center justify-center border-b">
+                    <VisuallyHidden><SheetTitle>Main Menu</SheetTitle></VisuallyHidden>
+                    <Link href="/" className="flex items-center gap-2 font-semibold" onClick={() => setOpenMobile(false)}>
+                        <BotIcon className="h-7 w-7 text-accent" />
+                        <h1 className="text-xl font-headline font-semibold">FinSight <span className="text-primary">AI</span></h1>
+                    </Link>
+                </SheetHeader>
+                <div className="p-4" onClick={() => setOpenMobile(false)}>
+                    <SidebarNav items={navItems} />
+                    <SidebarNav items={mobileSidebarNavItems} />
+                </div>
+            </SheetContent>
+        </Sheet>
+    );
+}
+
+export function ClientLayout({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
-     <SidebarProvider onOpenChange={(open) => isMobile && setOpenMobile(open)}>
-        {isMobile && (
-          <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-            <SheetContent side="left" className="p-0">
-               <SheetHeader className="h-16 flex items-center justify-center border-b">
-                 <VisuallyHidden>
-                    <SheetTitle>Main Menu</SheetTitle>
-                 </VisuallyHidden>
-                <Link href="/" className="flex items-center gap-2 font-semibold">
-                  <BotIcon className="h-7 w-7 text-accent" />
-                  <h1 className="text-xl font-headline font-semibold">
-                    FinSight <span className="text-primary">AI</span>
-                  </h1>
-                </Link>
-              </SheetHeader>
-              <div className="p-4">
-                 <SidebarNav items={navItems} />
-                 <SidebarNav items={mobileSidebarNavItems} />
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
-
+     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar>
             <SidebarHeader>
                  <Link href="/" className="flex items-center gap-2 font-semibold">
                     <BotIcon className="h-7 w-7 text-accent" />
-                    <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-                    FinSight <span className="text-primary">AI</span>
+                    <h1 className="text-xl font-headline font-semibold opacity-100 transition-opacity duration-300 group-hover/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0">
+                      FinSight <span className="text-primary">AI</span>
                     </h1>
                 </Link>
             </SidebarHeader>
@@ -212,11 +226,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                  <SidebarNav items={navItems.filter(item => !['/login', '/signup', '/admin'].includes(item.href))} />
             </SidebarContent>
              <SidebarFooter>
-                <SidebarTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Toggle Sidebar">
-                        <ChevronsLeft />
-                    </Button>
-                </SidebarTrigger>
+                {/* Footer content can go here */}
             </SidebarFooter>
         </Sidebar>
         <SidebarInset>
@@ -225,6 +235,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </SidebarInset>
       </div>
 
+      {isClient && <MobileSidebarSheet />}
       {isClient && isMobile && <BottomNavigation items={navItems} />}
     </SidebarProvider>
   );
