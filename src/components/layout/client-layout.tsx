@@ -103,7 +103,7 @@ const Header = () => {
           <span className="sr-only">Toggle Sidebar</span>
        </SidebarTrigger>
        
-       <Link href="/" className="flex items-center gap-2 font-semibold">
+       <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
           <BotIcon className="h-7 w-7 text-accent" />
           <h1 className="text-xl font-headline font-semibold hidden md:block">FinSight <span className="text-primary">AI</span></h1>
       </Link>
@@ -187,7 +187,7 @@ const MobileSidebarSheet = () => {
             <SheetContent side="left" className="p-0">
                 <SheetHeader className="h-16 flex items-center justify-center border-b">
                     <VisuallyHidden><SheetTitle>Main Menu</SheetTitle></VisuallyHidden>
-                    <Link href="/" className="flex items-center gap-2 font-semibold" onClick={() => setOpenMobile(false)}>
+                    <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap" onClick={() => setOpenMobile(false)}>
                         <BotIcon className="h-7 w-7 text-accent" />
                         <h1 className="text-xl font-headline font-semibold">FinSight <span className="text-primary">AI</span></h1>
                     </Link>
@@ -214,7 +214,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <Sidebar>
             <SidebarHeader>
-                 {/* Logo is now in the main header */}
+                 <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
+                    <BotIcon className="h-7 w-7 text-accent" />
+                    {isExpanded && <h1 className="text-xl font-headline font-semibold">FinSight <span className="text-primary">AI</span></h1>}
+                  </Link>
             </SidebarHeader>
             <SidebarContent>
                  <SidebarNav items={navItems.filter(item => !['/login', '/signup', '/admin'].includes(item.href))} />
@@ -225,9 +228,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex-1 overflow-y-auto">
+          <div className="flex-1">
             {children}
-          </main>
+          </div>
         </SidebarInset>
         
         {isClient && <MobileSidebarSheet />}
