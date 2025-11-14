@@ -3,13 +3,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarInset, SidebarTrigger,
-  useSidebar
-} from '@/components/ui/sidebar';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { 
-  BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
-  UserPlus, LifeBuoy, Mail, FileText, Menu, ChevronsLeft, Crown 
+  User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
+  UserPlus, LifeBuoy, Mail, FileText, Menu, Crown, Bot 
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,34 +13,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomDropdown, type CustomDropdownMenuItem } from '@/components/ui/custom-dropdown';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { navItems, type NavItem } from './sidebar-nav';
-import { SidebarNav } from './sidebar-nav';
-import dynamic from 'next/dynamic';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { NavBar } from './nav'; 
+import { useIsMobile } from '@/hooks/use-mobile';
+import { mainNav, navItems } from './sidebar-nav';
 import { cn } from '@/lib/utils';
 
-const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
-  ssr: false,
-});
-
-const mobileSidebarNavItems: NavItem[] = [
-  { href: "/notifications", label: "Notifications", icon: Bell, authRequired: true, showBadge: true },
-  { href: "/settings", label: "Account Settings", icon: Settings, authRequired: true },
-  { href: "/support", label: "Support", icon: LifeBuoy, authRequired: false },
-  { href: "/contact", label: "Contact", icon: Mail, authRequired: false },
-  { href: "/about", label: "About FinSight", icon: Info, authRequired: false },
-  { href: "/privacy", label: "Privacy Policy", icon: ShieldCheck, authRequired: false },
-  { href: "/terms", label: "Terms & Conditions", icon: FileText, authRequired: false },
-];
 
 const Header = () => {
   const { user, loading, userData, hasRole, logout } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
@@ -96,32 +75,42 @@ const Header = () => {
       ];
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
        {/* Left Zone */}
        <div className="flex items-center gap-2">
-         <SidebarTrigger>
-            <Menu />
-            <span className="sr-only">Toggle Sidebar</span>
-         </SidebarTrigger>
-         <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
-            <BotIcon className="h-7 w-7 text-accent" />
-            <h1 className="text-xl font-headline font-semibold hidden md:block">FinSight <span className="text-primary">AI</span></h1>
-        </Link>
-       </div>
-       
-       {/* Center Zone */}
-       <div className="flex-1 flex justify-center">
-         <div className="hidden md:block">
-            <NavBar tabs={navItems} />
-         </div>
-       </div>
-     
+          <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
+              <Bot className="h-6 w-6 text-accent" />
+              <span className="font-bold">FinSight AI</span>
+            </Link>
+        </div>
+
+        {/* Center Zone */}
+        <nav className="hidden md:flex items-center gap-1">
+             {mainNav.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                            "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                            isActive
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        )}
+                        >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                    </Link>
+                );
+             })}
+        </nav>
+      
       {/* Right Zone */}
       <div className="flex items-center gap-2 md:gap-4">
         {isClient && (
           <>
-            {isMobile && !hasSubscription && (
+            {!isMobile && !hasSubscription && user && (
               <Button asChild size="sm" className="bg-primary h-8 hover:bg-primary/90">
                   <Link href="/pricing">Subscribe</Link>
               </Button>
@@ -178,28 +167,6 @@ const Header = () => {
   );
 };
 
-
-const MobileSidebarSheet = () => {
-    const { openMobile, setOpenMobile } = useSidebar();
-    return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-            <SheetContent side="left" className="p-0">
-                <SheetHeader className="h-16 flex items-center justify-center border-b">
-                    <VisuallyHidden><SheetTitle>Main Menu</SheetTitle></VisuallyHidden>
-                    <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap" onClick={() => setOpenMobile(false)}>
-                        <BotIcon className="h-7 w-7 text-accent" />
-                        <h1 className="text-xl font-headline font-semibold">FinSight <span className="text-primary">AI</span></h1>
-                    </Link>
-                </SheetHeader>
-                <div className="p-4" onClick={() => setOpenMobile(false)}>
-                    <SidebarNav items={navItems} />
-                    <SidebarNav items={mobileSidebarNavItems} />
-                </div>
-            </SheetContent>
-        </Sheet>
-    );
-}
-
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
@@ -209,33 +176,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-      <div className="flex min-h-screen w-full">
-        <Sidebar>
-            <SidebarHeader>
-                 <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
-                    <BotIcon className="h-7 w-7 text-accent" />
-                    <span className={cn('text-xl font-headline font-semibold', !useSidebar().isExpanded && "sr-only")}>
-                        FinSight <span className="text-primary">AI</span>
-                    </span>
-                  </Link>
-            </SidebarHeader>
-            <SidebarContent>
-                 <SidebarNav items={navItems.filter(item => !['/login', '/signup', '/admin'].includes(item.href))} />
-            </SidebarContent>
-             <SidebarFooter>
-                {/* Footer content can go here */}
-            </SidebarFooter>
-        </Sidebar>
-
-        <div className="flex flex-col w-full">
-            <Header />
-            <div className="flex-1">
-                <SidebarInset>{children}</SidebarInset>
-            </div>
-        </div>
-        
-        {isClient && <MobileSidebarSheet />}
-        {isClient && isMobile && <BottomNavigation items={navItems} />}
+      <div className="flex flex-col w-full md:ml-64">
+          <Header />
+          <main className="flex-1">
+              {children}
+          </main>
+          {isClient && isMobile && <BottomNavigation items={navItems} />}
       </div>
   );
 }

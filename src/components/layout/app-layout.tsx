@@ -3,14 +3,15 @@
 
 import React from 'react';
 import { ClientLayout } from './client-layout';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from './AppSidebar'; // Import the new sidebar
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <div className="flex min-h-screen w-full bg-background">
+      <AppSidebar />
       <ClientLayout>
           {children}
       </ClientLayout>
-    </SidebarProvider>
+    </div>
   );
 }

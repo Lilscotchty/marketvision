@@ -1,0 +1,67 @@
+
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Bot } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
+import { mainNav, accountNav } from './sidebar-nav';
+
+const NavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string; }) => {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-gray-700 text-white font-bold"
+          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </Link>
+  );
+};
+
+export function AppSidebar() {
+  const { hasRole } = useAuth();
+
+  return (
+    <aside className="hidden h-screen w-64 flex-col fixed inset-y-0 left-0 z-50 border-r bg-gray-900 text-white md:flex">
+      <div className="flex h-16 items-center border-b border-gray-800 px-4">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-white">
+          <Bot className="h-6 w-6 text-accent" />
+          <span>MarketVision</span>
+        </Link>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <nav className="flex flex-col gap-4 p-4">
+          <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold uppercase text-gray-500">
+              Main Tools
+            </h3>
+            {mainNav.map((item) => (
+              <NavLink key={item.href} {...item} />
+            ))}
+          </div>
+          <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold uppercase text-gray-500">
+              Account
+            </h3>
+            {accountNav.map((item) => {
+              if (item.developerOnly && !hasRole('Developer')) {
+                return null;
+              }
+              return <NavLink key={item.href} {...item} />;
+            })}
+          </div>
+        </nav>
+      </div>
+    </aside>
+  );
+}
