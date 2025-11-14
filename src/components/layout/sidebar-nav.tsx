@@ -61,7 +61,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
           <SidebarMenuItem key={index}>
              <div className="flex items-center gap-3 p-2 h-9 w-full">
               <Skeleton className="h-5 w-5 rounded-sm" />
-              <Skeleton className="h-4 w-20 rounded-sm" />
+              {isExpanded && <Skeleton className="h-4 w-20 rounded-sm" />}
             </div>
           </SidebarMenuItem>
         ))}
@@ -80,17 +80,19 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
                 >
                   <Link href={item.href}>
                     <item.icon />
-                    <span className="opacity-100 transition-opacity duration-300 group-hover/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0">
-                      {item.fullLabel || item.label}
-                    </span>
-                     {item.showBadge && unreadCount > 0 && isExpanded && (
-                      <Badge 
-                          variant="destructive" 
-                          className="ml-auto"
-                      >
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                      </Badge>
-                  )}
+                    {isExpanded && (
+                      <>
+                        <span>{item.fullLabel || item.label}</span>
+                        {item.showBadge && unreadCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="ml-auto"
+                          >
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </Badge>
+                        )}
+                      </>
+                    )}
                   </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

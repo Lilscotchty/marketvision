@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarInset, SidebarTrigger,
+  Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarInset, SidebarTrigger,
   useSidebar
 } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -205,21 +205,23 @@ const MobileSidebarSheet = () => {
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
+  const { isExpanded } = useSidebar();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   return (
-     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar>
             <SidebarHeader>
                  <Link href="/" className="flex items-center gap-2 font-semibold">
                     <BotIcon className="h-7 w-7 text-accent" />
-                    <h1 className="text-xl font-headline font-semibold opacity-100 transition-opacity duration-300 group-hover/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0">
-                      FinSight <span className="text-primary">AI</span>
-                    </h1>
+                    {isExpanded && (
+                      <h1 className="text-xl font-headline font-semibold">
+                        FinSight <span className="text-primary">AI</span>
+                      </h1>
+                    )}
                 </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -231,12 +233,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex-1 pt-4 md:pt-8">{children}</main>
+          <main className="flex-1 p-2 sm:p-4 md:p-6">{children}</main>
         </SidebarInset>
+        
+        {isClient && <MobileSidebarSheet />}
+        {isClient && isMobile && <BottomNavigation items={navItems} />}
       </div>
-
-      {isClient && <MobileSidebarSheet />}
-      {isClient && isMobile && <BottomNavigation items={navItems} />}
-    </SidebarProvider>
   );
 }
