@@ -1,4 +1,3 @@
-
 import type { Config } from 'tailwindcss';
 //@ts-ignore
 import { default as flattenColorPalette } from 'tailwindcss/lib/util/flattenColorPalette';
@@ -27,6 +26,7 @@ const config: Config = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'toast-slide-in-down': 'toast-slide-in-down 0.4s ease-out',
         'toast-slide-out-up': 'toast-slide-out-up 0.3s ease-in',
+        'glowing-stars': 'glowing-stars 3s infinite',
         moveUp: 'moveUp 1.4s ease forwards',
         appear: 'appear 1s 1s forwards',
         bounce: 'bounce 1s infinite',
@@ -55,6 +55,24 @@ const config: Config = {
         'toast-slide-out-up': {
           from: { transform: 'translateY(0)', opacity: '1' },
           to: { transform: 'translateY(-100%)', opacity: '0' },
+        },
+        'glowing-stars': {
+          '0%': {
+            'box-shadow': '0 0 5px 0px rgba(255, 255, 255, 0.3)',
+            opacity: '0.8',
+          },
+          '20%': {
+            'box-shadow': '0 0 20px 5px rgba(255, 255, 255, 0.8)',
+            opacity: '1',
+          },
+          '40%': {
+            'box-shadow': '0 0 5px 0px rgba(255, 255, 255, 0.3)',
+            opacity: '0.8',
+          },
+          '100%': {
+            'box-shadow': '0 0 5px 0px rgba(255, 255, 255, 0.3)',
+            opacity: '0.8',
+          },
         },
         moveUp: {
           '0%': { transform: 'translateY(5%)', opacity: '0' },

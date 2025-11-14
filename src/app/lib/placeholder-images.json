@@ -1,0 +1,14 @@
+{
+    "testimonial1": {
+        "src": "https://picsum.photos/seed/t1/100/100",
+        "dataAiHint": "person portrait"
+    },
+    "testimonial2": {
+        "src": "https://picsum.photos/seed/t2/100/100",
+        "dataAiHint": "woman portrait"
+    },
+    "testimonial3": {
+        "src": "https://picsum.photos/seed/t3/100/100",
+        "dataAiHint": "man portrait"
+    }
+}
