@@ -47,8 +47,8 @@
     --sidebar-foreground: 220 20% 25%; /* Darker text for readability */
     --sidebar-primary: 220 85% 55%; /* Use app primary for active items */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 92%; /* Light hover for sidebar items */
-    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-accent: 220 20% 94%; /* Light hover/active background for sidebar items */
+    --sidebar-accent-foreground: 220 20% 20%; /* Text color on hover/active */
     --sidebar-border: 220 15% 90%; /* Subtle sidebar border */
     --sidebar-ring: 220 85% 50%; 
   }

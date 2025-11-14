@@ -119,7 +119,7 @@ Sidebar.displayName = "Sidebar"
 export const SidebarHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => {
         const { isExpanded } = useSidebar();
-        return <div ref={ref} className={cn("flex h-16 items-center", isExpanded ? "px-4" : "px-3.5", className)} {...props} />;
+        return <div ref={ref} className={cn("flex h-16 items-center border-b", isExpanded ? "px-4" : "px-3.5", className)} {...props} />;
     }
 );
 SidebarHeader.displayName = "SidebarHeader";
@@ -145,8 +145,7 @@ export const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttribute
       <main
         ref={ref}
         className={cn(
-          "flex-1 transition-[margin-left] duration-300 ease-in-out",
-          "md:ml-[var(--sidebar-collapsed-width)]",
+          "transition-[margin-left] duration-300 ease-in-out md:ml-[var(--sidebar-collapsed-width)]",
           className
         )}
         {...props}
@@ -206,7 +205,8 @@ export const SidebarMenuButton = React.forwardRef<
       className={cn(
         "flex h-9 w-full justify-start items-center gap-3 rounded-md px-3 text-sm font-medium",
         "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground"
+        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-primary data-[active=true]:font-semibold",
+        "data-[active=true]:[&_svg]:text-sidebar-primary"
       )}
       {...props}
     >
