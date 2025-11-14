@@ -45,7 +45,7 @@
     /* Sidebar Colors for Light Theme */
     --sidebar-background: 0 0% 98%; /* Very light gray, almost white */
     --sidebar-foreground: 220 20% 25%; /* Darker text for readability */
-    --sidebar-primary: 220 85% 55%; /* Use app primary for active items */
+    --sidebar-primary: 220 20% 10%; /* Black for active text */
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 94%; /* Light hover/active background for sidebar items */
     --sidebar-accent-foreground: 220 20% 20%; /* Text color on hover/active */
@@ -92,7 +92,7 @@
     /* Sidebar Colors for Dark Theme */
     --sidebar-background: 210 10% 15%; 
     --sidebar-foreground: 0 0% 88%;
-    --sidebar-primary: 220 85% 55%; 
+    --sidebar-primary: 0 0% 98%; /* White for active text */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 210 10% 22%; 
     --sidebar-accent-foreground: 0 0% 96%;
@@ -106,12 +106,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
     /* Ensure transitions are smooth */
     @apply transition-colors duration-300;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-body;
+    @apply font-headline;
   }
 }
 
