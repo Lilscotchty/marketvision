@@ -1,7 +1,8 @@
+
 "use client"
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
@@ -42,15 +43,27 @@ export const NavBar = ({ tabs }: { tabs: NavItem[] }) => {
   const pathname = usePathname()
   const { user, loading } = useAuth()
   const [hoveredTab, setHoveredTab] = useState<string | null>(null)
+  
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const visibleTabs = tabs.filter((tab) => {
     if (loading) return false
     if (tab.authRequired && !user) return false
     if (tab.guestOnly && user) return false
-    // Exclude login/signup from this nav
-    if (tab.href === '/login' || tab.href === '/signup') return false
+    // Exclude login/signup and admin from this main nav
+    if (['/login', '/signup', '/admin'].includes(tab.href)) return false
     return true
   })
+  
+  const getHoveredElement = () => {
+    if (!isClient || !hoveredTab) return null;
+    return document.querySelector<HTMLAnchorElement>(`a[href="${hoveredTab}"]`);
+  }
+
+  const hoveredElement = getHoveredElement();
 
   return (
     <nav
@@ -65,7 +78,7 @@ export const NavBar = ({ tabs }: { tabs: NavItem[] }) => {
           onMouseEnter={() => setHoveredTab(tab.href)}
         />
       ))}
-      {hoveredTab && (
+      {hoveredTab && hoveredElement && (
         <motion.span
           layoutId="underline"
           className="absolute bottom-0 left-0 block h-px w-full bg-muted"
@@ -73,12 +86,8 @@ export const NavBar = ({ tabs }: { tabs: NavItem[] }) => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.15 }}
           style={{
-            left:
-              // --- THIS LINE IS FIXED ---
-              document.querySelector<HTMLAnchorElement>(`a[href="${hoveredTab}"]`)?.offsetLeft || 0,
-            width:
-              // --- THIS LINE IS FIXED ---
-              document.querySelector<HTMLAnchorElement>(`a[href="${hoveredTab}"]`)?.clientWidth || 0
+            left: hoveredElement.offsetLeft,
+            width: hoveredElement.clientWidth
           }}
         />
       )}

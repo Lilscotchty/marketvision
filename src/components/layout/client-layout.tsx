@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
@@ -12,7 +13,6 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CustomDropdown, type CustomDropdownMenuItem } from '@/components/ui/custom-dropdown';
-import { useTheme } from '@/contexts/theme-context';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { navItems, type NavItem } from './sidebar-nav';
@@ -21,7 +21,7 @@ import dynamic from 'next/dynamic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BottomNavigation } from './bottom-navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { cn } from '@/lib/utils';
+import { NavBar } from './nav'; // <-- Import NavBar
 
 const TradingViewTickerTape = dynamic(() => import('@/components/dashboard/tradingview-ticker-tape'), {
   ssr: false,
@@ -40,7 +40,6 @@ const mobileSidebarNavItems: NavItem[] = [
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
   const { user, loading, userData, hasRole, logout } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -97,15 +96,25 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   const Header = () => (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       <SidebarTrigger variant="ghost" size="icon">
+       <SidebarTrigger variant="ghost" size="icon" className="md:hidden">
           <Menu />
        </SidebarTrigger>
+       
+       <div className="hidden md:flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <BotIcon className="h-7 w-7 text-accent" />
+            <h1 className="text-xl font-headline font-semibold">
+              FinSight <span className="text-primary">AI</span>
+            </h1>
+          </Link>
+          <NavBar tabs={navItems} />
+       </div>
      
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         {isClient && (
           <>
             <div className="ml-auto flex-1 sm:flex-initial">
-              <div className="hidden md:block w-full max-w-sm lg:max-w-md xl:max-w-lg">
+               <div className="hidden lg:block w-full max-w-sm xl:max-w-lg">
                 <TradingViewTickerTape />
               </div>
             </div>
@@ -167,26 +176,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <SidebarProvider onOpenChange={(open) => isMobile && setOpenMobile(open)}>
-        <Sidebar>
-          <SidebarHeader className="h-16 flex items-center justify-center">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <BotIcon className="h-7 w-7 text-accent" />
-              <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
-                FinSight <span className="text-primary">AI</span>
-              </h1>
-            </Link>
-          </SidebarHeader>
-           <SidebarContent>
-              <SidebarNav items={navItems} />
-           </SidebarContent>
-          <SidebarFooter>
-            <SidebarTrigger variant="ghost" className="w-full justify-start">
-               <ChevronsLeft className="mr-2 h-4 w-4 transition-transform duration-300 group-data-[collapsible=icon]:rotate-180" />
-               <span className="group-data-[collapsible=icon]:hidden">Collapse</span>
-            </SidebarTrigger>
-          </SidebarFooter>
-        </Sidebar>
-
         {isMobile && (
           <Sheet open={openMobile} onOpenChange={setOpenMobile}>
             <SheetContent side="left" className="p-0">
@@ -202,16 +191,17 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SheetHeader>
               <div className="p-4">
+                 <SidebarNav items={navItems} />
                  <SidebarNav items={mobileSidebarNavItems} />
               </div>
             </SheetContent>
           </Sheet>
         )}
 
-      <SidebarInset>
+      <div className="flex min-h-screen w-full">
           <Header />
-          {children}
-      </SidebarInset>
+          <main className="flex-1 pt-4 md:pt-8">{children}</main>
+      </div>
 
       {isClient && isMobile && <BottomNavigation items={navItems} />}
     </SidebarProvider>
