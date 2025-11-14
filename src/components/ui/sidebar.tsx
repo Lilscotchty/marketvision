@@ -203,10 +203,10 @@ export const SidebarMenuButton = React.forwardRef<
       variant="ghost"
       data-active={isActive}
       className={cn(
-        "flex h-9 w-full justify-start items-center gap-3 rounded-md px-3 text-sm font-medium",
+        "flex h-9 w-full justify-start items-center gap-3 rounded-md px-3 text-xs font-medium",
         "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-primary data-[active=true]:font-semibold",
-        "data-[active=true]:[&_svg]:text-sidebar-primary"
+        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-foreground data-[active=true]:font-semibold",
+        "data-[active=true]:[&_svg]:text-foreground"
       )}
       {...props}
     >
