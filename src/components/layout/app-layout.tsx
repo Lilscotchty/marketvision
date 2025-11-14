@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { ClientLayout } from './client-layout';
-import { AppSidebar } from './AppSidebar'; // Import the new sidebar
+import { AppSidebar } from './AppSidebar';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
