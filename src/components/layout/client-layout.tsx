@@ -103,11 +103,10 @@ const Header = () => {
           <span className="sr-only">Toggle Sidebar</span>
        </SidebarTrigger>
        
-       <div className={cn("items-center gap-4 hidden", !isExpanded && "md:flex")}>
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <BotIcon className="h-7 w-7 text-accent" />
-          </Link>
-       </div>
+       <Link href="/" className="flex items-center gap-2 font-semibold">
+          <BotIcon className="h-7 w-7 text-accent" />
+          <h1 className="text-xl font-headline font-semibold hidden md:block">FinSight <span className="text-primary">AI</span></h1>
+      </Link>
 
        <div className="flex items-center gap-4">
         <div className="hidden md:block">
@@ -215,14 +214,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full">
         <Sidebar>
             <SidebarHeader>
-                 <Link href="/" className="flex items-center gap-2 font-semibold">
-                    <BotIcon className="h-7 w-7 text-accent" />
-                    {isExpanded && (
-                      <h1 className="text-xl font-headline font-semibold">
-                        FinSight <span className="text-primary">AI</span>
-                      </h1>
-                    )}
-                </Link>
+                 {/* Logo is now in the main header */}
             </SidebarHeader>
             <SidebarContent>
                  <SidebarNav items={navItems.filter(item => !['/login', '/signup', '/admin'].includes(item.href))} />
@@ -233,7 +225,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <SidebarInset>
           <Header />
-          <main className="flex-1 p-2 sm:p-4 md:p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
         </SidebarInset>
         
         {isClient && <MobileSidebarSheet />}
