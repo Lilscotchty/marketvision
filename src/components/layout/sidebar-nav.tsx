@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useNotificationCenter } from "@/contexts/notification-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 
 export interface NavItem {
@@ -79,7 +80,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
-                    <item.icon />
+                    <item.icon className="transition-transform duration-300" />
                     {isExpanded && (
                       <>
                         <span>{item.fullLabel || item.label}</span>
