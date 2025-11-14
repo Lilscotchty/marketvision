@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { GlowingStarsBackgroundCard } from '@/components/ui/glowing-stars';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/auth-context';
-import placeholderImages from '@/lib/placeholder-images.json';
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
   <div className="relative p-6 bg-card/50 rounded-lg shadow-lg border border-border/20 overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
