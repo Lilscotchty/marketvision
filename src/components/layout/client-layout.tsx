@@ -204,7 +204,6 @@ const MobileSidebarSheet = () => {
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
-  const { isExpanded } = useSidebar();
 
   useEffect(() => {
     setIsClient(true);
@@ -216,7 +215,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <SidebarHeader>
                  <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
                     <BotIcon className="h-7 w-7 text-accent" />
-                    {isExpanded && <h1 className="text-xl font-headline font-semibold">FinSight <span className="text-primary">AI</span></h1>}
                   </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -226,12 +224,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 {/* Footer content can go here */}
             </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
-          <Header />
-          <div className="flex-1">
-            {children}
-          </div>
-        </SidebarInset>
+        <div className="flex flex-col w-full">
+            <Header />
+            <SidebarInset>
+                {children}
+            </SidebarInset>
+        </div>
         
         {isClient && <MobileSidebarSheet />}
         {isClient && isMobile && <BottomNavigation items={navItems} />}

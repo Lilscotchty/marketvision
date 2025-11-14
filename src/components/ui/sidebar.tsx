@@ -118,7 +118,8 @@ Sidebar.displayName = "Sidebar"
 
 export const SidebarHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => {
-        return <div ref={ref} className={cn("flex h-16 items-center px-4", className)} {...props} />;
+        const { isExpanded } = useSidebar();
+        return <div ref={ref} className={cn("flex h-16 items-center", isExpanded ? "px-4" : "px-3.5", className)} {...props} />;
     }
 );
 SidebarHeader.displayName = "SidebarHeader";
@@ -140,14 +141,12 @@ SidebarFooter.displayName = "SidebarFooter"
 
 export const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
-    const { isExpanded } = useSidebar()
     return (
       <main
         ref={ref}
         className={cn(
           "flex-1 transition-[margin-left] duration-300 ease-in-out",
           "md:ml-[var(--sidebar-collapsed-width)]",
-          isExpanded && "md:ml-[var(--sidebar-width)]",
           className
         )}
         {...props}
