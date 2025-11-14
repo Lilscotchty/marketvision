@@ -37,15 +37,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserProfile = useCallback(async (supabaseUser: User) => {
     try {
       // We just select the profile. The trigger handles creation.
+      // Use .maybeSingle() to gracefully handle cases where the profile might not exist yet
+      // without throwing an error that crashes the app.
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // The trigger should have created this. If it's still not found,
-        // log a more serious error.
+        // Log the error but don't treat it as a fatal one for the app.
+        // The trigger should have created the profile. If it's still not found,
+        // this is a situation to monitor, but the app should still function.
         console.error('Error fetching user profile (it should exist):', error.message);
         return null;
       }
