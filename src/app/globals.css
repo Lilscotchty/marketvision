@@ -23,7 +23,8 @@
     --muted: 220 15% 95%; /* Lighter muted background */
     --muted-foreground: 220 10% 45%; /* Muted text */
 
-    --accent: 220 85% 60%; /* Vibrant Blue from image */
+    /* UPDATED to match sidebar hover */
+    --accent: 224 14% 17%; /* Corresponds to gray-800 */
     --accent-foreground: 0 0% 100%; /* White on accent */
 
     --destructive: 0 70% 55%; /* Slightly desaturated red */
@@ -47,8 +48,9 @@
     --sidebar-foreground: 220 20% 25%; /* Darker text for readability */
     --sidebar-primary: 220 20% 10%; /* Black for active text */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 94%; /* Light hover/active background for sidebar items */
-    --sidebar-accent-foreground: 220 20% 20%; /* Text color on hover/active */
+    /* UPDATED to match sidebar active */
+    --sidebar-accent: 225 11% 23%; /* Corresponds to gray-700 */
+    --sidebar-accent-foreground: 220 20% 98%; /* Text color on hover/active (white) */
     --sidebar-border: 220 15% 90%; /* Subtle sidebar border */
     --sidebar-ring: 220 85% 50%; 
   }
@@ -72,8 +74,9 @@
     --muted: 210 10% 20%; 
     --muted-foreground: 210 15% 60%; 
 
-    --accent: 220 85% 60%; 
-    --accent-foreground: 0 0% 100%;
+    /* UPDATED to match sidebar hover */
+    --accent: 224 14% 17%; /* Corresponds to gray-800 */
+    --accent-foreground: 0 0% 100%; /* White on accent */
 
     --destructive: 0 63% 50%; /* Adjusted red */
     --destructive-foreground: 0 0% 98%;
@@ -94,7 +97,8 @@
     --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 0 0% 98%; /* White for active text */
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 210 10% 22%; 
+    /* UPDATED to match sidebar active */
+    --sidebar-accent: 225 11% 23%; /* Corresponds to gray-700 */
     --sidebar-accent-foreground: 0 0% 96%;
     --sidebar-border: 210 10% 20%; 
     --sidebar-ring: 220 85% 50%;

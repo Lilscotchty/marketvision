@@ -18,8 +18,8 @@ const NavLink = ({ href, icon: Icon, label }: { href: string; icon: React.Elemen
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
         isActive
-          ? "bg-gray-700 text-white font-bold"
-          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+          ? "bg-sidebar-accent text-sidebar-accent-foreground font-bold"
+          : "text-gray-300 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -35,7 +35,7 @@ export function AppSidebar() {
     <aside className="hidden h-screen w-64 flex-col fixed inset-y-0 left-0 z-50 border-r bg-gray-900 text-white md:flex">
       <div className="flex h-16 items-center border-b border-gray-800 px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-white">
-          <Bot className="h-6 w-6 text-accent" />
+          <Bot className="h-6 w-6 text-primary" />
           <span>MarketVision</span>
         </Link>
       </div>
