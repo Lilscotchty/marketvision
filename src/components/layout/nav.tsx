@@ -80,7 +80,7 @@ export const NavBar = ({ tabs }: { tabs: NavItem[] }) => {
       ))}
       {hoveredTab && hoveredElement && (
         <motion.span
-          layoutId="underline"
+          layoutId="underline-hover"
           className="absolute bottom-0 left-0 block h-px w-full bg-muted"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

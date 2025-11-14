@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter, SidebarInset } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { 
   BotIcon, User, LogIn, LogOut, Bell, Settings, Info, ShieldCheck, 
@@ -199,8 +199,30 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         )}
 
       <div className="flex min-h-screen w-full">
+        <Sidebar>
+            <SidebarHeader>
+                 <Link href="/" className="flex items-center gap-2 font-semibold">
+                    <BotIcon className="h-7 w-7 text-accent" />
+                    <h1 className="text-xl font-headline font-semibold group-data-[collapsible=icon]:hidden">
+                    FinSight <span className="text-primary">AI</span>
+                    </h1>
+                </Link>
+            </SidebarHeader>
+            <SidebarContent>
+                 <SidebarNav items={navItems.filter(item => !['/login', '/signup', '/admin'].includes(item.href))} />
+            </SidebarContent>
+             <SidebarFooter>
+                <SidebarTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Toggle Sidebar">
+                        <ChevronsLeft />
+                    </Button>
+                </SidebarTrigger>
+            </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
           <Header />
           <main className="flex-1 pt-4 md:pt-8">{children}</main>
+        </SidebarInset>
       </div>
 
       {isClient && isMobile && <BottomNavigation items={navItems} />}
