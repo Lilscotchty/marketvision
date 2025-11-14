@@ -44,7 +44,6 @@ const mobileSidebarNavItems: NavItem[] = [
 const Header = () => {
   const { user, loading, userData, hasRole, logout } = useAuth();
   const { toast } = useToast();
-  const { isExpanded } = useSidebar();
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
 
@@ -98,30 +97,30 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 sm:px-6">
-       <SidebarTrigger>
-          <Menu />
-          <span className="sr-only">Toggle Sidebar</span>
-       </SidebarTrigger>
        
-       <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
-          <BotIcon className="h-7 w-7 text-accent" />
-          <h1 className="text-xl font-headline font-semibold hidden md:block">FinSight <span className="text-primary">AI</span></h1>
-      </Link>
-
-       <div className="flex items-center gap-4">
-        <div className="hidden md:block">
+       {/* Left Zone */}
+       <div className="flex items-center gap-2">
+         <SidebarTrigger>
+            <Menu />
+            <span className="sr-only">Toggle Sidebar</span>
+         </SidebarTrigger>
+         <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
+            <BotIcon className="h-7 w-7 text-accent" />
+            <h1 className="text-xl font-headline font-semibold hidden md:block">FinSight <span className="text-primary">AI</span></h1>
+        </Link>
+       </div>
+       
+       {/* Center Zone */}
+       <div className="flex-1 flex justify-center">
+         <div className="hidden md:block">
             <NavBar tabs={navItems} />
-        </div>
+         </div>
        </div>
      
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+      {/* Right Zone */}
+      <div className="flex items-center gap-2 md:gap-4">
         {isClient && (
           <>
-            <div className="ml-auto flex-1 sm:flex-initial">
-               <div className="hidden lg:block w-full max-w-sm xl:max-w-lg">
-                <TradingViewTickerTape />
-              </div>
-            </div>
             {isMobile && !hasSubscription && (
               <Button asChild size="sm" className="bg-primary h-8 hover:bg-primary/90">
                   <Link href="/pricing">Subscribe</Link>
@@ -215,6 +214,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
             <SidebarHeader>
                  <Link href="/" className="flex items-center gap-2 font-semibold whitespace-nowrap">
                     <BotIcon className="h-7 w-7 text-accent" />
+                    <span className={cn('text-xl font-headline font-semibold', !useSidebar().isExpanded && "sr-only")}>
+                        FinSight <span className="text-primary">AI</span>
+                    </span>
                   </Link>
             </SidebarHeader>
             <SidebarContent>
@@ -224,11 +226,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
                 {/* Footer content can go here */}
             </SidebarFooter>
         </Sidebar>
+
         <div className="flex flex-col w-full">
             <Header />
-            <SidebarInset>
-                {children}
-            </SidebarInset>
+            <div className="flex-1">
+                <SidebarInset>{children}</SidebarInset>
+            </div>
         </div>
         
         {isClient && <MobileSidebarSheet />}
