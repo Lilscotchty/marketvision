@@ -31,14 +31,12 @@ export interface AnalysisResult {
  * Uploads an array of files to a user-specific folder in Supabase Storage.
  * This is a Server Action and must be called from a client component.
  * @param files - An array of File objects to upload.
- * @param userId - The ID of the user (can be used for folder path, though session ID is preferred).
  * @returns An array of objects, each containing either a `publicUrl` or an `error`.
  */
 export async function uploadChartImages(
-  files: File[],
-  userId: string
+  files: File[]
 ): Promise<{ publicUrl: string | null; error: any }[]> {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   const {
@@ -59,11 +57,11 @@ export async function uploadChartImages(
     }));
   }
 
-  const sessionUserId = session.user.id;
+  const userId = session.user.id;
 
   const uploadPromises = files.map(async (file) => {
     const fileExt = file.name.split('.').pop();
-    const filePath = `${sessionUserId}/${uuidv4()}.${fileExt}`;
+    const filePath = `${userId}/${uuidv4()}.${fileExt}`;
 
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
@@ -583,7 +581,7 @@ export async function updateUserRoles(
   userIdToUpdate: string,
   newRoles: Role[]
 ): Promise<ActionResponse> {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   // 1. Get the *current* admin user making this request
