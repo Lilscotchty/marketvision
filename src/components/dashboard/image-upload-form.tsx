@@ -1,3 +1,4 @@
+
 // src/components/dashboard/image-upload-form.tsx
 "use client";
 
@@ -255,7 +256,7 @@ export function ImageUploadForm() {
     setUploadingMessage("Uploading charts...");
     setState(undefined);
 
-    const uploadResults = await uploadChartImages(files, user.id);
+    const uploadResults = await uploadChartImages(files);
     
     const uploadedUrls: string[] = [];
     for (const result of uploadResults) {
@@ -345,7 +346,7 @@ export function ImageUploadForm() {
           />
           <button
             type="button"
-            onClick={() => removeFile(indexToRemove)}
+            onClick={() => removeFile(index)}
             className="absolute -top-2 -right-2 z-10 p-1 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Remove image"
             disabled={(isPending || uploadingMessage !== null)}
