@@ -15,7 +15,7 @@ import type { UserManagementProfile, Role } from "@/types";
 
 // This function fetches all stats in parallel
 async function getAdminData() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   // 1. Get the current user and check their role

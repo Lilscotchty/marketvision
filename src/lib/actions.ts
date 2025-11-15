@@ -38,7 +38,7 @@ export async function uploadChartImages(
   files: File[],
   userId: string
 ): Promise<{ publicUrl: string | null; error: any }[]> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   const {
@@ -583,7 +583,7 @@ export async function updateUserRoles(
   userIdToUpdate: string,
   newRoles: Role[]
 ): Promise<ActionResponse> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
   // 1. Get the *current* admin user making this request
