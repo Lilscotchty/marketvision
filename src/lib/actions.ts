@@ -15,7 +15,7 @@ import type {
 import { createSupabaseServerClient } from '@/lib/supabase/server'; // Added for Server Action
 import { revalidatePath } from 'next/cache'; // Added for Server Action
 import { v4 as uuidv4 } from 'uuid';
-import { cookies } from 'next/headers'; // <-- ADD THIS IMPORT
+import { cookies } from 'next/headers';
 
 const BUCKET_NAME = 'chart_uploads';
 
@@ -37,8 +37,8 @@ export async function uploadChartImages(
   files: File[],
   userId: string
 ): Promise<{ publicUrl: string | null; error: any }[]> {
-  const cookieStore = cookies(); // <-- ADD THIS LINE
-  const supabase = createSupabaseServerClient(cookieStore); // <-- PASS COOKIES TO THE CLIENT
+  const cookieStore = cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
 
   const {
     data: { session },
@@ -633,7 +633,7 @@ export async function updateUserRoles(
     ? 'Owner'
     : newRoles.includes('Developer')
     ? 'Developer'
-    : 'user';
+    : 'User';
 
   const { error } = await supabase
     .from('profiles')
