@@ -14,7 +14,8 @@
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 220 20% 10%;
 
-    --primary: 220 85% 55%; /* Vibrant Blue from image */
+    --primary: 210 85% 55%; /* Vibrant Blue from image */
+    --primary-border: 220 100% 55%;
     --primary-foreground: 210 40% 98%; /* Almost White - for contrast on primary */
 
     --secondary: 220 15% 92%; /* Very Light Muted Blue/Gray */
@@ -24,8 +25,8 @@
     --muted-foreground: 220 10% 45%; /* Muted text */
 
     /* UPDATED to match sidebar hover */
-    --accent: 224 14% 17%; /* Corresponds to gray-800 */
-    --accent-foreground: 0 0% 100%; /* White on accent */
+    --accent: 224 14% 80%; /* Corresponds to gray-800 */
+    --accent-foreground: 0 0% 0%; /* White on accent */
 
     --destructive: 0 70% 55%; /* Slightly desaturated red */
     --destructive-foreground: 0 0% 98%;

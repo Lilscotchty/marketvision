@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Bell,
@@ -40,6 +40,12 @@ export function AppHeader() {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleLogout = async () => {
     try {
@@ -97,7 +103,7 @@ export function AppHeader() {
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="hidden md:inline-flex">Feedback</Button>
+        <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground text-[12px] h-7 border ">Feedback</Button>
         <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -111,18 +117,22 @@ export function AppHeader() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
-              </Button>
+              {isClient ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full border text-muted-foreground"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="h-4 w-4 rounded-full" />
+                  ) : (
+                    <Moon className="h-4 w-4 rounded-full" />
+                  )}
+                </Button>
+              ) : (
+                <div className="h-8 w-8 rounded-full border" /> // Placeholder for SSR
+              )}
             </TooltipTrigger>
             <TooltipContent>
               <p>Toggle Theme</p>
@@ -130,7 +140,7 @@ export function AppHeader() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+              <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
                  <Link href="/support"><LifeBuoy className="h-4 w-4" /></Link>
               </Button>
             </TooltipTrigger>
@@ -140,7 +150,7 @@ export function AppHeader() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-               <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+               <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
                 <Link href="/notifications"><Bell className="h-4 w-4" /></Link>
               </Button>
             </TooltipTrigger>
@@ -152,7 +162,7 @@ export function AppHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
               </Avatar>
