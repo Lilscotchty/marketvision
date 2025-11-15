@@ -1,6 +1,7 @@
 // src/app/admin/page.tsx
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import {
   Card,
   CardContent,
@@ -13,7 +14,8 @@ import type { UserManagementProfile, Role } from "@/types";
 
 // This function fetches all stats in parallel
 async function getAdminData() {
-  const supabase = createSupabaseServerClient();
+  const cookieStore = cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
 
   // 1. Get the current user and check their role
   const { data: { user } } = await supabase.auth.getUser();
