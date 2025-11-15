@@ -1,428 +1,150 @@
-"use client";
+// src/app/admin/page.tsx
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, CreditCard, BarChart, ShieldCheck } from "lucide-react";
+import AdminClient from "./admin-client"; // We will create this client component
+import type { UserManagementProfile, Role } from "@/types";
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, CreditCard, BarChart, ShieldCheck, UserPlus, UserCog, Crown } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import type { UserManagementProfile, Role } from '@/types';
-import { availableRoles } from '@/types';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+// This function fetches all stats in parallel
+async function getAdminData() {
+  const supabase = createSupabaseServerClient();
 
-// This is a simulation. In a real app, this would be fetched from a secure backend.
-const getAllUsersFromLocalStorage = (): UserManagementProfile[] => {
-  if (typeof window === 'undefined') return [];
-  const users: UserManagementProfile[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('userData-')) {
-      try {
-        const userData = JSON.parse(localStorage.getItem(key)!);
-        if (userData.userId && userData.email) { // Ensure basic user data exists
-          users.push({
-            userId: userData.userId, 
-            email: userData.email,
-            roles: userData.roles || ['User'],
-            hasActiveSubscription: userData.hasActiveSubscription ?? false, 
-            chartAnalysisTrialPoints: userData.chartAnalysisTrialPoints ?? 0, 
-          });
-        }
-      } catch (error) {
-        console.error(`Failed to parse user data for key ${key}:`, error);
-      }
-    }
+  // 1. Get the current user and check their role
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
   }
-  return users;
-};
 
-// Function to find a user by email in local storage
-const findUserByEmail = (email: string): UserManagementProfile | null => {
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('userData-')) {
-            try {
-                const userData = JSON.parse(localStorage.getItem(key)!);
-                if (userData.email && userData.email.toLowerCase() === email.toLowerCase()) {
-                    return {
-                        userId: userData.userId, 
-                        email: userData.email,
-                        roles: userData.roles || ['User'],
-                        hasActiveSubscription: userData.hasActiveSubscription ?? false, 
-                        chartAnalysisTrialPoints: userData.chartAnalysisTrialPoints ?? 0, 
-                    };
-                }
-            } catch (e) { /* ignore */ }
-        }
-    }
-    return null;
-};
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
 
-
-const AdminDashboardPage = () => {
-  const { user, hasRole, loading } = useAuth();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [managedUsers, setManagedUsers] = useState<UserManagementProfile[]>([]);
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [userToAdd, setUserToAdd] = useState<UserManagementProfile | null>(null);
-  const [isConfirmAddUserOpen, setIsConfirmAddUserOpen] = useState(false);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [selectedUserForRoles, setSelectedUserForRoles] = useState<UserManagementProfile | null>(null);
-  const [selectedRoles, setSelectedRoles] = useState<Set<Role>>(new Set());
-
-  const isOwner = hasRole('Owner');
-
-  useEffect(() => {
-    if (!loading && !hasRole('Developer')) {
-      toast({
-        title: "Access Denied",
-        description: "You do not have permission to view this page.",
-        variant: "destructive"
-      });
-      router.push('/');
-    }
-  }, [hasRole, loading, router, toast]);
-  
-  useEffect(() => {
-    if (!loading && hasRole('Developer')) {
-      setManagedUsers(getAllUsersFromLocalStorage());
-    }
-  }, [hasRole, loading]);
-  
-  const refreshUsers = () => {
-    setManagedUsers(getAllUsersFromLocalStorage());
-  };
-
-  const handleUpdateRoles = (userId: string, newRoles: Role[]) => {
-    const key = `userData-${userId}`; 
-    try {
-      const userDataString = localStorage.getItem(key);
-      if (userDataString) {
-        const userData = JSON.parse(userDataString);
-        
-        if (userData.email === 'pb7552212@gmail.com' && !newRoles.includes('Owner')) {
-          toast({
-            title: "Action Forbidden",
-            description: "The Owner's 'Owner' role cannot be removed.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        userData.roles = newRoles;
-        localStorage.setItem(key, JSON.stringify(userData));
-        toast({
-          title: "Roles Updated",
-          description: `User roles have been updated.`,
-        });
-        refreshUsers();
-        setIsRoleModalOpen(false);
-      } else {
-         toast({
-          title: "Update Failed",
-          description: "User data not found in local storage.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to update role:", error);
-      toast({
-        title: "Error",
-        description: "An error occurred while updating roles.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAddUserInitiate = () => {
-    if (!newUserEmail) {
-        toast({ title: "Email required", description: "Please enter an email address."});
-        return;
-    }
-
-    const existingUser = findUserByEmail(newUserEmail);
-    if (existingUser) {
-        openRoleManagement(existingUser);
-    } else {
-        setUserToAdd({ 
-            userId: `new-${Date.now()}`, 
-            email: newUserEmail, 
-            roles: ['User'],
-            hasActiveSubscription: false, 
-            chartAnalysisTrialPoints: 0, 
-        });
-        setIsConfirmAddUserOpen(true);
-    }
-  };
-
-  const handleConfirmAddUser = () => {
-    if (!userToAdd) return;
-    
-    const newUserEntry = {
-        userId: userToAdd.userId, 
-        email: userToAdd.email,
-        chartAnalysisTrialPoints: 0,
-        hasActiveSubscription: false,
-        roles: ['User'] as Role[], 
-    };
-    localStorage.setItem(`userData-${userToAdd.userId}`, JSON.stringify(newUserEntry)); 
-    toast({ title: "User Added", description: `${userToAdd.email} has been added.` });
-    refreshUsers();
-    setNewUserEmail('');
-    setUserToAdd(null);
-    setIsConfirmAddUserOpen(false);
-    
-    const addedUser = findUserByEmail(newUserEntry.email);
-    if (addedUser) {
-      openRoleManagement(addedUser);
-    }
-  };
-  
-  const openRoleManagement = (userToManage: UserManagementProfile) => {
-    setSelectedUserForRoles(userToManage);
-    setSelectedRoles(new Set(userToManage.roles));
-    setIsRoleModalOpen(true);
-  };
-  
-  const onRoleCheckboxChange = (role: Role, checked: boolean) => {
-    setSelectedRoles(prev => {
-        const newRoles = new Set(prev);
-        if (checked) {
-            newRoles.add(role);
-        } else {
-            newRoles.delete(role);
-        }
-        return newRoles;
-    });
-  };
-
-  const saveRoles = () => {
-      if (selectedUserForRoles) {
-          handleUpdateRoles(selectedUserForRoles.userId, Array.from(selectedRoles));
-      }
-  };
-
-
-  if (loading || !hasRole('Developer')) {
-    return (
-      <main className="flex-1 p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-48" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-          </div>
-        </div>
-      </main>
-    );
+  // Protect the page at the server level
+  if (profile?.role !== "Developer" && profile?.role !== "Owner") {
+    redirect("/");
   }
+
+  const isOwner = profile.role === "Owner";
+
+  // 2. Fetch all stats at the same time
+  const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult] =
+    await Promise.all([
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("subscription_status", "active"), // <--!! UPDATE THIS to your column
+      supabase.from("analyses").select("*", { count: "exact", head: true }), // <--!! UPDATE THIS to your table
+      supabase.from("profiles").select("id, email, role, subscription_status"), // Fetch all users
+    ]);
+
+  // 3. Format profiles data for the client
+  const managedUsers: UserManagementProfile[] = profilesResult.data?.map(p => ({
+    userId: p.id,
+    email: p.email,
+    // This logic supports your 'role' column being just TEXT
+    // If you change 'role' to TEXT[], you can just use p.role
+    roles: p.role ? [p.role as Role] : ['User'], 
+    hasActiveSubscription: p.subscription_status === 'active', // <--!! UPDATE THIS
+    chartAnalysisTrialPoints: 0, // You would fetch this too
+  })) ?? [];
+  
+  // 4. Return the data
+  return {
+    totalUsers: userCountResult.count ?? 0,
+    totalSubscribers: subscriberCountResult.count ?? 0,
+    totalAnalyses: analysisCountResult.count ?? 0,
+    managedUsers,
+    isOwner,
+  };
+}
+
+// The Admin Page is now an Async Server Component
+export default async function AdminPage() {
+  const {
+    totalUsers,
+    totalSubscribers,
+    totalAnalyses,
+    managedUsers,
+    isOwner,
+  } = await getAdminData();
 
   return (
     <main className="flex-1 p-4 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
-        <TooltipProvider>
-            <div className="container mx-auto py-8">
-                <header className="mb-8">
-                    <h1 className="text-3xl font-headline font-bold tracking-tight flex items-center gap-2">
-                        <ShieldCheck className="h-8 w-8 text-primary" />
-                        Admin Dashboard
-                    </h1>
-                    <p className="text-lg text-muted-foreground">
-                        Application metrics and user management.
-                    </p>
-                </header>
+      <div className="container mx-auto py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl font-headline font-bold tracking-tight flex items-center gap-2">
+            <ShieldCheck className="h-8 w-8 text-primary" />
+            Admin Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Application metrics and user management.
+          </p>
+        </header>
 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">{managedUsers.length}</div>
-                          <p className="text-xs text-muted-foreground">in local browser storage</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-                          <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">+150</div>
-                          <p className="text-xs text-muted-foreground">+180.1% from last month</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">API Usage (Today)</CardTitle>
-                          <BarChart className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">5,732</div>
-                          <p className="text-xs text-muted-foreground">+12% since last hour</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Analyses Performed</CardTitle>
-                          <BarChart className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                          <div className="text-2xl font-bold">+12,234</div>
-                          <p className="text-xs text-muted-foreground">+19% from last month</p>
-                      </CardContent>
-                    </Card>
-                </div>
-                 <div className="mt-8 grid gap-8 md:grid-cols-2">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline">User Role Management</CardTitle>
-                            <CardDescription>Add, find, and manage user roles. Only the Owner can assign roles.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {isOwner && (
-                                  <div className="flex gap-2">
-                                      <Input
-                                          type="email"
-                                          placeholder="Find or add user by email"
-                                          value={newUserEmail}
-                                          onChange={(e) => setNewUserEmail(e.target.value)}
-                                      />
-                                      <Button onClick={handleAddUserInitiate}><UserPlus className="h-4 w-4 mr-2"/>Find/Add</Button>
-                                  </div>
-                                )}
-                                <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                                  {managedUsers.map((mUser) => (
-                                      <div key={mUser.userId} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
-                                          <div className="flex flex-col gap-1.5">
-                                            <span className="text-sm font-medium flex items-center gap-1.5">
-                                              {mUser.email}
-                                              
-                                              {mUser.roles.includes('Owner') && (
-                                                  <Tooltip>
-                                                    <TooltipTrigger>
-                                                      <Crown className="h-4 w-4 text-amber-500" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                      <p>Owner</p>
-                                                    </TooltipContent>
-                                                  </Tooltip>
-                                              )}
-                                            </span>
-                                            <div className="flex flex-wrap gap-1">
-                                                {mUser.roles.map(role => (
-                                                    <Badge key={role} variant={role === 'Developer' || role === 'Owner' ? "default" : "secondary"} className="text-xs">
-                                                        {role}
-                                                    </Badge> 
-                                                ))}
-                                            </div>
-                                          </div>
-                                          {isOwner && (
-                                            <Button size="sm" variant="outline" onClick={() => openRoleManagement(mUser)}>
-                                                <UserCog className="h-4 w-4 mr-1" /> Manage
-                                            </Button>
-                                          )}
-                                      </div>
-                                  ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent Activity</CardTitle>
-                            <CardDescription>A log of recent user activities will be displayed here.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="text-center text-muted-foreground py-12">
-                            <p>Activity Log Coming Soon</p>
-                        </CardContent>
-                    </Card>
-                 </div>
-            </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total Users Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                Total users in the database
+              </p>
+            </CardContent>
+          </Card>
 
-            <AlertDialog open={isConfirmAddUserOpen} onOpenChange={setIsConfirmAddUserOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>User Not Found</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            The user "{userToAdd?.email}" does not exist. Would you like to create a new user entry for this email?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setUserToAdd(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmAddUser}>
-                            Yes, Add User
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+          {/* Total Subscribers Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Subscribers
+              </CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalSubscribers}</div>
+              <p className="text-xs text-muted-foreground">
+                Users with an active subscription
+              </p>
+            </CardContent>
+          </Card>
 
-            <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Manage Roles for {selectedUserForRoles?.email}</DialogTitle>
-                        <DialogDescription>
-                            Assign or revoke roles. The 'Owner' role cannot be removed from the application owner.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 grid grid-cols-2 gap-4">
-                        {availableRoles.map(role => (
-                            <div key={role} className="flex items-center space-x-2">
-                               <Checkbox 
-                                    id={`role-${role}`}
-                                    checked={selectedRoles.has(role)}
-                                    onCheckedChange={(checked) => onRoleCheckboxChange(role, Boolean(checked))}
-                                    disabled={role === 'Owner' && selectedUserForRoles?.email === 'pb7552212@gmail.com'}
-                                />
-                                <Label htmlFor={`role-${role}`} className="font-medium">{role}</Label>
-                            </div>
-                        ))}
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button onClick={saveRoles}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </TooltipProvider>
+          {/* Total Analyses Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Analyses Made
+              </CardTitle>
+              <BarChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalAnalyses}</div>
+              <p className="text-xs text-muted-foreground">
+                Total analyses performed by users
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pass the server-fetched data to the Client Component */}
+        <AdminClient
+          initialManagedUsers={managedUsers}
+          isOwner={isOwner}
+        />
+      </div>
     </main>
   );
-};
-
-export default AdminDashboardPage;
+}

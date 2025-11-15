@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { handleImageAnalysisAction, type AnalysisResult } from "@/lib/actions";
+import { handleImageAnalysisAction, uploadChartImages, type AnalysisResult } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Loader from "./loader";
 import { TypingLoaderText } from "./typing-loader-text";
-import { uploadChartImages } from "@/lib/supabase/storage";
+
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -345,7 +345,7 @@ export function ImageUploadForm() {
           />
           <button
             type="button"
-            onClick={() => removeFile(index)}
+            onClick={() => removeFile(indexToRemove)}
             className="absolute -top-2 -right-2 z-10 p-1 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Remove image"
             disabled={(isPending || uploadingMessage !== null)}
