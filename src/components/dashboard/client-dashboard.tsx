@@ -20,7 +20,7 @@ const TradingViewMarketOverview = dynamic(() =>
   import('@/components/dashboard/tradingview-market-overview').then(mod => mod.TradingViewMarketOverview),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-[60px] w-full" />,
+    loading: () => <Skeleton className="h-[660px] w-full" />,
   }
 );
 
