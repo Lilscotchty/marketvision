@@ -588,16 +588,18 @@ export async function updateUserRoles(
     return { success: false, message: 'Not authenticated.' };
   }
 
-  const { data: adminProfile } = await supabase
-    .from('profiles')
-    .select('roles')
-    .eq('id', adminUser.id)
-    .single();
-  
   const isHardcodedOwner = adminUser.email === 'pb7552212@gmail.com';
 
-  if (!isHardcodedOwner && !adminProfile?.roles?.includes('Owner')) {
-    return { success: false, message: 'Access Denied: You are not an Owner.' };
+  if (!isHardcodedOwner) {
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('roles')
+      .eq('id', adminUser.id)
+      .single();
+
+    if (!adminProfile?.roles?.includes('Owner')) {
+      return { success: false, message: 'Access Denied: You are not an Owner.' };
+    }
   }
 
   const { data: targetProfile } = await supabase
@@ -679,6 +681,28 @@ export async function upsertNewsPost(
 
     if (!user) {
         return { success: false, message: 'Not authenticated.' };
+    }
+
+    // Ensure a profile exists for the user, creating one if necessary.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile) {
+      // Profile doesn't exist, create it.
+      const userRoles: Role[] = user.email === 'pb7552212@gmail.com' ? ['Owner', 'User'] : ['User'];
+      const { error: insertError } = await supabase.from('profiles').insert({
+        id: user.id,
+        email: user.email,
+        roles: userRoles,
+      });
+
+      if (insertError) {
+        console.error("Error creating profile on-the-fly:", insertError);
+        return { success: false, message: `Failed to create user profile: ${insertError.message}` };
+      }
     }
 
     const postData = {
