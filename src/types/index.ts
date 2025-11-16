@@ -139,10 +139,11 @@ export const SendEmailOutputSchema = z.object({
 });
 export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
 
-export interface MarketNewsItem {
+// News types
+export interface ApiMarketNewsItem {
   title: string;
   url: string;
-  time_published: string; // e.g., "20240726T013854"
+  time_published: string;
   authors: string[];
   summary: string;
   banner_image: string;
@@ -159,3 +160,26 @@ export interface MarketNewsItem {
     ticker_sentiment_label: string;
   }[];
 }
+
+export const sentimentOptions = ["Bullish", "Bearish", "Neutral"] as const;
+export type Sentiment = typeof sentimentOptions[number];
+
+export interface NewsPost {
+  id: string;
+  created_at: string;
+  title: string;
+  content: string;
+  banner_image_url?: string | null;
+  sentiment: Sentiment;
+  author_id: string;
+  author_email?: string; // For display purposes
+}
+
+export const NewsPostSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters long.'),
+  content: z.string().min(50, 'Content must be at least 50 characters long.'),
+  banner_image_url: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+  sentiment: z.enum(sentimentOptions),
+});
+
+export type NewsPostFormValues = z.infer<typeof NewsPostSchema>;

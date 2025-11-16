@@ -9,9 +9,11 @@ import type {
   PredictionOutput,
   AnalysisOutput,
   AlphaVantageGlobalQuote,
-  MarketNewsItem,
+  ApiMarketNewsItem,
   AssetCategory,
   Role, // Added Role type
+  NewsPost,
+  NewsPostFormValues,
 } from '@/types';
 import { createSupabaseServerClient } from '@/lib/supabase/server'; // Added for Server Action
 import { revalidatePath } from 'next/cache'; // Added for Server Action
@@ -504,7 +506,7 @@ export async function fetchMarketDataFromAV(
 }
 
 export interface FetchNewsResult {
-  data?: MarketNewsItem[];
+  data?: ApiMarketNewsItem[];
   error?: string;
 }
 
@@ -534,7 +536,7 @@ export async function fetchMarketNews(): Promise<FetchNewsResult> {
       }
     }
 
-    const newsItems: MarketNewsItem[] = data.feed || [];
+    const newsItems: ApiMarketNewsItem[] = data.feed || [];
     return { data: newsItems };
   } catch (error) {
     console.error(`Failed to fetch market news:`, error);
@@ -566,17 +568,11 @@ export async function categorizeAssetAction(
   }
 }
 
-// ------------------------------------------------------------------
-// --- NEW FUNCTION ADDED BELOW ---
-// ------------------------------------------------------------------
-
-// This is the type for the function's response
 type ActionResponse = {
   success: boolean;
   message: string;
 };
 
-// Make sure the "export" keyword is here
 export async function updateUserRoles(
   userIdToUpdate: string,
   newRoles: Role[]
@@ -584,7 +580,6 @@ export async function updateUserRoles(
   const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
-  // 1. Get the *current* admin user making this request
   const {
     data: { user: adminUser },
   } = await supabase.auth.getUser();
@@ -593,18 +588,18 @@ export async function updateUserRoles(
     return { success: false, message: 'Not authenticated.' };
   }
 
-  // 2. Check if the *current* admin is an 'Owner'
   const { data: adminProfile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', adminUser.id)
     .single();
+  
+  const isHardcodedOwner = adminUser.email === 'pb7552212@gmail.com';
 
-  if (adminProfile?.role !== 'Owner') {
+  if (adminProfile?.role !== 'Owner' && !isHardcodedOwner) {
     return { success: false, message: 'Access Denied: You are not an Owner.' };
   }
 
-  // 3. Get the profile of the user to be updated
   const { data: targetProfile } = await supabase
     .from('profiles')
     .select('email, role')
@@ -615,7 +610,6 @@ export async function updateUserRoles(
     return { success: false, message: 'Target user not found.' };
   }
 
-  // 4. Protect the hardcoded owner
   if (
     targetProfile.email === 'pb7552212@gmail.com' &&
     !newRoles.includes('Owner')
@@ -626,8 +620,6 @@ export async function updateUserRoles(
     };
   }
 
-  // 5. Update the user's role in the database
-  //    (This assumes a single 'role' text column)
   const newRole = newRoles.includes('Owner')
     ? 'Owner'
     : newRoles.includes('Developer')
@@ -643,7 +635,94 @@ export async function updateUserRoles(
     return { success: false, message: `Database error: ${error.message}` };
   }
 
-  // 6. Revalidate the path to refresh the data on the admin page
   revalidatePath('/admin');
   return { success: true, message: 'Roles updated successfully.' };
+}
+
+
+// Server Action to get all news posts
+export async function getNewsPosts(): Promise<{ data: NewsPost[] | null, error: string | null }> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+  
+  const { data, error } = await supabase
+    .from('news_posts')
+    .select(`
+      id,
+      created_at,
+      title,
+      content,
+      banner_image_url,
+      sentiment,
+      author_id,
+      profiles ( email )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching news posts:', error);
+    return { data: null, error: error.message };
+  }
+
+  // Remap the data to include author_email at the top level
+  const remappedData = data.map(post => ({
+    ...post,
+    author_email: post.profiles.email
+  }));
+
+  return { data: remappedData, error: null };
+}
+
+// Server action to create/update a news post
+export async function upsertNewsPost(
+  values: NewsPostFormValues,
+  postId?: string
+): Promise<ActionResponse & { postId?: string }> {
+    const cookieStore = await cookies();
+    const supabase = createSupabaseServerClient(cookieStore);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, message: 'Not authenticated.' };
+    }
+
+    const postData = {
+        ...values,
+        author_id: user.id,
+    };
+
+    if (postId) {
+        // Update existing post
+        const { error } = await supabase.from('news_posts').update(postData).eq('id', postId);
+        if (error) {
+            return { success: false, message: `Error updating post: ${error.message}` };
+        }
+        revalidatePath('/admin');
+        revalidatePath('/news');
+        return { success: true, message: 'Post updated successfully.', postId };
+    } else {
+        // Create new post
+        const { data, error } = await supabase.from('news_posts').insert(postData).select().single();
+        if (error) {
+            return { success: false, message: `Error creating post: ${error.message}` };
+        }
+        revalidatePath('/admin');
+        revalidatePath('/news');
+        return { success: true, message: 'Post created successfully.', postId: data.id };
+    }
+}
+
+// Server action to delete a news post
+export async function deleteNewsPost(postId: string): Promise<ActionResponse> {
+    const cookieStore = await cookies();
+    const supabase = createSupabaseServerClient(cookieStore);
+
+    const { error } = await supabase.from('news_posts').delete().eq('id', postId);
+    if (error) {
+        return { success: false, message: `Error deleting post: ${error.message}` };
+    }
+    revalidatePath('/admin');
+    revalidatePath('/news');
+    return { success: true, message: 'Post deleted successfully.' };
 }

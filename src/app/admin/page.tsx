@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Users, CreditCard, BarChart, ShieldCheck } from "lucide-react";
 import AdminClient from "./admin-client"; // We will create this client component
-import type { UserManagementProfile, Role } from "@/types";
+import type { UserManagementProfile, Role, NewsPost } from "@/types";
+import { getNewsPosts } from "@/lib/actions";
 
 // This function fetches all stats in parallel
 async function getAdminData() {
@@ -25,7 +26,6 @@ async function getAdminData() {
     redirect("/login");
   }
   
-  // --- ADDED: Explicit check for the application owner's email ---
   const isHardcodedOwner = user.email === 'pb7552212@gmail.com';
 
   const { data: profile } = await supabase
@@ -34,17 +34,14 @@ async function getAdminData() {
     .eq("id", user.id)
     .single();
 
-  // Protect the page at the server level
-  // --- MODIFIED: Include the isHardcodedOwner check in the condition ---
-  if (!isHardcodedOwner && profile?.role !== "Developer" && profile?.role !== "Owner") {
-    redirect("/");
+  const isOwner = isHardcodedOwner || profile?.role === "Owner";
+  
+  if (!isOwner && profile?.role !== 'Developer') {
+     redirect("/");
   }
 
-  // An owner is either the hardcoded owner or has the 'Owner' role in the DB
-  const isOwner = isHardcodedOwner || profile?.role === "Owner";
-
-  // 2. Fetch all stats at the same time
-  const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult] =
+  // 2. Fetch all stats and data at the same time
+  const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult, newsPostsResult] =
     await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase
@@ -53,25 +50,27 @@ async function getAdminData() {
         .eq("subscription_status", "active"), // <--!! UPDATE THIS to your column
       supabase.from("analyses").select("*", { count: "exact", head: true }), // <--!! UPDATE THIS to your table
       supabase.from("profiles").select("id, email, role, subscription_status"), // Fetch all users
+      getNewsPosts(), // Fetch news posts from our new action
     ]);
 
   // 3. Format profiles data for the client
   const managedUsers: UserManagementProfile[] = profilesResult.data?.map(p => ({
     userId: p.id,
     email: p.email,
-    // This logic supports your 'role' column being just TEXT
-    // If you change 'role' to TEXT[], you can just use p.role
     roles: p.role ? [p.role as Role] : ['User'], 
-    hasActiveSubscription: p.subscription_status === 'active', // <--!! UPDATE THIS
-    chartAnalysisTrialPoints: 0, // You would fetch this too
+    hasActiveSubscription: p.subscription_status === 'active', 
+    chartAnalysisTrialPoints: 0, 
   })) ?? [];
   
+  const newsPosts: NewsPost[] = newsPostsResult.data || [];
+
   // 4. Return the data
   return {
     totalUsers: userCountResult.count ?? 0,
     totalSubscribers: subscriberCountResult.count ?? 0,
     totalAnalyses: analysisCountResult.count ?? 0,
     managedUsers,
+    initialNewsPosts: newsPosts,
     isOwner,
   };
 }
@@ -83,6 +82,7 @@ export default async function AdminPage() {
     totalSubscribers,
     totalAnalyses,
     managedUsers,
+    initialNewsPosts,
     isOwner,
   } = await getAdminData();
 
@@ -99,8 +99,7 @@ export default async function AdminPage() {
           </p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Users Card */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -114,7 +113,6 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Total Subscribers Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -130,7 +128,6 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Total Analyses Card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -147,9 +144,9 @@ export default async function AdminPage() {
           </Card>
         </div>
 
-        {/* Pass the server-fetched data to the Client Component */}
         <AdminClient
           initialManagedUsers={managedUsers}
+          initialNewsPosts={initialNewsPosts}
           isOwner={isOwner}
         />
       </div>

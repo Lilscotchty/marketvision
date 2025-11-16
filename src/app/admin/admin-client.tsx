@@ -1,13 +1,13 @@
 // src/app/admin/admin-client.tsx
 "use client";
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserCog, Crown } from 'lucide-react';
+import { UserCog, Crown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { UserManagementProfile, Role } from '@/types';
+import type { UserManagementProfile, Role, NewsPost } from '@/types';
 import { availableRoles } from '@/types';
 import {
   Dialog,
@@ -26,20 +26,41 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { updateUserRoles } from '@/lib/actions'; // Import the Server Action
+import { updateUserRoles, getNewsPosts } from '@/lib/actions'; 
+import NewsPostManager from './news-post-manager';
 
 type AdminClientProps = {
   initialManagedUsers: UserManagementProfile[];
+  initialNewsPosts: NewsPost[];
   isOwner: boolean;
 };
 
-const AdminClient = ({ initialManagedUsers, isOwner }: AdminClientProps) => {
+const AdminClient = ({ initialManagedUsers, initialNewsPosts, isOwner }: AdminClientProps) => {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [managedUsers] = useState(initialManagedUsers);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUserForRoles, setSelectedUserForRoles] = useState<UserManagementProfile | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<Set<Role>>(new Set());
+
+  const [newsPosts, setNewsPosts] = useState(initialNewsPosts);
+  const [isNewsLoading, setIsNewsLoading] = useState(false);
+
+  const refreshNewsPosts = async () => {
+    setIsNewsLoading(true);
+    const { data, error } = await getNewsPosts();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Could not refresh news posts.",
+        variant: "destructive",
+      });
+    } else if (data) {
+      setNewsPosts(data);
+    }
+    setIsNewsLoading(false);
+  };
+
 
   const handleUpdateRoles = (userId: string, newRoles: Role[]) => {
     startTransition(async () => {
@@ -87,7 +108,13 @@ const AdminClient = ({ initialManagedUsers, isOwner }: AdminClientProps) => {
 
   return (
     <TooltipProvider>
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
+      <div className="mt-8 grid gap-8 md:grid-cols-1">
+        <NewsPostManager 
+          posts={newsPosts}
+          onRefresh={refreshNewsPosts}
+          isLoading={isNewsLoading}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">User Role Management</CardTitle>
@@ -97,8 +124,6 @@ const AdminClient = ({ initialManagedUsers, isOwner }: AdminClientProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Note: Add/Find user logic is removed for simplicity.
-                  You can add a new Server Action for that. */}
               <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                 {managedUsers.map((mUser) => (
                   <div key={mUser.userId} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
@@ -131,15 +156,6 @@ const AdminClient = ({ initialManagedUsers, isOwner }: AdminClientProps) => {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>A log of recent user activities will be displayed here.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground py-12">
-            <p>Activity Log Coming Soon</p>
           </CardContent>
         </Card>
       </div>
