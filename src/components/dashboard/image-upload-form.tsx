@@ -376,12 +376,13 @@ export function ImageUploadForm() {
         <div className={cn("relative z-10", isProcessing && "blur-sm")}>
             <form ref={formRef} onSubmit={handleSubmit}>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold text-white">
-                Chart Analysis
+              <CardTitle className="font-headline text-2xl font-bold tracking-tight">
+                Chart Analysis Tool
               </CardTitle>
-              <CardDescription className="text-xs text-gray-400">Upload your candlestick charts to receive a detailed AI analysis and market prediction.</CardDescription>
+              <CardDescription>Upload your candlestick charts to receive a detailed AI analysis and market prediction.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+
               <Input
                 id="chart-images"
                 name="chartImages"

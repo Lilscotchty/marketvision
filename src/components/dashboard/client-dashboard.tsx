@@ -5,7 +5,7 @@ import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import { CandlestickChart, TrendingUp } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { Skeleton } from "@/components/ui/skeleton";
-import TradingStrategyCards from './trading-strategy-cards'; // <-- NEW IMPORT
+import TradingStrategyCards from './trading-strategy-cards';
 
 // Dynamically import heavy components
 const PromotionalImageTray = dynamic(() => 
@@ -30,11 +30,6 @@ export function ClientDashboard() {
   return (
     <main className="space-y-10 md:space-y-12">
       <section id="chart-analysis-tool">
-        <header className="mb-6">
-          <h2 className="text-2xl font-bold tracking-tight font-headline">
-            Chart Analysis Tool
-          </h2>
-        </header>
         
         <div className="my-6">
           <PromotionalImageTray />
@@ -45,9 +40,7 @@ export function ClientDashboard() {
 
       <Separator className="my-8" />
       
-      {/* --- NEW STRATEGY CARDS SECTION --- */}
       <TradingStrategyCards />
-      {/* ---------------------------------- */}
       
       <Separator className="my-8" />
 

@@ -590,19 +590,19 @@ export async function updateUserRoles(
 
   const { data: adminProfile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('roles')
     .eq('id', adminUser.id)
     .single();
   
   const isHardcodedOwner = adminUser.email === 'pb7552212@gmail.com';
 
-  if (adminProfile?.role !== 'Owner' && !isHardcodedOwner) {
+  if (!adminProfile?.roles?.includes('Owner') && !isHardcodedOwner) {
     return { success: false, message: 'Access Denied: You are not an Owner.' };
   }
 
   const { data: targetProfile } = await supabase
     .from('profiles')
-    .select('email, role')
+    .select('email, roles')
     .eq('id', userIdToUpdate)
     .single();
 
@@ -619,16 +619,10 @@ export async function updateUserRoles(
       message: "Action Forbidden: The Owner's 'Owner' role cannot be removed.",
     };
   }
-
-  const newRole = newRoles.includes('Owner')
-    ? 'Owner'
-    : newRoles.includes('Developer')
-    ? 'Developer'
-    : 'User';
-
+  
   const { error } = await supabase
     .from('profiles')
-    .update({ role: newRole })
+    .update({ roles: newRoles })
     .eq('id', userIdToUpdate);
 
   if (error) {

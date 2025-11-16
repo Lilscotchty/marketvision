@@ -30,13 +30,14 @@ async function getAdminData() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("roles")
     .eq("id", user.id)
     .single();
 
-  const isOwner = isHardcodedOwner || profile?.role === "Owner";
+  const userRoles = profile?.roles || [];
+  const isOwner = isHardcodedOwner || userRoles.includes("Owner");
   
-  if (!isOwner && profile?.role !== 'Developer') {
+  if (!isOwner && !userRoles.includes('Developer')) {
      redirect("/");
   }
 
@@ -49,7 +50,7 @@ async function getAdminData() {
         .select("*", { count: "exact", head: true })
         .eq("subscription_status", "active"), // <--!! UPDATE THIS to your column
       supabase.from("analyses").select("*", { count: "exact", head: true }), // <--!! UPDATE THIS to your table
-      supabase.from("profiles").select("id, email, role, subscription_status"), // Fetch all users
+      supabase.from("profiles").select("id, email, roles, subscription_status"), // Fetch all users
       getNewsPosts(), // Fetch news posts from our new action
     ]);
 
@@ -57,7 +58,7 @@ async function getAdminData() {
   const managedUsers: UserManagementProfile[] = profilesResult.data?.map(p => ({
     userId: p.id,
     email: p.email,
-    roles: p.role ? [p.role as Role] : ['User'], 
+    roles: p.roles || ['User'], 
     hasActiveSubscription: p.subscription_status === 'active', 
     chartAnalysisTrialPoints: 0, 
   })) ?? [];
