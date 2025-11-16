@@ -692,7 +692,7 @@ export async function upsertNewsPost(
 
     if (!profile) {
       // Profile doesn't exist, create it.
-      const userRoles: Role[] = user.email === 'pb7552212@gmail.com' ? ['Owner', 'User'] : ['User'];
+      const userRoles: Role[] = user.email === 'pb7552212@gmail.com' ? ['Owner'] : ['User'];
       const { error: insertError } = await supabase.from('profiles').insert({
         id: user.id,
         email: user.email,
