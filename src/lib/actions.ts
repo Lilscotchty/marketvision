@@ -596,7 +596,7 @@ export async function updateUserRoles(
   
   const isHardcodedOwner = adminUser.email === 'pb7552212@gmail.com';
 
-  if (!adminProfile?.roles?.includes('Owner') && !isHardcodedOwner) {
+  if (!isHardcodedOwner && !adminProfile?.roles?.includes('Owner')) {
     return { success: false, message: 'Access Denied: You are not an Owner.' };
   }
 
@@ -661,7 +661,7 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null, error: 
   // Remap the data to include author_email at the top level
   const remappedData = data.map(post => ({
     ...post,
-    author_email: post.profiles.email
+    author_email: post.profiles ? post.profiles.email : 'Unknown Author'
   }));
 
   return { data: remappedData, error: null };

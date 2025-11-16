@@ -120,8 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (role: Role): boolean => {
     // Hardcoded check for the application owner
-    if (user?.email === 'pb7552212@gmail.com' && (role === 'Owner' || role === 'Developer')) {
-      return true;
+    if (user?.email === 'pb7552212@gmail.com') {
+      return true; // The owner has all roles.
     }
     // Check roles from the database profile
     return userData?.roles?.includes(role) ?? false;

@@ -49,9 +49,9 @@ async function getAdminData() {
       supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
-        .eq("subscription_status", "active"), // <--!! UPDATE THIS to your column
+        .eq("has_active_subscription", true),
       supabase.from("analyses").select("*", { count: "exact", head: true }), // <--!! UPDATE THIS to your table
-      supabase.from("profiles").select("id, email, roles, subscription_status"), // Fetch all users
+      supabase.from("profiles").select("id, email, roles, has_active_subscription"), // Fetch all users
       getNewsPosts(), // Fetch news posts from our new action
     ]);
 
@@ -60,7 +60,7 @@ async function getAdminData() {
     userId: p.id,
     email: p.email,
     roles: p.roles || ['User'], 
-    hasActiveSubscription: p.subscription_status === 'active', 
+    hasActiveSubscription: p.has_active_subscription, 
     chartAnalysisTrialPoints: 0, 
   })) ?? [];
   
