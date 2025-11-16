@@ -28,7 +28,7 @@ const tradingStrategies: TradingStrategy[] = [
     id: 'power_of_three',
     title: 'Power of Three (ICT)',
     description: 'Accumulation, Manipulation, and Distribution price cycle.',
-    imageUrl: 'https://i.ibb.co/Rfmqdyq/IMG1.jpg',
+    imageUrl: 'https://i.ibb.co/j9wjBTGL/IMG2.jpg',
     tag: 'Advanced',
     href: '#',
   },
