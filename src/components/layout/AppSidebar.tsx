@@ -54,7 +54,8 @@ export function AppSidebar() {
               Account
             </h3>
             {accountNav.map((item) => {
-              if (item.developerOnly && !hasRole('Developer')) {
+              // --- MODIFIED: Show link if it's for developers AND user has Developer OR Owner role ---
+              if (item.developerOnly && !hasRole('Developer') && !hasRole('Owner')) {
                 return null;
               }
               return <NavLink key={item.href} {...item} />;
