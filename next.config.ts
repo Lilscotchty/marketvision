@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'lnpyhrogsrpywoftosbg.supabase.co',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.benzinga.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
