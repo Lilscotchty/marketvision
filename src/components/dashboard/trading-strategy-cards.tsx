@@ -104,13 +104,13 @@ const TradingStrategyCards: React.FC = () => {
                     height={40}
                     className="rounded-full" // Circular image
                   />
-                  <CardTitle className="text-lg font-semibold text-white">
+                  <CardTitle className="text-sm font-semibold text-white">
                     {strategy.title}
                   </CardTitle>
                 </div>
                 {strategy.tag && (
                   <Badge
-                    className="bg-gray-800 text-gray-300 text-xs 
+                    className="bg-cyan-800 text-white-300 text-xs 
                                hover:bg-gray-700" // Exact badge colors
                   >
                     {strategy.tag}
@@ -118,13 +118,13 @@ const TradingStrategyCards: React.FC = () => {
                 )}
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-sm text-gray-400">
+                <p className="text-xs text-gray-400">
                   {strategy.description}
                 </p>
               </CardContent>
               <CardFooter className="flex justify-between items-center pt-4">
-                <span className="text-sm font-medium text-cyan-400">
-                  Learn more
+                <span className="text-xs font-medium text-cyan-400">
+                  Get started
                 </span>
                 <ArrowRight className="h-4 w-4 text-cyan-400" />
               </CardFooter>
