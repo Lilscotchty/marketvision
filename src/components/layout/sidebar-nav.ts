@@ -29,7 +29,7 @@ export const mainNav: NavItem[] = [
   { href: "/live-analysis", icon: AreaChart, label: "Live Analysis", authRequired: true },
   { href: "/alerts", icon: BellRing, label: "Alerts", authRequired: true },
   { href: "/news", icon: Newspaper, label: "News", authRequired: true },
-  { href: "/performance", icon: BarChart3, label: "Performance", authRequired: true },
+  { href: "/performance", icon: BarChart3, label: "History", authRequired: true },
 ];
 
 export const accountNav: NavItem[] = [
