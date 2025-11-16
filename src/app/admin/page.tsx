@@ -24,6 +24,9 @@ async function getAdminData() {
   if (!user) {
     redirect("/login");
   }
+  
+  // --- ADDED: Explicit check for the application owner's email ---
+  const isHardcodedOwner = user.email === 'pb7552212@gmail.com';
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -32,11 +35,13 @@ async function getAdminData() {
     .single();
 
   // Protect the page at the server level
-  if (profile?.role !== "Developer" && profile?.role !== "Owner") {
+  // --- MODIFIED: Include the isHardcodedOwner check in the condition ---
+  if (!isHardcodedOwner && profile?.role !== "Developer" && profile?.role !== "Owner") {
     redirect("/");
   }
 
-  const isOwner = profile.role === "Owner";
+  // An owner is either the hardcoded owner or has the 'Owner' role in the DB
+  const isOwner = isHardcodedOwner || profile?.role === "Owner";
 
   // 2. Fetch all stats at the same time
   const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult] =
