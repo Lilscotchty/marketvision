@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -84,10 +85,9 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
   }, [userData]);
 
   const activateSubscription = () => {
-    if (user) {
-      // --- FIX 2: Use user.uid (from Firebase) not user.id (from Supabase) ---
+    if (user && localUserData) {
       const updatedUserData = { ...localUserData, hasActiveSubscription: true } as UserAppData;
-      localStorage.setItem(`userData-${user.id}`, JSON.stringify(updatedUserData));
+      localStorage.setItem(`marketVisionUserData_${user.id}`, JSON.stringify(updatedUserData));
       setLocalUserData(updatedUserData);
     }
   };
@@ -250,7 +250,6 @@ export function LiveMarketDataDisplay({ onAnalysisComplete }: LiveMarketDataDisp
               Subscribe Now
             </Button>
           </CardContent>
-           {/* --- FIX 1: This was the syntax error --- */}
            <SubscriptionModal
               isOpen={isSubscriptionModalOpen}
               onClose={() => setIsSubscriptionModalOpen(false)}
