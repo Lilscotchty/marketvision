@@ -36,8 +36,9 @@ async function getAdminData() {
 
   const userRoles = profile?.roles || [];
   const isOwner = isHardcodedOwner || userRoles.includes("Owner");
+  const isDeveloper = userRoles.includes("Developer");
   
-  if (!isOwner && !userRoles.includes('Developer')) {
+  if (!isOwner && !isDeveloper) {
      redirect("/");
   }
 
