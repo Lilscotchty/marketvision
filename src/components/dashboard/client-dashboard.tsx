@@ -5,7 +5,7 @@ import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import dynamic from 'next/dynamic';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
-import { LandingPageContent } from "@/app/page";
+import { LandingPageContent } from "./landing-page-content";
 
 // Dynamically import heavy components
 const PromotionalImageTray = dynamic(() => 
@@ -25,7 +25,6 @@ const TradingViewMarketOverview = dynamic(() =>
 );
 
 const Separator = dynamic(() => import('@/components/ui/separator').then(mod => mod.Separator));
-const TradingStrategyCards = dynamic(() => import('./trading-strategy-cards'));
 
 export function ClientDashboard() {
   const { user, loading } = useAuth();
@@ -59,10 +58,6 @@ export function ClientDashboard() {
         <ImageUploadForm />
       </section>
 
-      <Separator className="my-8" />
-      
-      <TradingStrategyCards />
-      
       <Separator className="my-8" />
 
       <section id="global-market-data">
