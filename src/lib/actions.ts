@@ -588,18 +588,21 @@ export async function updateUserRoles(
     return { success: false, message: 'Not authenticated.' };
   }
 
-  const isHardcodedOwner = adminUser.email === 'pb7552212@gmail.com';
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('roles')
+    .eq('id', adminUser.id)
+    .single();
 
-  if (!isHardcodedOwner) {
-    const { data: adminProfile } = await supabase
-      .from('profiles')
-      .select('roles')
-      .eq('id', adminUser.id)
-      .single();
+  const isOwner =
+    adminUser.email === 'pb7552212@gmail.com' ||
+    (adminProfile?.roles && adminProfile.roles.includes('Owner'));
 
-    if (!adminProfile?.roles?.includes('Owner')) {
-      return { success: false, message: 'Access Denied: You are not an Owner.' };
-    }
+  if (!isOwner) {
+    return {
+      success: false,
+      message: 'Access Denied: You are not an Owner.',
+    };
   }
 
   const { data: targetProfile } = await supabase
@@ -621,7 +624,7 @@ export async function updateUserRoles(
       message: "Action Forbidden: The Owner's 'Owner' role cannot be removed.",
     };
   }
-  
+
   const { error } = await supabase
     .from('profiles')
     .update({ roles: newRoles })
@@ -635,9 +638,8 @@ export async function updateUserRoles(
   return { success: true, message: 'Roles updated successfully.' };
 }
 
-
 // Server Action to get all news posts
-export async function getNewsPosts(): Promise<{ data: NewsPost[] | null, error: string | null }> {
+export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: string | null }> {
   const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
   
@@ -661,10 +663,20 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null, error: 
   }
 
   // Remap the data to include author_email at the top level
-  const remappedData = data.map(post => ({
-    ...post,
-    author_email: post.profiles ? post.profiles.email : 'Unknown Author'
-  }));
+  const remappedData = data.map(post => {
+    // Supabase returns the joined table as an array if not marked as a one-to-one relationship.
+    const author_email = Array.isArray(post.profiles) && post.profiles.length > 0
+      ? post.profiles[0].email
+      : post.profiles && !Array.isArray(post.profiles)
+      // @ts-ignore
+      ? post.profiles.email
+      : 'Unknown Author';
+
+    return {
+      ...post,
+      author_email: author_email
+    };
+  });
 
   return { data: remappedData, error: null };
 }
@@ -674,73 +686,95 @@ export async function upsertNewsPost(
   values: NewsPostFormValues,
   postId?: string
 ): Promise<ActionResponse & { postId?: string }> {
-    const cookieStore = await cookies();
-    const supabase = createSupabaseServerClient(cookieStore);
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
 
-    const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-        return { success: false, message: 'Not authenticated.' };
+  if (!user) {
+    return { success: false, message: 'Not authenticated.' };
+  }
+
+  // Ensure a profile exists for the user, creating one if necessary.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile) {
+    // Profile doesn't exist, create it.
+    const userRoles: Role[] =
+      user.email === 'pb7552212@gmail.com' ? ['Owner'] : ['User'];
+    const { error: insertError } = await supabase.from('profiles').insert({
+      id: user.id,
+      email: user.email,
+      roles: userRoles,
+    });
+
+    if (insertError) {
+      console.error('Error creating profile on-the-fly:', insertError);
+      return {
+        success: false,
+        message: `Failed to create user profile: ${insertError.message}`,
+      };
     }
+  }
 
-    // Ensure a profile exists for the user, creating one if necessary.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
+  const postData = {
+    ...values,
+    author_id: user.id,
+  };
+
+  if (postId) {
+    // Update existing post
+    const { error } = await supabase
+      .from('news_posts')
+      .update(postData)
+      .eq('id', postId);
+    if (error) {
+      return {
+        success: false,
+        message: `Error updating post: ${error.message}`,
+      };
+    }
+    revalidatePath('/admin');
+    revalidatePath('/news');
+    return { success: true, message: 'Post updated successfully.', postId };
+  } else {
+    // Create new post
+    const { data, error } = await supabase
+      .from('news_posts')
+      .insert(postData)
+      .select()
       .single();
-
-    if (!profile) {
-      // Profile doesn't exist, create it.
-      const userRoles: Role[] = user.email === 'pb7552212@gmail.com' ? ['Owner'] : ['User'];
-      const { error: insertError } = await supabase.from('profiles').insert({
-        id: user.id,
-        email: user.email,
-        roles: userRoles,
-      });
-
-      if (insertError) {
-        console.error("Error creating profile on-the-fly:", insertError);
-        return { success: false, message: `Failed to create user profile: ${insertError.message}` };
-      }
+    if (error) {
+      return {
+        success: false,
+        message: `Error creating post: ${error.message}`,
+      };
     }
-
-    const postData = {
-        ...values,
-        author_id: user.id,
-    };
-
-    if (postId) {
-        // Update existing post
-        const { error } = await supabase.from('news_posts').update(postData).eq('id', postId);
-        if (error) {
-            return { success: false, message: `Error updating post: ${error.message}` };
-        }
-        revalidatePath('/admin');
-        revalidatePath('/news');
-        return { success: true, message: 'Post updated successfully.', postId };
-    } else {
-        // Create new post
-        const { data, error } = await supabase.from('news_posts').insert(postData).select().single();
-        if (error) {
-            return { success: false, message: `Error creating post: ${error.message}` };
-        }
-        revalidatePath('/admin');
-        revalidatePath('/news');
-        return { success: true, message: 'Post created successfully.', postId: data.id };
-    }
+    revalidatePath('/admin');
+    revalidatePath('/news');
+    return { success: true, message: 'Post created successfully.', postId: data.id };
+  }
 }
 
 // Server action to delete a news post
 export async function deleteNewsPost(postId: string): Promise<ActionResponse> {
-    const cookieStore = await cookies();
-    const supabase = createSupabaseServerClient(cookieStore);
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
 
-    const { error } = await supabase.from('news_posts').delete().eq('id', postId);
-    if (error) {
-        return { success: false, message: `Error deleting post: ${error.message}` };
-    }
-    revalidatePath('/admin');
-    revalidatePath('/news');
-    return { success: true, message: 'Post deleted successfully.' };
+  const { error } = await supabase.from('news_posts').delete().eq('id', postId);
+  if (error) {
+    return {
+      success: false,
+      message: `Error deleting post: ${error.message}`,
+    };
+  }
+  revalidatePath('/admin');
+  revalidatePath('/news');
+  return { success: true, message: 'Post deleted successfully.' };
 }
