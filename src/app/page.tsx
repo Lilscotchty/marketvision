@@ -198,7 +198,7 @@ const LandingPageContent = () => {
 };
 
 
-export default function HomePage() {
+export default function Page() {
   const { user, loading } = useAuth();
 
   if (loading) {
