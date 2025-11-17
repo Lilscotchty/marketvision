@@ -4,7 +4,8 @@
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
 import dynamic from 'next/dynamic';
 import { Skeleton } from "@/components/ui/skeleton";
-import TradingStrategyCards from './trading-strategy-cards';
+import { useAuth } from "@/contexts/auth-context";
+import { LandingPageContent } from "@/app/page";
 
 // Dynamically import heavy components
 const PromotionalImageTray = dynamic(() => 
@@ -24,8 +25,29 @@ const TradingViewMarketOverview = dynamic(() =>
 );
 
 const Separator = dynamic(() => import('@/components/ui/separator').then(mod => mod.Separator));
+const TradingStrategyCards = dynamic(() => import('./trading-strategy-cards'));
 
 export function ClientDashboard() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+        <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-16 md:pb-8">
+            <div className="container mx-auto py-8">
+                 <div className="space-y-12">
+                    <Skeleton className="h-96 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </div>
+        </main>
+    );
+  }
+
+  if (!user) {
+    return <LandingPageContent />;
+  }
+
   return (
     <main className="space-y-10 md:space-y-12">
       <section id="chart-analysis-tool">
