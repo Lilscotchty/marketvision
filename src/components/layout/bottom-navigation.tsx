@@ -26,13 +26,13 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
     // Basic filtering for bottom nav, might need more specific logic
     if (['Settings', 'Login', 'Sign Up'].includes(item.label)) return false; 
     return true;
-  }).slice(0, 4); // Show max 4 items
+  }).slice(0, 5); // Show max 4 items
 
   if (loading) {
      return (
       <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border bg-card shadow-sm md:hidden">
-        <div className="mx-auto grid h-full max-w-lg grid-cols-4 font-medium">
-          {[...Array(4)].map((_, index) => (
+        <div className="mx-auto grid h-full max-w-lg grid-cols-5 font-medium">
+          {[...Array(5)].map((_, index) => (
             <div key={index} className="group inline-flex flex-col items-center justify-center px-2 py-1 text-center">
               <Skeleton className="mb-1 h-4 w-4 rounded-sm" />
               <Skeleton className="h-3 w-10 rounded-sm" />
@@ -45,7 +45,7 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border bg-card shadow-sm md:hidden">
-      <div className="mx-auto grid h-full max-w-lg grid-cols-4 font-medium">
+      <div className="mx-auto grid h-full max-w-lg grid-cols-5 font-medium">
         {displayedNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -55,8 +55,8 @@ export function BottomNavigation({ items }: BottomNavigationProps) {
               className={cn(
                 "group relative inline-flex flex-col items-center justify-center px-2 py-1 text-center hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                  ? "text-primary font-bold"
+                  : "text-muted-foreground font-bold"
               )}
             >
               <item.icon

@@ -2,10 +2,10 @@
 "use client";
 
 import { ImageUploadForm } from "@/components/dashboard/image-upload-form";
+import { CandlestickChart, TrendingUp } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/contexts/auth-context";
-import { LandingPageContent } from "./landing-page-content";
+import TradingStrategyCards from './trading-strategy-cards';
 
 // Dynamically import heavy components
 const PromotionalImageTray = dynamic(() => 
@@ -27,26 +27,6 @@ const TradingViewMarketOverview = dynamic(() =>
 const Separator = dynamic(() => import('@/components/ui/separator').then(mod => mod.Separator));
 
 export function ClientDashboard() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-        <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-16 md:pb-8">
-            <div className="container mx-auto py-8">
-                 <div className="space-y-12">
-                    <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                </div>
-            </div>
-        </main>
-    );
-  }
-
-  if (!user) {
-    return <LandingPageContent />;
-  }
-
   return (
     <main className="space-y-10 md:space-y-12">
       <section id="chart-analysis-tool">
@@ -58,6 +38,10 @@ export function ClientDashboard() {
         <ImageUploadForm />
       </section>
 
+      <Separator className="my-8" />
+      
+      <TradingStrategyCards />
+      
       <Separator className="my-8" />
 
       <section id="global-market-data">

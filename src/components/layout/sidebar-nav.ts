@@ -26,7 +26,7 @@ export type NavItem = {
 
 export const mainNav: NavItem[] = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", authRequired: true },
-  { href: "/live-analysis", icon: AreaChart, label: "Live Analysis", authRequired: true },
+  { href: "/live-analysis", icon: AreaChart, label: "Chart", authRequired: true },
   { href: "/alerts", icon: BellRing, label: "Alerts", authRequired: true },
   { href: "/news", icon: Newspaper, label: "News", authRequired: true },
   { href: "/performance", icon: BarChart3, label: "History", authRequired: true },
