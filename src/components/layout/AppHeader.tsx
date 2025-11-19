@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import Link from 'next/link';
 import {
   Bell,
   ChevronDown,
-  LifeBuoy,
+  Headset,
   LogOut,
   Moon,
   Search,
@@ -104,6 +103,7 @@ export function AppHeader() {
       {/* Right Section */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground text-[12px] h-7 border ">Feedback</Button>
+        
         <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -114,40 +114,54 @@ export function AppHeader() {
             ⌘K
           </kbd>
         </div>
+
         <TooltipProvider>
+          {/* Theme Toggle: Hidden on mobile, visible on md+ */}
           <Tooltip>
             <TooltipTrigger asChild>
               {isClient ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-full border text-muted-foreground"
+                  // UPDATED: added 'hidden md:inline-flex'
+                  className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                   {theme === 'dark' ? (
                     <Sun className="h-4 w-4 rounded-full" />
                   ) : (
-                    <Moon className="h-4 w-4 rounded-full" />
+                    <Moon className=" h-4 w-4 rounded-full" />
                   )}
                 </Button>
               ) : (
-                <div className="h-8 w-8 rounded-full border" /> // Placeholder for SSR
+                // UPDATED: added 'hidden md:block' to the placeholder as well
+                <div className="hidden md:block h-8 w-8 rounded-full border" /> 
               )}
             </TooltipTrigger>
             <TooltipContent>
               <p>Toggle Theme</p>
             </TooltipContent>
           </Tooltip>
+
+          {/* Support Icon: Hidden on mobile, visible on md+ */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
-                 <Link href="/support"><LifeBuoy className="h-4 w-4" /></Link>
+              <Button 
+                asChild 
+                variant="ghost" 
+                size="icon" 
+                // UPDATED: added 'hidden md:inline-flex'
+                className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground"
+              >
+                 <Link href="/support"><Headset className="h-4 w-4" /></Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               <p>Support</p>
             </TooltipContent>
           </Tooltip>
+
+          {/* Notifications: Visible on all screens */}
           <Tooltip>
             <TooltipTrigger asChild>
                <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
