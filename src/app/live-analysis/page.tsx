@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Activity, Zap } from "lucide-react";
+
 
 // Dynamically import the TradingView chart to prevent SSR issues and improve initial load.
 const TradingViewAdvancedChartWidget = dynamic(
@@ -49,15 +51,48 @@ export default function LiveAnalysisPage() {
     <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
       <div className="container mx-auto py-4 md:py-8 space-y-8">
 
-        <header className="text-center">
-          <h1 className="text-3xl font-headline font-bold tracking-tight sm:text-4xl flex items-center justify-center">
-            <BarChart className="mr-3 h-8 w-8 text-accent"/>
-            In-depth <span className="text-accent">Analysis</span>
-          </h1>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6  pb-8">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-[10px] font-bold tracking-wide text-green-700 dark:text-green-500 uppercase">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                System Online
+              </div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-muted border border-border text-[10px] font-medium text-muted-foreground">
+                 v2.4.0-stable
+              </div>
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+              Live Market <span className="text-muted-foreground font-light">Chart</span>
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-xl leading-relaxed">
+            Empower your analysis with a continuous feed of real-time market data.
+            </p>
+          </div>
+      <div className="flex flex-col sm:flex-row gap-6 sm:items-center">
+             {/* Stats - Hidden on mobile */}
+             <div className="hidden lg:flex gap-8 items-center  pr-8">
+                 <div className="text-right space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Inference Speed</p>
+                    <p className="text-xl font-mono text-foreground flex items-center justify-end gap-2">
+                       <Zap className="w-4 h-4 text-amber-500" /> 140ms
+                    </p>
+                 </div>
+                 <div className="text-right space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Network Status</p>
+                    <p className="text-xl font-mono text-foreground flex items-center justify-end gap-2">
+                       <Activity className="w-4 h-4 text-green-600 dark:text-green-500" /> Stable
+                    </p>
+                 </div>
+             </div>
+          </div>
         </header>
         
         <section id="live-trading-chart">
-          <h2 className="text-2xl font-semibold font-headline mb-4 text-center">Live Trading Chart</h2>
           <div className="relative h-[600px] md:h-[750px] w-full rounded-lg overflow-hidden bg-card" ref={chartContainerRef}>
             {!isMobile && (
               <Button
@@ -75,43 +110,6 @@ export default function LiveAnalysisPage() {
         </section>
         
         <Separator className="my-8" />
-
-        <section id="conceptual-analysis-input">
-           <h2 className="text-2xl font-semibold font-headline mb-6 text-center">Conceptual Market Analysis</h2>
-           <FormContainer open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <Card className="shadow-md text-center">
-              <CardHeader>
-                  <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
-                    <Bot className="text-primary"/>
-                    AI-Powered ICT Analysis
-                  </CardTitle>
-                  <CardDescription>
-                    Provide market context to get a conceptual analysis based on ICT principles.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormContainerTrigger asChild>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4"/>
-                      Start New Analysis
-                    </Button>
-                </FormContainerTrigger>
-              </CardContent>
-            </Card>
-
-            <FormContainerContent side={isMobile ? 'bottom' : undefined} className={isMobile ? 'h-[95vh] flex flex-col' : 'sm:max-w-4xl'}>
-              <FormContainerHeader>
-                <FormContainerTitle>Conceptual Market Analysis Input</FormContainerTitle>
-                <FormContainerDescription>
-                  Fetch a live quote or manually enter data, then get the AI's conceptual take. This is not financial advice.
-                </FormContainerDescription>
-              </FormContainerHeader>
-              <div className="flex-grow overflow-y-auto pr-2">
-                <LiveMarketDataDisplay onAnalysisComplete={() => {}} />
-              </div>
-            </FormContainerContent>
-           </FormContainer>
-        </section>
       </div>
     </main>
   );

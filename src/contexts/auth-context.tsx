@@ -1,9 +1,8 @@
-
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { SupabaseClient, User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { UserAppData, Role } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -36,9 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = useCallback(async (supabaseUser: User) => {
     try {
-      // We just select the profile. The trigger handles creation.
-      // Use .maybeSingle() to gracefully handle cases where the profile might not exist yet
-      // without throwing an error that crashes the app.
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -46,10 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        // Log the error but don't treat it as a fatal one for the app.
-        // The trigger should have created the profile. If it's still not found,
-        // this is a situation to monitor, but the app should still function.
-        console.error('Error fetching user profile (it should exist):', error.message);
+        // Ignore JWT expired errors as they will be resolved by the TOKEN_REFRESHED event
+        if (error.message && error.message.includes("JWT expired")) {
+           return null;
+        }
+        console.error('Error fetching user profile:', error.message);
         return null;
       }
       return data;
@@ -59,49 +56,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase]);
 
+  const handleUserUpdate = useCallback(async (session: Session | null) => {
+    if (session?.user) {
+      setUser(session.user);
+      const profile = await fetchUserProfile(session.user);
+      if (profile) {
+        setUserData({
+          userId: profile.id,
+          email: profile.email,
+          roles: profile.roles,
+          hasActiveSubscription: profile.has_active_subscription,
+          chartAnalysisTrialPoints: profile.chart_analysis_trial_points,
+        });
+      }
+    } else {
+      setUser(null);
+      setUserData(null);
+    }
+  }, [fetchUserProfile]);
+
   useEffect(() => {
+    // 1. Set up the listener for future changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setLoading(true);
-        if (event === 'SIGNED_IN' && session) {
-          const supabaseUser = session.user;
-          setUser(supabaseUser);
-          const profile = await fetchUserProfile(supabaseUser);
-          if (profile) {
-            setUserData({
-              userId: profile.id,
-              email: profile.email,
-              roles: profile.roles,
-              hasActiveSubscription: profile.has_active_subscription,
-              chartAnalysisTrialPoints: profile.chart_analysis_trial_points,
-            });
-          }
+      async (event: AuthChangeEvent, session: Session | null) => {
+        
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+           await handleUserUpdate(session);
         } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setUserData(null);
+           setUser(null);
+           setUserData(null);
+           router.push('/login');
         }
-        setLoading(false);
       }
     );
 
-    // Check for initial session on load
+    // 2. Perform the initial session check
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const supabaseUser = session.user;
-        setUser(supabaseUser);
-        const profile = await fetchUserProfile(supabaseUser);
-        if (profile) {
-          setUserData({
-            userId: profile.id,
-            email: profile.email,
-            roles: profile.roles,
-            hasActiveSubscription: profile.has_active_subscription,
-            chartAnalysisTrialPoints: profile.chart_analysis_trial_points,
-          });
-        }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await handleUserUpdate(session);
+      } catch (error) {
+        console.error("Error checking initial session:", error);
+      } finally {
+        // Only turn off loading once the initial check is complete
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkInitialSession();
@@ -109,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, fetchUserProfile]);
+  }, [supabase, handleUserUpdate, router]);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -119,11 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: Role): boolean => {
-    // Hardcoded check for the application owner
     if (user?.email === 'pb7552212@gmail.com') {
-      return true; // The owner has all roles.
+      return true; 
     }
-    // Check roles from the database profile
     return userData?.roles?.includes(role) ?? false;
   };
 

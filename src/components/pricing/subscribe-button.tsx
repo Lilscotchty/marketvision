@@ -1,13 +1,18 @@
-
 "use client";
 
 import React from 'react';
 import styled from 'styled-components';
 
-const SubscribeButton = () => {
+// Define the props interface
+interface SubscribeButtonProps {
+  onClick?: () => void;
+}
+
+const SubscribeButton = ({ onClick }: SubscribeButtonProps) => {
   return (
     <StyledWrapper>
-      <button className="button">
+      {/* Attach the onClick handler here */}
+      <button className="button" onClick={onClick}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24">
           <path d="m18 0 8 12 10-8-4 20H4L0 4l10 8 8-12z" />
         </svg>

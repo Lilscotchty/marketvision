@@ -77,7 +77,7 @@ const tradingStrategies: TradingStrategy[] = [
 const TradingStrategyCards: React.FC = () => {
   return (
     <section className="mb-10">
-      <h2 className="text-2xl font-bold tracking-tight mb-4 font-headline">
+      <h2 className="text-xl font-bold tracking-tight mb-4 font-headline">
         Popular Trading Strategies
       </h2>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

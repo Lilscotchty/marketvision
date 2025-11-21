@@ -1,11 +1,29 @@
+"use client";
 
+import React, { useState } from 'react';
 import { PriceCard, OfferingWrapper, Offering, ProductName, Price, Description } from '@/components/pricing/pricing-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {  Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import SubscribeButton from '@/components/pricing/subscribe-button';
+import { SubscriptionModal } from '@/components/billing/subscription-modal';
+import { useToast } from '@/hooks/use-toast';
+
+// Constants
+const KORAPAY_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 
 export default function PricingPage() {
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscriptionSuccess = () => {
+    toast({
+      title: "Welcome to Pro! 🚀",
+      description: "Your subscription has been successfully activated.",
+    });
+    // Logic to update user status would go here
+  };
+
   return (
     <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 pb-24 md:pb-8">
       <div className="container mx-auto py-8 md:py-12 space-y-12">
@@ -47,7 +65,10 @@ export default function PricingPage() {
               For active traders who need advanced tools and multi-timeframe analysis.
             </Description>
             <Price period="/ month">$49</Price>
-            <SubscribeButton />
+            
+            {/* Subscribe Button triggers the modal */}
+            <SubscribeButton onClick={() => setIsPaymentModalOpen(true)} />
+            
             <OfferingWrapper>
               <Offering>500 chart analyses per month</Offering>
               <Offering>Advanced ICT concepts (Breaker Blocks, FVGs)</Offering>
@@ -75,6 +96,14 @@ export default function PricingPage() {
             </OfferingWrapper>
           </PriceCard>
         </section>
+
+        {/* Payment Gateway Modal */}
+        <SubscriptionModal 
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onSimulateSuccess={handleSubscriptionSuccess}
+          paymentLink={KORAPAY_PAYMENT_LINK}
+        />
       </div>
     </main>
   );

@@ -33,7 +33,7 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden h-screen w-64 flex-col fixed inset-y-0 left-0 z-50 border-r bg-gray-900 text-white md:flex">
-      <div className="flex h-16 items-center border-b border-gray-800 px-4">
+      <div className="flex h-14 items-center border-b border-gray-800 px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-white">
           <Bot className="h-6 w-6 text-primary" />
           <span>MarketVision</span>

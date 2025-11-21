@@ -1,5 +1,3 @@
-
-// src/components/dashboard/image-upload-form.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
@@ -8,20 +6,17 @@ import Link from "next/link";
 import { handleImageAnalysisAction, uploadChartImages, type AnalysisResult } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, UploadCloud, CreditCard, X, ImagePlus, BarChartHorizontal, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, UploadCloud, X, ImagePlus, Sparkles, Lock, Zap } from "lucide-react";
 import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
-import type { HistoricalPrediction, UserAppData, Role } from "@/types";
+import type { HistoricalPrediction, UserAppData } from "@/types";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Loader from "./loader";
 import { TypingLoaderText } from "./typing-loader-text";
-
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -137,7 +132,6 @@ export function ImageUploadForm() {
             localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
         }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, user, toast]);
 
 
@@ -302,87 +296,135 @@ export function ImageUploadForm() {
   };
 
   const hasFiles = previewUrls.length > 0;
+  const isProcessing = isPending || uploadingMessage !== null;
 
-  const getHelperText = () => {
-    if (interactionDisabledForAuth) return "Please log in to analyze charts.";
-    if (needsSubscription) return "Your trials have ended. Subscribe for unlimited analysis.";
-    if (!hasSubscription) return `You have ${trialPoints} trial analyses remaining.`;
-    return "You have an active subscription.";
+  // Helper to get status bar content
+  const getStatusContent = () => {
+    if (interactionDisabledForAuth) return {
+      icon: Lock,
+      color: "text-muted-foreground",
+      bg: "bg-muted",
+      text: "Authentication required"
+    };
+    if (needsSubscription) return {
+      icon: AlertCircle,
+      color: "text-destructive",
+      bg: "bg-destructive/10",
+      text: "Subscription required"
+    };
+    if (!hasSubscription) return {
+      icon: Zap,
+      color: "text-orange-600 dark:text-orange-500",
+      bg: "bg-orange-100 dark:bg-orange-500/10",
+      text: `${trialPoints} trial analyses remaining`
+    };
+    return {
+      icon: CheckCircle,
+      color: "text-green-600 dark:text-green-500",
+      bg: "bg-green-100 dark:bg-green-500/10",
+      text: "Premium Active"
+    };
   };
+
+  const status = getStatusContent();
 
   const renderFileInput = () => (
     <div
       className={cn(
-        "flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
-        "border-border/50 hover:border-accent/80 hover:bg-muted/50",
-        isDragging && "border-accent bg-accent/10",
-        (interactionDisabledForAuth || needsSubscription || (isPending || uploadingMessage !== null)) && "cursor-not-allowed opacity-50"
+        "group relative flex flex-col items-center justify-center w-full h-64 rounded-2xl cursor-pointer transition-all duration-300 ease-out",
+        "border-2 border-dashed border-border", // Light/Dark aware border
+        "bg-secondary/20 dark:bg-secondary/10", // Subtle backgrounds
+        isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "hover:bg-secondary/40 hover:border-muted-foreground/40",
+        (interactionDisabledForAuth || needsSubscription || isProcessing) && "cursor-not-allowed opacity-50"
       )}
-      onClick={() => !(interactionDisabledForAuth || needsSubscription || (isPending || uploadingMessage !== null)) && fileInputRef.current?.click()}
+      onClick={() => !(interactionDisabledForAuth || needsSubscription || isProcessing) && fileInputRef.current?.click()}
       onDragEnter={handleDragEvents}
       onDragLeave={handleDragEvents}
       onDragOver={handleDragEvents}
       onDrop={handleDrop}
     >
-      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-        <UploadCloud className="w-10 h-10 mb-4 text-muted-foreground" />
-        <p className="mb-2 text-sm text-muted-foreground">
-          <span className="font-semibold text-accent">Click to upload</span> or drag and drop
+      <div className="flex flex-col items-center justify-center pt-5 pb-6 relative z-10">
+        <div className={cn(
+          "w-16 h-16 rounded-full bg-background flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:border-primary/30 group-hover:shadow-lg"
+        )}>
+          <UploadCloud className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+        </div>
+        <p className="mb-2 text-sm text-foreground font-medium">
+          <span className="text-primary">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs text-muted-foreground">Up to 3 images (PNG, JPG, WEBP) - 5MB max each</p>
+        <p className="text-xs text-muted-foreground">Supports JPG, PNG, WEBP (Max 5MB)</p>
       </div>
+
+      {/* Subtle grid background inside dropzone */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_14px] rounded-2xl" />
     </div>
   );
 
   const renderPreviews = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {previewUrls.map((url, index) => (
-        <div key={index} className="relative group w-full aspect-video">
+        <div key={index} className="relative group w-full aspect-video rounded-xl overflow-hidden border border-border bg-background shadow-sm">
           <Image
             src={url}
             alt={`Preview ${index + 1}`}
             fill
-            className="rounded-md border bg-card object-contain"
+            className="object-contain"
           />
-          <button
-            type="button"
-            onClick={() => removeFile(index)}
-            className="absolute -top-2 -right-2 z-10 p-1 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-            aria-label="Remove image"
-            disabled={(isPending || uploadingMessage !== null)}
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+             <button
+                type="button"
+                onClick={() => removeFile(index)}
+                className="p-2 bg-red-500/20 text-red-400 rounded-full border border-red-500/50 hover:bg-red-500 hover:text-white transition-colors"
+                disabled={isProcessing}
+              >
+                <X className="w-5 h-5" />
+              </button>
+          </div>
         </div>
       ))}
     </div>
   );
 
-  const isProcessing = isPending || uploadingMessage !== null;
-
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg relative overflow-hidden">
+      {/* Main Card Container */}
+      <div className="group relative w-full rounded-3xl border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/20 shadow-xl">
+        
+        {/* Background Ambient Glows - Hidden in Light Mode for cleanliness, Visible in Dark */}
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-0 dark:opacity-20 pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl opacity-0 dark:opacity-20 pointer-events-none" />
+
         {isProcessing && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-card/50 backdrop-blur-sm">
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
                 <Loader />
                 {uploadingMessage ? (
-                  <p className="mt-6 text-lg font-medium text-foreground">{uploadingMessage}</p>
+                  <p className="mt-6 text-sm font-medium text-foreground animate-pulse">{uploadingMessage}</p>
                 ) : (
                   <TypingLoaderText />
                 )}
             </div>
         )}
-        <div className={cn("relative z-10", isProcessing && "blur-sm")}>
-            <form ref={formRef} onSubmit={handleSubmit}>
-            <CardHeader>
-              <CardTitle className="font-headline text-2xl font-bold tracking-tight">
-                Chart Analysis Tool
-              </CardTitle>
-              <CardDescription>Upload your candlestick charts to receive a detailed AI analysis and market prediction.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        
+        <div className={cn("relative z-10 p-1", isProcessing && "blur-sm scale-[0.98] transition-all duration-700")}>
+            <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
+            
+            {/* Header */}
+            <div className="px-6 py-6 border-b border-border">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary">
+                        <Sparkles className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight text-foreground">
+                         Analysis Engine
+                    </h3>
+                </div>
+                <p className="text-sm text-muted-foreground pl-12">
+                    Upload charts to detect patterns, bias, and entry models.
+                </p>
+            </div>
 
+            {/* Body */}
+            <div className="p-6 space-y-6">
               <Input
                 id="chart-images"
                 name="chartImages"
@@ -398,13 +440,13 @@ export function ImageUploadForm() {
               {!hasFiles && renderFileInput()}
               
               {hasFiles && (
-                <>
+                <div className="space-y-4">
                   {renderPreviews()}
                   {previewUrls.length < MAX_FILES && (
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full mt-4"
+                      className="w-full h-12 border-dashed border-border bg-transparent hover:bg-secondary text-muted-foreground hover:text-foreground"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={interactionDisabledForAuth || needsSubscription || isProcessing}
                     >
@@ -412,59 +454,63 @@ export function ImageUploadForm() {
                       Add More Images ({previewUrls.length}/{MAX_FILES})
                     </Button>
                   )}
-                </>
-              )}
-            </CardContent>
-            <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <Alert className={cn(
-                    "w-full sm:w-auto sm:flex-grow",
-                    !isFullyAuthenticated && "border-blue-500/50",
-                    needsSubscription && "border-destructive/50",
-                    canAnalyze && !hasSubscription && "border-green-500/50"
-                )}>
-                    {needsSubscription ? <AlertCircle className="h-4 w-4 text-destructive" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
-                    <AlertTitle>
-                        {interactionDisabledForAuth && "Authentication"}
-                        {needsSubscription && "Subscription Required"}
-                        {canAnalyze && !hasSubscription && "Trial Active"}
-                        {canAnalyze && hasSubscription && "Premium Access"}
-                    </AlertTitle>
-                    <AlertDescription>
-                        {getHelperText()}
-                        {needsSubscription && (
-                          <Button variant="link" size="sm" className="p-0 h-auto ml-1 text-destructive" onClick={() => setIsSubscriptionModalOpen(true)}>
-                            Subscribe Now
-                          </Button>
-                        )}
-                    </AlertDescription>
-                </Alert>
-
-                <div className="flex gap-2 w-full sm:w-auto self-end">
-                <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto" disabled={interactionDisabledForAuth || isProcessing}>
-                    Reset
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={interactionDisabledForAuth || !canAnalyze || isProcessing || !hasFiles}
-                  className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {uploadingMessage ? 'Uploading...' : 'Analyzing...'}
-                    </>
-                  ) : (
-                    "Analyze Charts"
-                  )}
-                </Button>
                 </div>
-            </CardFooter>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                
+                {/* Modern Status Pill */}
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors", status.bg, status.color, "border-current/20")}>
+                        <status.icon className="w-3 h-3" />
+                        {status.text}
+                    </div>
+                    
+                    {needsSubscription && (
+                         <Button 
+                            variant="link" 
+                            size="sm" 
+                            className="text-foreground h-auto p-0 font-medium hover:text-primary" 
+                            onClick={() => setIsSubscriptionModalOpen(true)}
+                         >
+                            Upgrade Now 
+                         </Button>
+                    )}
+                </div>
+
+                <div className="flex gap-3 w-full sm:w-auto">
+                    {hasFiles && (
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            onClick={handleReset} 
+                            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            disabled={isProcessing}
+                        >
+                            Reset
+                        </Button>
+                    )}
+                    
+                    <Button
+                        type="submit"
+                        disabled={interactionDisabledForAuth || !canAnalyze || isProcessing || !hasFiles}
+                        className={cn(
+                            "flex-1 sm:flex-none min-w-[140px] shadow-lg hover:shadow-xl transition-all hover:scale-105",
+                            isProcessing ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"
+                        )}
+                    >
+                        {isProcessing ? "Processing..." : "Start Analysis"}
+                    </Button>
+                </div>
+            </div>
             </form>
         </div>
-      </Card>
+      </div>
 
       {state?.error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 text-destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Analysis Error</AlertTitle>
           <AlertDescription>{state.error}</AlertDescription>
@@ -472,11 +518,13 @@ export function ImageUploadForm() {
       )}
       
       {state?.prediction && state.analysis && (
-        <PredictionResults 
-          prediction={state.prediction} 
-          analysis={state.analysis} 
-          imagePreviewUrls={state.imagePreviewUrls || []}
-        />
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+             <PredictionResults 
+                prediction={state.prediction} 
+                analysis={state.analysis} 
+                imagePreviewUrls={state.imagePreviewUrls || []}
+            />
+        </div>
       )}
       
       <SubscriptionModal

@@ -1,504 +1,357 @@
 
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import type { HistoricalPrediction } from '@/types';
-import { TrendingUp, TrendingDown, Minus, ThumbsUp, ThumbsDown, Trash2, Share2, MoreHorizontal, GalleryHorizontal, Lightbulb, Zap, Workflow, Layers3, Compass, BookOpen, Target, Activity, Info, ShieldCheck, Crosshair, PackageOpen } from 'lucide-react';
-import Image from 'next/image';
+import { ThumbsUp, ThumbsDown, Trash2, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from '../ui/scroll-area';
-import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Label } from '../ui/label';
+import Image from 'next/image';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from '@/components/ui/badge';
+import { GalleryHorizontal, Lightbulb, Zap, Workflow, Layers3, Compass, BookOpen, Target, Activity, Info, ShieldCheck, Crosshair, PackageOpen } from "lucide-react";
 
-interface PredictionCardProps {
+
+interface SimplePredictionCardProps {
   prediction: HistoricalPrediction;
   onFlag: (predictionId: string, flag: 'successful' | 'unsuccessful') => void;
   onDelete: (predictionId: string) => void;
 }
 
-const PredictionCard = ({ prediction, onFlag, onDelete }: PredictionCardProps) => {
-  const { id, prediction: predData, analysis, asset, date, imagePreviewUrl, manualFlag } = prediction;
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const summaryText = analysis?.summary || 'No analysis summary available.';
-  const marketDirection = predData?.marketDirection || 'NEUTRAL';
-
-  const DirectionIcon = 
-    marketDirection === 'UP' ? <TrendingUp className="h-6 w-6" /> :
-    marketDirection === 'DOWN' ? <TrendingDown className="h-6 w-6" /> :
-    <Minus className="h-6 w-6" />;
-    
-  const getBackgroundImage = () => {
-    switch (marketDirection) {
-      case 'UP':
-        return 'https://i.ibb.co/TMBtJqwp/Bulish.jpg';
-      case 'DOWN':
-        return 'https://i.ibb.co/zHF6zFhf/Bearish.png';
-      default:
-        return imagePreviewUrl || 'https://placehold.co/190x254/151515/a8a8a8.png?text=Chart';
-    }
-  };
-
-  const handleFlagClick = (e: React.MouseEvent, flag: 'successful' | 'unsuccessful') => {
-    e.stopPropagation();
-    e.preventDefault();
-    onFlag(id, flag);
-  };
-  
-  const handleDeleteClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      onDelete(id);
-  }
-
-  const handleShareClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!cardRef.current) return;
-
-    try {
-      const canvas = await html2canvas(cardRef.current, { 
-        useCORS: true, 
-        backgroundColor: null,
-        onclone: (document) => {
-          const clonedCard = document.querySelector('.card');
-          if (clonedCard) {
-            const actionButtons = clonedCard.querySelector('.action-buttons');
-            if (actionButtons) {
-                (actionButtons as HTMLElement).style.display = 'none';
-            }
-          }
-        }
-      });
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `finsight-analysis-${asset}-${new Date(date).toLocaleDateString()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error generating image:', error);
-    }
-  };
+const SimplePredictionCard = ({ prediction, onFlag, onDelete }: SimplePredictionCardProps) => {
+  const { id, asset, date, manualFlag, analysis, prediction: predData } = prediction;
+  const [open, setOpen] = useState(false);
   
   const dailyBiasReasoning = analysis?.dailyBiasReasoning;
   const sniperEntry = analysis?.sniperEntrySetup;
   const displayImages = prediction.imagePreviewUrls?.filter(Boolean) as string[] || (prediction.imagePreviewUrl ? [prediction.imagePreviewUrl] : []);
 
+
   return (
-    <StyledWrapper ref={cardRef}>
+    <StyledWrapper $manualFlag={manualFlag} direction={predData?.marketDirection}>
       <div className="card">
-        <div className="content">
-          <div className="back">
-            <div className="back-content">
-              {DirectionIcon}
-              <strong>{marketDirection}</strong>
-            </div>
-          </div>
-          <div className="front">
-             <div className="img">
-               <Image src={getBackgroundImage()} alt={asset || 'chart'} layout="fill" objectFit="cover" />
-              <div className="circle"></div>
-              <div className="circle" id="right"></div>
-              <div className="circle" id="bottom"></div>
-            </div>
-            <div className="front-content">
-              <div className="card-header">
-                <small className="badge">{asset}</small>
-                <div className="action-buttons">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" title="Share as Image" onClick={handleShareClick}><Share2 size={12} /></Button>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20" title="More Details"><MoreHorizontal size={14} /></Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl">
-                            <DialogHeader>
-                                <DialogTitle>Analysis for {asset} - {new Date(date).toLocaleString()}</DialogTitle>
-                                <DialogDescription>Full AI-generated analysis details.</DialogDescription>
-                            </DialogHeader>
-                            <ScrollArea className="h-[70vh] pr-4">
-                              <div className="space-y-6 py-4">
-                                {analysis ? (
-                                    <>
-                                       {displayImages.length > 0 && (
-                                          <Card>
-                                            <CardHeader>
-                                              <Label className="font-headline text-md flex items-center gap-2">
-                                                <GalleryHorizontal className="text-accent" /> Analyzed Charts
-                                              </Label>
-                                            </CardHeader>
-                                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-b-lg">
-                                              {displayImages.map((url, index) => (
-                                                <div key={index} className="relative aspect-[4/3] rounded-md overflow-hidden border">
-                                                  <Image src={url} alt={`Analyzed chart ${index + 1}`} fill className="object-contain" />
-                                                </div>
-                                              ))}
-                                            </CardContent>
-                                          </Card>
-                                        )}
-                                      <Card>
-                                        <CardHeader>
-                                            <Label className="font-headline text-md flex items-center gap-2">
-                                                <Lightbulb className="text-accent"/> Chart Analysis
-                                            </Label>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div><Label>Trend</Label><p className="text-md font-semibold">{analysis.trend}</p></div>
-                                            {analysis.inferredDailyBias && (<div><Label className="flex items-center gap-1"><Compass className="h-4 w-4 text-accent" />Inferred Daily Bias</Label><p className="text-md font-semibold">{analysis.inferredDailyBias}</p></div>)}
-                                            
-                                             {(dailyBiasReasoning?.drawOnLiquidityAnalysis || dailyBiasReasoning?.timeBasedLiquidityAnalysis || dailyBiasReasoning?.ltfConfirmationOutlook || dailyBiasReasoning?.openingPriceConfluence) && (
-                                                <div>
-                                                <Label className="text-sm font-medium mb-2 flex items-center gap-1"><BookOpen className="h-4 w-4 text-accent"/> Daily Bias Reasoning</Label>
-                                                <Accordion type="single" collapsible className="w-full">
-                                                    {dailyBiasReasoning.drawOnLiquidityAnalysis && (<AccordionItem value="item-1"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Target className="h-3 w-3" /> Draw on Liquidity</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.drawOnLiquidityAnalysis}</AccordionContent></AccordionItem>)}
-                                                    {dailyBiasReasoning.timeBasedLiquidityAnalysis && (<AccordionItem value="item-2"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Activity className="h-3 w-3" /> Time-Based Liquidity</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.timeBasedLiquidityAnalysis}</AccordionContent></AccordionItem>)}
-                                                    {dailyBiasReasoning.ltfConfirmationOutlook && (<AccordionItem value="item-3"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Layers3 className="h-3 w-3" /> LTF Confirmation Outlook</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.ltfConfirmationOutlook}</AccordionContent></AccordionItem>)}
-                                                    {dailyBiasReasoning.openingPriceConfluence && (<AccordionItem value="item-4"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Info className="h-3 w-3" /> Opening Price Confluence</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.openingPriceConfluence}</AccordionContent></AccordionItem>)}
-                                                </Accordion>
-                                                </div>
-                                            )}
-
-                                            <div>
-                                              <Label>Patterns</Label>
-                                              {analysis.patterns && analysis.patterns.length > 0 ? (<div className="flex flex-wrap gap-2 mt-1">{analysis.patterns.map((p, i) => (<Badge key={i} variant="secondary">{p}</Badge>))}</div>) : (<p className="text-sm text-muted-foreground mt-1">None identified.</p>)}
-                                            </div>
-
-                                            {analysis.ictElements && analysis.ictElements.length > 0 && (
-                                                <div>
-                                                <Label className="flex items-center gap-1"><Zap className="h-4 w-4 text-accent" /> ICT Elements</Label>
-                                                <ul className="mt-2 list-none space-y-2">{analysis.ictElements.map((el, i) => (<li key={i} className="p-2 border rounded-md bg-muted/30 text-xs"><strong className="text-accent">{el.type}:</strong><p className="text-muted-foreground mt-0.5">{el.location_description}</p></li>))}</ul>
-                                                </div>
-                                            )}
-                                             {analysis.marketStructureAnalysis && (<div><Label className="flex items-center gap-1"><Workflow className="h-4 w-4 text-accent" /> Market Structure</Label><p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap p-2 border rounded-md bg-muted/30">{analysis.marketStructureAnalysis}</p></div>)}
-                                              {analysis.potentialAMDCycle && (analysis.potentialAMDCycle.phase || analysis.potentialAMDCycle.reasoning) && (<div><Label className="flex items-center gap-1"><Layers3 className="h-4 w-4 text-accent" /> AMD Cycle</Label><div className="mt-1 p-3 border rounded-md bg-muted/30 space-y-1 text-xs">{analysis.potentialAMDCycle.phase && (<p><strong className="text-foreground">Phase:</strong> {analysis.potentialAMDCycle.phase}</p>)}{analysis.potentialAMDCycle.reasoning && (<p className="text-muted-foreground"><Info className="inline h-3 w-3 mr-1" /> {analysis.potentialAMDCycle.reasoning}</p>)}{(analysis.potentialAMDCycle.phase === "Unclear" && !analysis.potentialAMDCycle.reasoning) && (<p className="text-muted-foreground">No clear AMD cycle phase apparent.</p>)}</div></div>)}
-                                            
-                                            <div><Label>Summary</Label><p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{analysis.summary}</p></div>
-                                        </CardContent>
-                                      </Card>
-                                      {sniperEntry && (sniperEntry.dailyBiasContext || sniperEntry.entryMechanic || sniperEntry.tradeManagement) && (
-                                        <Card className="border-accent/50">
-                                          <CardHeader>
-                                            <Label className="font-headline text-md flex items-center gap-2">
-                                              <Crosshair className="text-accent"/> Sniper Entry Analysis
-                                            </Label>
-                                            <DialogDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a trade signal.</DialogDescription>
-                                          </CardHeader>
-                                          <CardContent className="space-y-6">
-                                            {sniperEntry.dailyBiasContext && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><Compass className="h-4 w-4 text-accent"/>Daily Bias Setup (HTF)</h4><div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs"><p className="text-muted-foreground"><strong className="font-medium text-foreground">4H/1H Analysis:</strong> {sniperEntry.dailyBiasContext.fourHourAnalysis}</p><p className="text-muted-foreground"><strong className="font-medium text-foreground">Alignment:</strong> {sniperEntry.dailyBiasContext.alignment}</p></div></div>)}
-                                            {sniperEntry.entryMechanic && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><PackageOpen className="h-4 w-4 text-accent"/>Entry Mechanic (LTF)</h4><div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs"><p className="text-muted-foreground"><strong className="font-medium text-foreground">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p><p className="text-muted-foreground"><strong className="font-medium text-foreground">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p></div></div>)}
-                                            {sniperEntry.tradeManagement && (sniperEntry.tradeManagement.entryPrice || sniperEntry.tradeManagement.stopLossPrice || sniperEntry.tradeManagement.takeProfitPrice) && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><ShieldCheck className="h-4 w-4 text-accent"/>Precise Trade Management</h4><div className="p-4 border rounded-lg bg-muted/40 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center"><div><Label className="text-xs text-muted-foreground">Entry Price</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.entryPrice.toLocaleString()}</p></div><div><Label className="text-xs text-red-500">Stop Loss</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.stopLossPrice.toLocaleString()}</p></div><div><Label className="text-xs text-green-500">Take Profit</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.takeProfitPrice.toLocaleString()}</p></div></div></div>)}
-                                          </CardContent>
-                                        </Card>
-                                      )}
-                                    </>
-                                ) : (
-                                  <p className="text-center text-muted-foreground py-8">No detailed analysis available for this prediction.</p>
-                                )}
-                              </div>
-                            </ScrollArea>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-              </div>
-              <div className="description">
-                <div className="title">
-                  <p className="title">
-                    <strong>{new Date(date).toLocaleDateString()}</strong>
-                  </p>
-                </div>
-                <p className="card-footer">
-                  {summaryText.substring(0, 50)}{summaryText.length > 50 ? '...' : ''}
-                </p>
-                <div className="flag-buttons">
-                  <button 
-                    className="flag-btn successful" 
-                    onClick={(e) => handleFlagClick(e, 'successful')}
-                    title="Mark as Successful"
-                  >
-                    <ThumbsUp size={12} />
-                  </button>
-                  <button 
-                    className="flag-btn unsuccessful" 
-                    onClick={(e) => handleFlagClick(e, 'unsuccessful')}
-                    title="Mark as Unsuccessful"
-                  >
-                    <ThumbsDown size={12} />
-                  </button>
-                   <button 
-                    className="flag-btn delete" 
-                    onClick={handleDeleteClick}
-                    title="Delete Prediction"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-                {manualFlag && (
-                  <small className={`badge-sm ${manualFlag}`}>
-                    {manualFlag}
-                  </small>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="hover-background"></div>
+        <div className="hover-arrow">
+          {predData?.marketDirection === 'UP' ? <ArrowUpRight /> : <ArrowDownRight />}
         </div>
+        <div className="text">
+          <span>{asset}</span>
+          <p className="subtitle">{format(new Date(date), 'MMM dd, yyyy, hh:mm a')}</p>
+          {manualFlag && (
+            <span className={`manual-flag ${manualFlag}`}>
+              {manualFlag}
+            </span>
+          )}
+        </div>
+        <div className="icons">
+          <button className="btn" onClick={() => onFlag(id, 'successful')} title="Flag as Successful">
+            <ThumbsUp className="svg-icon" />
+          </button>
+          <button className="btn" onClick={() => onFlag(id, 'unsuccessful')} title="Flag as Unsuccessful">
+            <ThumbsDown className="svg-icon" />
+          </button>
+          <button className="btn" onClick={() => onDelete(id)} title="Delete">
+            <Trash2 className="svg-icon" />
+          </button>
+        </div>
+        
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <button className="details-btn">
+                    <Eye size={16} />
+                </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Analysis for {asset} - {new Date(date).toLocaleString()}</DialogTitle>
+                    <DialogDescription>Full AI-generated analysis details.</DialogDescription>
+                </DialogHeader>
+                 <ScrollArea className="h-[70vh] pr-4">
+                    <div className="space-y-6 py-4">
+                        {analysis ? (
+                             <>
+                               {displayImages.length > 0 && (
+                                  <Card>
+                                    <CardHeader>
+                                      <Label className="font-headline text-md flex items-center gap-2">
+                                        <GalleryHorizontal className="text-accent" /> Analyzed Charts
+                                      </Label>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-b-lg">
+                                      {displayImages.map((url, index) => (
+                                        <div key={index} className="relative aspect-[4/3] rounded-md overflow-hidden border">
+                                          <Image src={url} alt={`Analyzed chart ${index + 1}`} fill className="object-contain" />
+                                        </div>
+                                      ))}
+                                    </CardContent>
+                                  </Card>
+                                )}
+                              <Card>
+                                <CardHeader>
+                                    <Label className="font-headline text-md flex items-center gap-2">
+                                        <Lightbulb className="text-accent"/> Chart Analysis
+                                    </Label>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div><Label>Trend</Label><p className="text-md font-semibold">{analysis.trend}</p></div>
+                                    {analysis.inferredDailyBias && (<div><Label className="flex items-center gap-1"><Compass className="h-4 w-4 text-accent" />Inferred Daily Bias</Label><p className="text-md font-semibold">{analysis.inferredDailyBias}</p></div>)}
+                                    
+                                     {(dailyBiasReasoning?.drawOnLiquidityAnalysis || dailyBiasReasoning?.timeBasedLiquidityAnalysis || dailyBiasReasoning?.ltfConfirmationOutlook || dailyBiasReasoning?.openingPriceConfluence) && (
+                                        <div>
+                                        <Label className="text-sm font-medium mb-2 flex items-center gap-1"><BookOpen className="h-4 w-4 text-accent"/> Daily Bias Reasoning</Label>
+                                        <Accordion type="single" collapsible className="w-full">
+                                            {dailyBiasReasoning.drawOnLiquidityAnalysis && (<AccordionItem value="item-1"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Target className="h-3 w-3" /> Draw on Liquidity</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.drawOnLiquidityAnalysis}</AccordionContent></AccordionItem>)}
+                                            {dailyBiasReasoning.timeBasedLiquidityAnalysis && (<AccordionItem value="item-2"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Activity className="h-3 w-3" /> Time-Based Liquidity</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.timeBasedLiquidityAnalysis}</AccordionContent></AccordionItem>)}
+                                            {dailyBiasReasoning.ltfConfirmationOutlook && (<AccordionItem value="item-3"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Layers3 className="h-3 w-3" /> LTF Confirmation Outlook</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.ltfConfirmationOutlook}</AccordionContent></AccordionItem>)}
+                                            {dailyBiasReasoning.openingPriceConfluence && (<AccordionItem value="item-4"><AccordionTrigger className="text-xs hover:no-underline"><div className="flex items-center gap-1"><Info className="h-3 w-3" /> Opening Price Confluence</div></AccordionTrigger><AccordionContent className="text-xs p-2 border-l-2 border-accent ml-2 pl-3">{dailyBiasReasoning.openingPriceConfluence}</AccordionContent></AccordionItem>)}
+                                        </Accordion>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                      <Label>Patterns</Label>
+                                      {analysis.patterns && analysis.patterns.length > 0 ? (<div className="flex flex-wrap gap-2 mt-1">{analysis.patterns.map((p, i) => (<Badge key={i} variant="secondary">{p}</Badge>))}</div>) : (<p className="text-sm text-muted-foreground mt-1">None identified.</p>)}
+                                    </div>
+
+                                    {analysis.ictElements && analysis.ictElements.length > 0 && (
+                                        <div>
+                                        <Label className="flex items-center gap-1"><Zap className="h-4 w-4 text-accent" /> ICT Elements</Label>
+                                        <ul className="mt-2 list-none space-y-2">{analysis.ictElements.map((el, i) => (<li key={i} className="p-2 border rounded-md bg-muted/30 text-xs"><strong className="text-accent">{el.type}:</strong><p className="text-muted-foreground mt-0.5">{el.location_description}</p></li>))}</ul>
+                                        </div>
+                                    )}
+                                     {analysis.marketStructureAnalysis && (<div><Label className="flex items-center gap-1"><Workflow className="h-4 w-4 text-accent" /> Market Structure</Label><p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap p-2 border rounded-md bg-muted/30">{analysis.marketStructureAnalysis}</p></div>)}
+                                      {analysis.potentialAMDCycle && (analysis.potentialAMDCycle.phase || analysis.potentialAMDCycle.reasoning) && (<div><Label className="flex items-center gap-1"><Layers3 className="h-4 w-4 text-accent" /> AMD Cycle</Label><div className="mt-1 p-3 border rounded-md bg-muted/30 space-y-1 text-xs">{analysis.potentialAMDCycle.phase && (<p><strong className="text-foreground">Phase:</strong> {analysis.potentialAMDCycle.phase}</p>)}{analysis.potentialAMDCycle.reasoning && (<p className="text-muted-foreground"><Info className="inline h-3 w-3 mr-1" /> {analysis.potentialAMDCycle.reasoning}</p>)}{(analysis.potentialAMDCycle.phase === "Unclear" && !analysis.potentialAMDCycle.reasoning) && (<p className="text-muted-foreground">No clear AMD cycle phase apparent.</p>)}</div></div>)}
+                                    
+                                    <div><Label>Summary</Label><p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{analysis.summary}</p></div>
+                                </CardContent>
+                              </Card>
+                              {sniperEntry && (sniperEntry.dailyBiasContext || sniperEntry.entryMechanic || sniperEntry.tradeManagement) && (
+                                <Card className="border-accent/50">
+                                  <CardHeader>
+                                    <Label className="font-headline text-md flex items-center gap-2">
+                                      <Crosshair className="text-accent"/> Sniper Entry Analysis
+                                    </Label>
+                                    <DialogDescription>A model based on the Intraday Sniper Entry strategy. This is a conceptual example, not a trade signal.</DialogDescription>
+                                  </CardHeader>
+                                  <CardContent className="space-y-6">
+                                    {sniperEntry.dailyBiasContext && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><Compass className="h-4 w-4 text-accent"/>Daily Bias Setup (HTF)</h4><div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs"><p className="text-muted-foreground"><strong className="font-medium text-foreground">4H/1H Analysis:</strong> {sniperEntry.dailyBiasContext.fourHourAnalysis}</p><p className="text-muted-foreground"><strong className="font-medium text-foreground">Alignment:</strong> {sniperEntry.dailyBiasContext.alignment}</p></div></div>)}
+                                    {sniperEntry.entryMechanic && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><PackageOpen className="h-4 w-4 text-accent"/>Entry Mechanic (LTF)</h4><div className="p-3 border rounded-md bg-muted/40 space-y-2 text-xs"><p className="text-muted-foreground"><strong className="font-medium text-foreground">15M Setup:</strong> {sniperEntry.entryMechanic.fifteenMinSetup}</p><p className="text-muted-foreground"><strong className="font-medium text-foreground">5M Confirmation:</strong> {sniperEntry.entryMechanic.fiveMinConfirmation}</p></div></div>)}
+                                    {sniperEntry.tradeManagement && (sniperEntry.tradeManagement.entryPrice || sniperEntry.tradeManagement.stopLossPrice || sniperEntry.tradeManagement.takeProfitPrice) && (<div className="space-y-3"><h4 className="font-semibold flex items-center gap-2 text-sm"><ShieldCheck className="h-4 w-4 text-accent"/>Precise Trade Management</h4><div className="p-4 border rounded-lg bg-muted/40 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center"><div><Label className="text-xs text-muted-foreground">Entry Price</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.entryPrice.toLocaleString()}</p></div><div><Label className="text-xs text-red-500">Stop Loss</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.stopLossPrice.toLocaleString()}</p></div><div><Label className="text-xs text-green-500">Take Profit</Label><p className="text-lg font-bold text-foreground">{sniperEntry.tradeManagement.takeProfitPrice.toLocaleString()}</p></div></div></div>)}
+                                  </CardContent>
+                                </Card>
+                              )}
+                            </>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-8">No detailed analysis available for this prediction.</p>
+                        )}
+                    </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
       </div>
     </StyledWrapper>
   );
 }
 
-const StyledWrapper = styled.div`
+const StyledWrapper = styled.div<{ $manualFlag?: 'successful' | 'unsuccessful', direction?: 'UP' | 'DOWN' | 'NEUTRAL' }>`
   .card {
-    overflow: visible;
-    width: 190px;
-    height: 254px;
-  }
-
-  .content {
     width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 300ms;
-    box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+    max-width: 300px;
+    margin: 0 auto;
+    height: 180px;
     border-radius: var(--radius);
-  }
-
-  .front, .back {
-    background-color: hsl(var(--card));
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .back {
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-  }
-
-  .back::before {
-    position: absolute;
-    content: ' ';
-    display: block;
-    width: 160px;
-    height: 160%;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary)), hsl(var(--primary)), hsl(var(--primary)), hsl(var(--primary)), transparent);
-    animation: rotation_481 5000ms infinite linear;
-  }
-
-  .back-content {
-    position: absolute;
-    width: 99%;
-    height: 99%;
-    background-color: hsl(var(--card));
-    border-radius: var(--radius);
-    color: hsl(var(--card-foreground));
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-  }
-  
-  .card:hover .content {
-    transform: rotateY(180deg);
-  }
-
-  @keyframes rotation_481 {
-    0% {
-      transform: rotateZ(0deg);
-    }
-
-    100% {
-      transform: rotateZ(360deg);
-    }
-  }
-
-  .front {
-    transform: rotateY(180deg);
-    color: hsl(var(--card));
-  }
-
-  .front .front-content {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 4px;
-  }
-  
-  .front-content .badge {
-    background-color: hsla(var(--background) / 0.5);
-    padding: 2px 10px;
-    border-radius: 10px;
-    backdrop-filter: blur(2px);
-    width: fit-content;
-    color: hsl(var(--card));
-    border: 1px solid hsl(var(--border) / 0.5);
-  }
-  
-  .badge-sm {
-      background-color: hsla(var(--muted-foreground) / 0.7);
-      padding: 2px 8px;
-      border-radius: 10px;
-      width: fit-content;
-      color: hsl(var(--card));
-      font-size: 9px;
-      text-transform: capitalize;
-      margin-top: 4px;
-      align-self: center;
-  }
-  
-  .badge-sm.successful {
-      background-color: rgba(40, 167, 69, 0.7);
-  }
-  
-  .badge-sm.unsuccessful {
-      background-color: rgba(220, 53, 69, 0.7);
-  }
-
-  .description {
-    box-shadow: 0px 0px 10px 5px hsla(var(--background) / 0.2);
-    width: 100%;
-    padding: 10px;
-    background-color: hsla(var(--background) / 0.4);
-    backdrop-filter: blur(5px);
-    border-radius: 5px;
-  }
-
-  .title {
-    font-size: 11px;
-    max-width: 100%;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .title p {
-    width: 100%;
-    color: hsl(var(--card));
-  }
-
-  .card-footer {
-    color: hsla(var(--card), 0.8);
-    margin-top: 5px;
-    font-size: 8px;
-    min-height: 24px;
-  }
-
-  .flag-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    justify-content: center;
-  }
-
-  .flag-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background-color: hsla(var(--muted-foreground) / 0.1);
-    color: hsl(var(--muted-foreground));
-    transition: all 0.2s ease;
-  }
-
-  .flag-btn:hover {
-    transform: scale(1.1);
-  }
-  
-  .flag-btn.successful:hover {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #28a745;
-  }
-
-  .flag-btn.unsuccessful:hover {
-    background-color: rgba(220, 53, 69, 0.2);
-     color: #dc3545;
-  }
-  
-  .flag-btn.delete:hover {
-    color: hsl(var(--destructive));
-    background-color: hsla(var(--destructive) / 0.1);
-  }
-
-  .front .img {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-
-  .circle {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background-color: hsl(var(--primary));
     position: relative;
-    filter: blur(15px);
-    animation: floating 2600ms infinite linear;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: transform 0.3s ease;
   }
 
-  #bottom {
-    background-color: hsl(var(--accent));
-    left: 50px;
-    top: 0px;
-    width: 150px;
-    height: 150px;
-    animation-delay: -800ms;
+  .hover-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.4s ease, background 0.4s ease;
+    z-index: 0;
   }
 
-  #right {
-    background-color: hsl(var(--destructive));
-    left: 160px;
-    top: -80px;
+  .hover-arrow {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: white;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s ease;
+    z-index: 2;
+    & > svg {
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    .hover-arrow {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+    .hover-background {
+      opacity: 1;
+      background: ${({ direction }) =>
+        direction === 'UP'
+          ? `linear-gradient(to bottom, hsla(var(--primary) / 0.6), transparent)`
+          : direction === 'DOWN'
+          ? `linear-gradient(to bottom, hsla(var(--destructive) / 0.6), transparent)`
+          : 'transparent'};
+    }
+  }
+  
+  .card::before {
+    content: "";
+    height: 100px;
+    width: 100px;
+    position: absolute;
+    top: -40%;
+    left: -20%;
+    border-radius: 50%;
+    border: 35px solid hsla(var(--primary) / 0.1);
+    transition: all .8s ease;
+    filter: blur(.5rem);
+    z-index: 1;
+  }
+
+  .text {
+    flex-grow: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    color: hsl(var(--card-foreground));
+    font-weight: 900;
+    font-size: 1.1em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .subtitle {
+    font-size: .7em;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .manual-flag {
+    margin-top: auto;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    align-self: flex-start;
+    text-transform: capitalize;
+  }
+
+  .manual-flag.successful {
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+  }
+
+  .manual-flag.unsuccessful {
+    background-color: hsl(var(--destructive) / 0.2);
+    color: hsl(var(--destructive));
+  }
+
+  .icons {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    border-top: 1px solid hsl(var(--border));
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn {
+    border: none;
+    flex-grow: 1;
+    height: 35px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .btn:not(:last-child) {
+    border-right: 1px solid hsl(var(--border));
+  }
+
+  .svg-icon {
+    width: 18px;
+    height: 18px;
+    stroke: hsl(var(--muted-foreground));
+    stroke-width: 2;
+  }
+
+  .btn:hover {
+    background-color: hsl(var(--muted));
+  }
+  
+  .btn:hover .svg-icon {
+      stroke: hsl(var(--foreground));
+  }
+  
+  .btn:first-child:hover .svg-icon {
+      stroke: #28a745;
+  }
+  .btn:nth-child(2):hover .svg-icon {
+      stroke: #dc3545;
+  }
+
+  .card:hover::before {
+    width: 140px;
+    height: 140px;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    filter: blur(0rem);
+  }
+  
+  .details-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     width: 30px;
     height: 30px;
-    animation-delay: -1800ms;
+    border-radius: 50%;
+    border: none;
+    background-color: hsl(var(--background) / 0.7);
+    backdrop-filter: blur(2px);
+    color: hsl(var(--foreground));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 2;
   }
 
-  @keyframes floating {
-    0% {
-      transform: translateY(0px);
-    }
-
-    50% {
-      transform: translateY(10px);
-    }
-
-    100% {
-      transform: translateY(0px);
-    }
+  .card:hover .details-btn {
+    opacity: 1;
+    transform: scale(1);
   }
 `;
 
-export default PredictionCard;
+export default SimplePredictionCard;
