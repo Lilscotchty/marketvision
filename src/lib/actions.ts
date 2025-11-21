@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -11,12 +10,12 @@ import type {
   AlphaVantageGlobalQuote,
   ApiMarketNewsItem,
   AssetCategory,
-  Role, // Added Role type
+  Role, 
   NewsPost,
   NewsPostFormValues,
 } from '@/types';
-import { createSupabaseServerClient } from '@/lib/supabase/server'; // Added for Server Action
-import { revalidatePath } from 'next/cache'; // Added for Server Action
+import { createSupabaseServerClient } from '@/lib/supabase/server'; 
+import { revalidatePath } from 'next/cache'; 
 import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
 
@@ -333,8 +332,6 @@ export async function fetchMarketDataFromAV(
       assetInfo.fromCurrency &&
       assetInfo.toCurrency
     ) {
-      // --- UPDATED FOREX BLOCK ---
-      // Use FX_DAILY to get full OHLC data, not just a single rate
       url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${assetInfo.fromCurrency}&to_symbol=${assetInfo.toCurrency}&apikey=${apiKey}`;
       const response = await fetch(url);
       if (!response.ok)
@@ -388,7 +385,7 @@ export async function fetchMarketDataFromAV(
           high: parseFloat(latestDayData['2. high']),
           low: parseFloat(latestDayData['3. low']),
           price: price,
-          volume: 0, // Forex doesn't typically provide volume
+          volume: 0, 
           latestTradingDay: latestDate,
           previousClose: previousClose,
           change: change,
@@ -396,7 +393,6 @@ export async function fetchMarketDataFromAV(
         },
         assetType: 'forex',
       };
-      // --- END UPDATED FOREX BLOCK ---
     } else if (
       assetInfo.type === 'crypto' &&
       assetInfo.apiSymbol &&
@@ -421,7 +417,6 @@ export async function fetchMarketDataFromAV(
       const timeSeriesKey = 'Time Series (Digital Currency Daily)';
       const timeSeries = data[timeSeriesKey];
 
-      // --- UPDATED CRYPTO BLOCK ---
       if (!timeSeries) {
         return {
           error: `No Crypto time series data for ${assetInfo.apiSymbol}/${assetInfo.market}.`,
@@ -429,7 +424,7 @@ export async function fetchMarketDataFromAV(
         };
       }
 
-      const dates = Object.keys(timeSeries); // Get all available dates
+      const dates = Object.keys(timeSeries); 
       if (dates.length < 2) {
         return {
           error: 'Not enough crypto data to calculate change.',
@@ -437,8 +432,8 @@ export async function fetchMarketDataFromAV(
         };
       }
 
-      const latestDate = dates[0]; // Today (or latest)
-      const previousDate = dates[1]; // Yesterday (or previous)
+      const latestDate = dates[0]; 
+      const previousDate = dates[1]; 
 
       const latestDayData = timeSeries[latestDate];
       const previousDayData = timeSeries[previousDate];
@@ -446,7 +441,7 @@ export async function fetchMarketDataFromAV(
       const openKey = `1a. open (${assetInfo.market})`;
       const highKey = `2a. high (${assetInfo.market})`;
       const lowKey = `3a. low (${assetInfo.market})`;
-      const closeKey = `4. close`; // AlphaVantage changed this
+      const closeKey = `4. close`; 
       const volumeKey = `5. volume`;
 
       const altOpenKey = `1. open`;
@@ -454,7 +449,6 @@ export async function fetchMarketDataFromAV(
       const altLowKey = `3. low`;
       const altCloseKey = `4. close`;
 
-      // Handle both new (e.g., '4. close') and old (e.g., '4a. close (USD)') keys
       const getSafeValue = (dayData: any, primaryKey: string, fallbackKey: string) => {
         return parseFloat(dayData[primaryKey] || dayData[fallbackKey]);
       };
@@ -483,7 +477,6 @@ export async function fetchMarketDataFromAV(
         },
         assetType: 'crypto',
       };
-      // --- END UPDATED CRYPTO BLOCK ---
     } else {
       return {
         error: `Unsupported asset type or format for fetching: ${symbol}`,
@@ -519,7 +512,7 @@ export async function fetchMarketNews(): Promise<FetchNewsResult> {
   const url = `https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics=financial_markets&limit=50&apikey=${apiKey}`;
 
   try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+    const response = await fetch(url, { next: { revalidate: 3600 } }); 
     if (!response.ok) {
       return { error: `News API request failed: ${response.statusText}` };
     }
@@ -664,7 +657,6 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
 
   // Remap the data to include author_email at the top level
   const remappedData = data.map(post => {
-    // Supabase returns the joined table as an array if not marked as a one-to-one relationship.
     const author_email = Array.isArray(post.profiles) && post.profiles.length > 0
       ? post.profiles[0].email
       : post.profiles && !Array.isArray(post.profiles)
@@ -777,4 +769,136 @@ export async function deleteNewsPost(postId: string): Promise<ActionResponse> {
   revalidatePath('/admin');
   revalidatePath('/news');
   return { success: true, message: 'Post deleted successfully.' };
+}
+
+// --- Credit & Subscription Management ---
+
+/**
+ * Attempts to consume 1 analysis credit for the current user.
+ * Returns success: true if user has subscription OR has credits > 0.
+ */
+export async function consumeAnalysisCredit(): Promise<{ success: boolean; message?: string; remainingCredits?: number }> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, message: 'Not authenticated' };
+
+  // Fetch profile
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('has_active_subscription, chart_analysis_trial_points')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return { success: false, message: 'Profile not found' };
+  }
+
+  // 1. Check Subscription (Unlimited Access)
+  if (profile.has_active_subscription) {
+    return { success: true, message: 'Subscription active' }; 
+  }
+
+  // 2. Check & Consume Credits
+  if ((profile.chart_analysis_trial_points || 0) > 0) {
+    const newPoints = (profile.chart_analysis_trial_points || 0) - 1;
+    
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ chart_analysis_trial_points: newPoints })
+      .eq('id', user.id);
+
+    if (updateError) {
+      return { success: false, message: 'Failed to update credits' };
+    }
+    
+    revalidatePath('/'); // Refresh dashboard data
+    return { success: true, remainingCredits: newPoints };
+  }
+
+  return { success: false, message: 'Insufficient credits' };
+}
+
+/**
+ * Admin Action: Add credits to a specific user
+ */
+export async function adminAddCredits(userId: string, amount: number): Promise<ActionResponse> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+
+  // Verify Admin/Owner
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, message: 'Not authenticated' };
+  
+  const { data: adminProfile } = await supabase.from('profiles').select('roles').eq('id', user.id).single();
+  const isAuthorized = adminProfile?.roles?.some((r: string) => ['Owner', 'Developer'].includes(r));
+  
+  if (!isAuthorized && user.email !== 'pb7552212@gmail.com') {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  // Get current points first to add to them
+  const { data: targetProfile } = await supabase.from('profiles').select('chart_analysis_trial_points').eq('id', userId).single();
+  const currentPoints = targetProfile?.chart_analysis_trial_points || 0;
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ chart_analysis_trial_points: currentPoints + amount })
+    .eq('id', userId);
+
+  if (error) return { success: false, message: error.message };
+  
+  revalidatePath('/admin');
+  return { success: true, message: `Added ${amount} credits successfully.` };
+}
+
+/**
+ * Admin Action: Toggle Subscription Status
+ */
+export async function adminToggleSubscription(userId: string, status: boolean): Promise<ActionResponse> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+
+   // Verify Admin/Owner
+   const { data: { user } } = await supabase.auth.getUser();
+   if (!user) return { success: false, message: 'Not authenticated' };
+   
+   const { data: adminProfile } = await supabase.from('profiles').select('roles').eq('id', user.id).single();
+   const isAuthorized = adminProfile?.roles?.some((r: string) => ['Owner', 'Developer'].includes(r));
+   
+   if (!isAuthorized && user.email !== 'pb7552212@gmail.com') {
+     return { success: false, message: 'Unauthorized' };
+   }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ has_active_subscription: status })
+    .eq('id', userId);
+
+  if (error) return { success: false, message: error.message };
+
+  revalidatePath('/admin');
+  return { success: true, message: `Subscription set to ${status}` };
+}
+
+/**
+ * Client Simulation: Self-activate subscription (For the modal "Simulate Success" button)
+ */
+export async function simulateSubscriptionSuccess(): Promise<ActionResponse> {
+    const cookieStore = await cookies();
+    const supabase = createSupabaseServerClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return { success: false, message: "Not authenticated" };
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ has_active_subscription: true })
+        .eq('id', user.id);
+    
+    if(error) return { success: false, message: error.message };
+    
+    revalidatePath('/');
+    return { success: true, message: "Subscription activated!" };
 }

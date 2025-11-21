@@ -1,4 +1,3 @@
-
 // src/app/admin/page.tsx
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -10,16 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Users, CreditCard, BarChart, ShieldCheck } from "lucide-react";
-import AdminClient from "./admin-client"; // We will create this client component
+import AdminClient from "./admin-client"; 
 import type { UserManagementProfile, Role, NewsPost } from "@/types";
 import { getNewsPosts } from "@/lib/actions";
 
-// This function fetches all stats in parallel
 async function getAdminData() {
   const cookieStore = await cookies();
   const supabase = createSupabaseServerClient(cookieStore);
 
-  // 1. Get the current user and check their role
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -42,7 +39,6 @@ async function getAdminData() {
      redirect("/");
   }
 
-  // 2. Fetch all stats and data at the same time
   const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult, newsPostsResult] =
     await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -50,23 +46,23 @@ async function getAdminData() {
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("has_active_subscription", true),
-      supabase.from("analyses").select("*", { count: "exact", head: true }), // <--!! UPDATE THIS to your table
-      supabase.from("profiles").select("id, email, roles, has_active_subscription"), // Fetch all users
-      getNewsPosts(), // Fetch news posts from our new action
+      supabase.from("analyses").select("*", { count: "exact", head: true }), 
+      // UPDATED: Ensure we select the specific columns we need
+      supabase.from("profiles").select("id, email, roles, has_active_subscription, chart_analysis_trial_points"), 
+      getNewsPosts(),
     ]);
 
-  // 3. Format profiles data for the client
+  // UPDATED: Map the database value to the type
   const managedUsers: UserManagementProfile[] = profilesResult.data?.map(p => ({
     userId: p.id,
     email: p.email,
     roles: p.roles || ['User'], 
     hasActiveSubscription: p.has_active_subscription, 
-    chartAnalysisTrialPoints: 0, 
+    chartAnalysisTrialPoints: p.chart_analysis_trial_points ?? 0, // Now pulls from DB
   })) ?? [];
   
   const newsPosts: NewsPost[] = newsPostsResult.data || [];
 
-  // 4. Return the data
   return {
     totalUsers: userCountResult.count ?? 0,
     totalSubscribers: subscriberCountResult.count ?? 0,
@@ -77,7 +73,6 @@ async function getAdminData() {
   };
 }
 
-// The Admin Page is now an Async Server Component
 export default async function AdminPage() {
   const {
     totalUsers,

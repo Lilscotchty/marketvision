@@ -3,7 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { handleImageAnalysisAction, uploadChartImages, type AnalysisResult } from "@/lib/actions";
+import { 
+    handleImageAnalysisAction, 
+    uploadChartImages, 
+    consumeAnalysisCredit, 
+    simulateSubscriptionSuccess, 
+    type AnalysisResult 
+} from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, CheckCircle, UploadCloud, X, ImagePlus, Sparkles, Lock, Zap } from "lucide-react";
@@ -22,7 +28,7 @@ const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
 const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILES = 3;
 const INITIAL_TRIAL_POINTS = 5;
@@ -38,29 +44,17 @@ export function ImageUploadForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, userData } = useAuth();
   const { toast } = useToast();
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [localCredits, setLocalCredits] = useState<number | null>(null);
 
-  const [userData, setUserData] = useState<UserAppData | null>(null);
   const isMobile = useIsMobile();
 
   const loadUserData = useCallback(() => {
     if (typeof window !== 'undefined' && user) {
       const data = localStorage.getItem(`marketVisionUserData_${user.id}`);
-      if (data) {
-        setUserData(JSON.parse(data));
-      } else {
-        const initialData: UserAppData = {
-          userId: user.id,
-          email: user.email || '',
-          hasActiveSubscription: false,
-          chartAnalysisTrialPoints: INITIAL_TRIAL_POINTS,
-          roles: ['User'],
-        };
-        localStorage.setItem(`marketVisionUserData_${user.id}`, JSON.stringify(initialData));
-        setUserData(initialData);
-      }
+      // We primarily rely on auth-context now, but keep this for any legacy local sync needs
     }
   }, [user]);
 
@@ -68,80 +62,33 @@ export function ImageUploadForm() {
     loadUserData();
   }, [loadUserData]);
 
-  const decrementTrialPoint = () => {
-    if (userData && !userData.hasActiveSubscription && userData.chartAnalysisTrialPoints > 0) {
-      const newTrialPoints = userData.chartAnalysisTrialPoints - 1;
-      const newUserData: UserAppData = { ...userData, chartAnalysisTrialPoints: newTrialPoints };
-      setUserData(newUserData);
-      if (user) {
-        localStorage.setItem(`marketVisionUserData_${user.id}`, JSON.stringify(newUserData));
-      }
-    }
-  };
-
-  const activateSubscription = () => {
-    const newUserData: UserAppData = {
-      ...userData,
-      userId: user!.id,
-      email: user!.email!,
-      hasActiveSubscription: true,
-      chartAnalysisTrialPoints: 0,
-      roles: userData?.roles || ['User'],
-    };
-    setUserData(newUserData);
-    if (user) {
-      localStorage.setItem(`marketVisionUserData_${user.id}`, JSON.stringify(newUserData));
-    }
-    setIsSubscriptionModalOpen(false);
-  };
-
+  // Sync local credits with userData from context initially
   useEffect(() => {
-    if (!state) return;
-
-    if (state?.prediction && state.analysis) {
-        if (typeof window !== 'undefined' && user) {
-            decrementTrialPoint();
-
-            const newPredictionEntry: HistoricalPrediction = {
-                id: `pred_${new Date().getTime()}`,
-                date: new Date().toISOString(),
-                asset: state.analysis.asset || 'Unknown', 
-                imagePreviewUrl: state.imagePreviewUrls?.[0] || "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
-                prediction: state.prediction,
-                analysis: state.analysis,
-                imagePreviewUrls: state.imagePreviewUrls,
-                manualFlag: undefined,
-            };
-
-            const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
-            let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
-
-            const predictionsForStorage = [newPredictionEntry, ...existingPredictions];
-            
-            try {
-              localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictionsForStorage));
-            } catch (error) {
-               console.error("Failed to set item in localStorage:", error);
-               toast({
-                 title: "Storage Error",
-                 description: "Could not save the analysis. The browser storage might be full.",
-                 variant: "destructive"
-               });
-            }
-            
-            localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
-        }
-    }
-  }, [state, user, toast]);
-
+      if (userData) {
+          setLocalCredits(userData.chartAnalysisTrialPoints);
+      }
+  }, [userData]);
 
   const isFullyAuthenticated = !authLoading && !!user;
   const hasSubscription = userData?.hasActiveSubscription;
-  const trialPoints = userData?.chartAnalysisTrialPoints ?? 0;
+  // Use localCredits if available (optimistic update), otherwise fallback to context
+  const currentPoints = localCredits ?? (userData?.chartAnalysisTrialPoints || 0);
 
-  const canAnalyze = isFullyAuthenticated && (hasSubscription || trialPoints > 0);
-  const needsSubscription = isFullyAuthenticated && !hasSubscription && trialPoints <= 0;
+  // Determine if user can analyze based on DB data
+  const canAnalyze = isFullyAuthenticated && (hasSubscription || currentPoints > 0);
+  const needsSubscription = isFullyAuthenticated && !hasSubscription && currentPoints <= 0;
   const interactionDisabledForAuth = authLoading || !user;
+
+  const handleActivateSubscription = async () => {
+    const result = await simulateSubscriptionSuccess();
+    if (result.success) {
+         toast({ title: "Subscription Activated", description: "You now have premium access!" });
+         setIsSubscriptionModalOpen(false);
+         window.location.reload();
+    } else {
+        toast({ title: "Error", description: result.message, variant: "destructive" });
+    }
+  };
 
   const handleFileDrop = (newFiles: FileList) => {
     if (interactionDisabledForAuth) {
@@ -245,56 +192,89 @@ export function ImageUploadForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!files.length || !user || !canAnalyze) return;
-
-    setUploadingMessage("Uploading charts...");
-    setState(undefined);
-
-    const uploadResults = await uploadChartImages(files);
     
-    const uploadedUrls: string[] = [];
-    for (const result of uploadResults) {
-      if (result.error) {
-        console.error("Upload failed:", result.error);
-        setUploadingMessage(null);
-        toast({
-          title: "Upload Failed",
-          description: `Could not upload one or more images: ${result.error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (result.publicUrl) {
-        uploadedUrls.push(result.publicUrl);
-      }
-    }
-
-    if (uploadedUrls.length !== files.length) {
-        setUploadingMessage(null);
-        toast({
-          title: "Upload Incomplete",
-          description: "Some images failed to upload. Please try again.",
-          variant: "destructive",
-        });
+    // 1. First Check: Local validation
+    if (!files.length || !user) return;
+    if (!canAnalyze) {
+        setIsSubscriptionModalOpen(true);
         return;
     }
 
-    setUploadingMessage("Upload complete. Starting analysis...");
-
+    setUploadingMessage("Verifying credits...");
+    
     startTransition(async () => {
-      const result = await handleImageAnalysisAction(uploadedUrls);
-      
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-      
-      setState(result);
-      setUploadingMessage(null);
+        // 2. Second Check: Server-side credit consumption
+        const creditResult = await consumeAnalysisCredit();
+        
+        if (!creditResult.success) {
+            setUploadingMessage(null);
+            toast({ 
+                title: "Access Denied", 
+                description: creditResult.message || "Please upgrade your plan.", 
+                variant: "destructive" 
+            });
+            setIsSubscriptionModalOpen(true);
+            return;
+        }
 
-      if (result && !result.error && result.imagePreviewUrls) {
-          setPreviewUrls(result.imagePreviewUrls.filter(Boolean) as string[]);
-      }
+        // Update local display of credits if returned
+        if (creditResult.remainingCredits !== undefined) {
+            setLocalCredits(creditResult.remainingCredits);
+        }
+
+        // 3. Proceed with Upload
+        setUploadingMessage("Uploading charts...");
+        const uploadResults = await uploadChartImages(files);
+        
+        const uploadedUrls: string[] = [];
+        for (const result of uploadResults) {
+            if (result.error || !result.publicUrl) {
+                console.error("Upload failed:", result.error);
+                setUploadingMessage(null);
+                toast({ title: "Upload Failed", description: "Could not upload images.", variant: "destructive" });
+                return;
+            }
+            uploadedUrls.push(result.publicUrl);
+        }
+
+        // 4. Proceed with Analysis
+        setUploadingMessage("Running AI analysis...");
+        const result = await handleImageAnalysisAction(uploadedUrls);
+        
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        setState(result);
+        setUploadingMessage(null);
+
+        if (result && !result.error && result.imagePreviewUrls) {
+            setPreviewUrls(result.imagePreviewUrls.filter(Boolean) as string[]);
+            
+            // Save to local history
+            const newPredictionEntry: HistoricalPrediction = {
+                id: `pred_${new Date().getTime()}`,
+                date: new Date().toISOString(),
+                asset: result.analysis?.asset || 'Unknown', 
+                imagePreviewUrl: result.imagePreviewUrls?.[0] || "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
+                prediction: result.prediction!,
+                analysis: result.analysis!,
+                imagePreviewUrls: result.imagePreviewUrls,
+                manualFlag: undefined,
+            };
+
+            const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
+            let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
+            const predictionsForStorage = [newPredictionEntry, ...existingPredictions];
+            
+            try {
+              localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictionsForStorage));
+            } catch (error) {
+               console.error("Failed to set item in localStorage:", error);
+            }
+            localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
+        }
     });
   };
 
+  // Define variables needed for rendering
   const hasFiles = previewUrls.length > 0;
   const isProcessing = isPending || uploadingMessage !== null;
 
@@ -302,8 +282,8 @@ export function ImageUploadForm() {
   const getStatusContent = () => {
     if (interactionDisabledForAuth) return {
       icon: Lock,
-      color: "text-muted-foreground",
-      bg: "bg-muted",
+      color: "text-zinc-500 dark:text-zinc-400",
+      bg: "bg-zinc-100 dark:bg-zinc-800/50",
       text: "Authentication required"
     };
     if (needsSubscription) return {
@@ -316,7 +296,7 @@ export function ImageUploadForm() {
       icon: Zap,
       color: "text-orange-600 dark:text-orange-500",
       bg: "bg-orange-100 dark:bg-orange-500/10",
-      text: `${trialPoints} trial analyses remaining`
+      text: `${currentPoints} trial analyses remaining`
     };
     return {
       icon: CheckCircle,
@@ -331,7 +311,7 @@ export function ImageUploadForm() {
   const renderFileInput = () => (
     <div
       className={cn(
-        "group relative flex flex-col items-center justify-center w-full h-64 rounded-2xl cursor-pointer transition-all duration-300 ease-out",
+        "group relative flex flex-col items-center justify-center w-full h-64 rounded-2xl cursor-pointer transition-all duration-300 ease-out overflow-hidden",
         "border-2 border-dashed border-border", // Light/Dark aware border
         "bg-secondary/20 dark:bg-secondary/10", // Subtle backgrounds
         isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "hover:bg-secondary/40 hover:border-muted-foreground/40",
@@ -343,20 +323,20 @@ export function ImageUploadForm() {
       onDragOver={handleDragEvents}
       onDrop={handleDrop}
     >
+      {/* Inner Grid Texture for Dropzone */}
+      <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+      
       <div className="flex flex-col items-center justify-center pt-5 pb-6 relative z-10">
         <div className={cn(
-          "w-16 h-16 rounded-full bg-background flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:border-primary/30 group-hover:shadow-lg"
+          "w-16 h-16 rounded-full bg-background flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 border border-border group-hover:border-primary/30 group-hover:shadow-lg"
         )}>
           <UploadCloud className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
         <p className="mb-2 text-sm text-foreground font-medium">
-          <span className="text-primary">Click to upload</span> or drag and drop
+          <span className="text-primary font-bold">Click to upload</span> or drag and drop
         </p>
         <p className="text-xs text-muted-foreground">Supports JPG, PNG, WEBP (Max 5MB)</p>
       </div>
-
-      {/* Subtle grid background inside dropzone */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_14px] rounded-2xl" />
     </div>
   );
 
@@ -388,39 +368,56 @@ export function ImageUploadForm() {
   return (
     <div className="space-y-8">
       {/* Main Card Container */}
-      <div className="group relative w-full rounded-3xl border border-border bg-card overflow-hidden transition-all duration-500 hover:border-primary/20 shadow-xl">
+      <div className="group relative w-full rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:border-primary/20 shadow-2xl">
         
-        {/* Background Ambient Glows - Hidden in Light Mode for cleanliness, Visible in Dark */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-0 dark:opacity-20 pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl opacity-0 dark:opacity-20 pointer-events-none" />
+        {/* --- PROFESSIONAL BACKGROUND EFFECTS --- */}
+        
+        {/* 1. Technical Grid */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+        
+        {/* 2. Animated Gradient Orbs (Subtle in light, glowing in dark) */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 dark:bg-purple-600/10 rounded-full blur-[100px] -z-10 animate-pulse delay-700" />
+
+        {/* 3. Stardust Texture (Adds film grain realism) */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-overlay" />
+
 
         {isProcessing && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
-                <Loader />
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/70 backdrop-blur-md transition-all duration-500">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
+                    <Loader />
+                </div>
                 {uploadingMessage ? (
-                  <p className="mt-6 text-sm font-medium text-foreground animate-pulse">{uploadingMessage}</p>
+                  <p className="mt-8 text-sm font-medium text-foreground animate-pulse tracking-wide">{uploadingMessage}</p>
                 ) : (
-                  <TypingLoaderText />
+                  <div className="mt-4"><TypingLoaderText /></div>
                 )}
             </div>
         )}
         
-        <div className={cn("relative z-10 p-1", isProcessing && "blur-sm scale-[0.98] transition-all duration-700")}>
+        <div className={cn("relative z-10 p-1", isProcessing && "blur-[2px] scale-[0.99] opacity-50 transition-all duration-700")}>
             <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
             
             {/* Header */}
-            <div className="px-6 py-6 border-b border-border">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary">
-                        <Sparkles className="w-5 h-5" />
+            <div className="px-6 py-6 border-b border-border/40 flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary shadow-inner">
+                            <Sparkles className="w-5 h-5" />
+                        </div>
+                        <h3 className="text-xl font-bold tracking-tight text-foreground">
+                            Analysis Engine
+                        </h3>
                     </div>
-                    <h3 className="text-xl font-bold tracking-tight text-foreground">
-                         Analysis Engine
-                    </h3>
+                    <p className="text-sm text-muted-foreground pl-12">
+                        Advanced pattern recognition & bias detection.
+                    </p>
                 </div>
-                <p className="text-sm text-muted-foreground pl-12">
-                    Upload charts to detect patterns, bias, and entry models.
-                </p>
+                <div className="hidden sm:block text-xs font-mono text-muted-foreground/50 border border-border/30 px-2 py-1 rounded bg-background/50">
+                    AI-MODEL: V4.2
+                </div>
             </div>
 
             {/* Body */}
@@ -440,13 +437,13 @@ export function ImageUploadForm() {
               {!hasFiles && renderFileInput()}
               
               {hasFiles && (
-                <div className="space-y-4">
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
                   {renderPreviews()}
                   {previewUrls.length < MAX_FILES && (
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-12 border-dashed border-border bg-transparent hover:bg-secondary text-muted-foreground hover:text-foreground"
+                      className="w-full h-12 border-dashed border-border bg-transparent hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-all"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={interactionDisabledForAuth || needsSubscription || isProcessing}
                     >
@@ -459,11 +456,11 @@ export function ImageUploadForm() {
             </div>
 
             {/* Footer Actions */}
-            <div className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="px-6 py-4 bg-muted/30 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-4 backdrop-blur-sm">
                 
                 {/* Modern Status Pill */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors", status.bg, status.color, "border-current/20")}>
+                    <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors shadow-sm", status.bg, status.color, "border-current/20")}>
                         <status.icon className="w-3 h-3" />
                         {status.text}
                     </div>
@@ -472,7 +469,7 @@ export function ImageUploadForm() {
                          <Button 
                             variant="link" 
                             size="sm" 
-                            className="text-foreground h-auto p-0 font-medium hover:text-primary" 
+                            className="text-foreground h-auto p-0 font-medium hover:text-primary underline-offset-4" 
                             onClick={() => setIsSubscriptionModalOpen(true)}
                          >
                             Upgrade Now 
@@ -497,11 +494,11 @@ export function ImageUploadForm() {
                         type="submit"
                         disabled={interactionDisabledForAuth || !canAnalyze || isProcessing || !hasFiles}
                         className={cn(
-                            "flex-1 sm:flex-none min-w-[140px] shadow-lg hover:shadow-xl transition-all hover:scale-105",
+                            "flex-1 sm:flex-none min-w-[160px] shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all hover:scale-105 active:scale-95 font-semibold",
                             isProcessing ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"
                         )}
                     >
-                        {isProcessing ? "Processing..." : "Start Analysis"}
+                        {isProcessing ? "Processing..." : "Run Analysis"}
                     </Button>
                 </div>
             </div>
@@ -510,7 +507,7 @@ export function ImageUploadForm() {
       </div>
 
       {state?.error && (
-        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 text-destructive">
+        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 text-destructive shadow-lg">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Analysis Error</AlertTitle>
           <AlertDescription>{state.error}</AlertDescription>
@@ -530,10 +527,7 @@ export function ImageUploadForm() {
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
-        onSimulateSuccess={() => {
-          activateSubscription();
-          toast({ title: "Subscription Activated", description: "You now have premium access!" });
-        }}
+        onSimulateSuccess={handleActivateSubscription}
         paymentLink={KORAPAY_TEST_PAYMENT_LINK}
       />
     </div>
