@@ -1,8 +1,9 @@
-
-// next.config.ts
+// Force Vercel rebuild: Env Vars Refresh
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  /* config options here */
+  // ... (leave the rest of your code alone)
   /* config options here */
   experimental: {
     serverActions: {
