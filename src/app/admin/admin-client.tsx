@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserCog, Crown, Loader2, Plus, Check, X } from 'lucide-react';
+import { UserCog, Crown, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -37,8 +36,7 @@ type AdminClientProps = {
 const AdminClient = ({ initialManagedUsers, initialNewsPosts, isOwner }: AdminClientProps) => {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  // Since this is a client component, real-time updates might require router.refresh() or state updates
-  // For simplicity in this snippet, we rely on the server action's revalidatePath to refresh the page data on next soft navigation
+  // In a real app, you might want to refetch this data or use router.refresh()
   const [managedUsers] = useState(initialManagedUsers); 
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserManagementProfile | null>(null);
@@ -75,6 +73,7 @@ const AdminClient = ({ initialManagedUsers, initialNewsPosts, isOwner }: AdminCl
           const result = await adminAddCredits(userId, 5); // Add 5 credits
           if (result.success) {
               toast({ title: "Credits Added", description: "User credited with 5 points." });
+              // Optional: router.refresh() to update the UI count
           } else {
               toast({ title: "Error", description: result.message, variant: "destructive" });
           }
@@ -86,6 +85,7 @@ const AdminClient = ({ initialManagedUsers, initialNewsPosts, isOwner }: AdminCl
           const result = await adminToggleSubscription(userId, !currentStatus);
           if (result.success) {
               toast({ title: "Subscription Updated", description: result.message });
+              // Optional: router.refresh() to update the UI badge
           } else {
               toast({ title: "Error", description: result.message, variant: "destructive" });
           }

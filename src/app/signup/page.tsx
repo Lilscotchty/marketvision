@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -14,8 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, Lock } from 'lucide-react';
+import { Loader2, UserPlus, Lock, User } from 'lucide-react';
 
+// ... (Icons kept same as before) ...
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
       <path
@@ -45,6 +45,7 @@ const FacebookIcon = () => (
 );
 
 const signupSchema = z.object({
+  username: z.string().min(3, { message: 'Username must be at least 3 characters.' }).max(20, { message: 'Username must be less than 20 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters long.' }),
   confirmPassword: z.string(),
@@ -68,6 +69,7 @@ export default function SignupPage() {
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -92,7 +94,6 @@ export default function SignupPage() {
       });
       setIsSocialLoading(null);
     }
-    // On success, Supabase redirects to the callback, so no further client-side action is needed.
   };
 
   const onSubmit = async (data: SignupFormValues) => {
@@ -102,6 +103,10 @@ export default function SignupPage() {
       password: data.password,
       options: {
         emailRedirectTo: `${location.origin}/api/auth/callback`,
+        // This data object is passed to the database trigger
+        data: {
+          username: data.username,
+        }
       },
     });
 
@@ -116,8 +121,6 @@ export default function SignupPage() {
         title: 'Confirm Your Email',
         description: 'We sent a confirmation link to your email address.',
       });
-      // Don't redirect immediately. User needs to confirm their email.
-      // You can show a success message or another component.
     }
     setIsLoading(false);
   };
@@ -127,7 +130,7 @@ export default function SignupPage() {
   return (
     <AuthFormWrapper 
       title="Get started quickly"
-      description="Choose your preferred sign-up method"
+      description="Create an account to access exclusive market insights."
     >
       <div className="grid grid-cols-2 gap-4 mb-6">
         <Button variant="outline" onClick={() => handleSocialSignIn('google')} disabled={isButtonDisabled}>
@@ -151,6 +154,24 @@ export default function SignupPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* NEW USERNAME FIELD */}
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username <span className="text-destructive">*</span></FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="johndoe123" {...field} className="pl-9" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
           <FormField
             control={form.control}
             name="email"
@@ -158,7 +179,7 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="Enter your email" {...field} />
+                  <Input type="email" placeholder="you@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -171,7 +192,7 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>Password <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Enter password (min 8 characters)" {...field} />
+                  <Input type="password" placeholder="Min 8 characters" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -184,7 +205,7 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>Confirm Password <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Confirm your password" {...field} />
+                  <Input type="password" placeholder="Confirm password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -216,7 +237,7 @@ export default function SignupPage() {
             ) : (
               <>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Create Your Account
+                Create Account
               </>
             )}
           </Button>
@@ -232,7 +253,7 @@ export default function SignupPage() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
         <Lock className="h-3 w-3" />
-        Your data is securely encrypted and protected
+        Your data is securely encrypted
       </p>
     </AuthFormWrapper>
   );

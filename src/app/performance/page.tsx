@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { PerformanceStats } from "@/components/performance/performance-stats";
 import type { HistoricalPrediction } from "@/types";
@@ -14,127 +13,123 @@ import PredictionCard from "@/components/performance/prediction-card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SimplePredictionCard from "@/components/performance/simple-prediction-card";
 import { Button } from "@/components/ui/button";
+import { getUserAnalyses, updateAnalysisFlag, deleteAnalysisAction, saveAnalysisToHistory } from "@/lib/actions";
 
-const IS_BROWSER = typeof window !== 'undefined';
-
-const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
 const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
 
-
 export default function PerformancePage() {
-  const [predictions, setPredictions] = useState<HistoricalPrediction[]>(() => {
-    if (!IS_BROWSER) return [];
-    const savedPredictions = localStorage.getItem(MAIN_PERFORMANCE_KEY);
-    return savedPredictions ? JSON.parse(savedPredictions) : [];
-  });
+  const [predictions, setPredictions] = useState<HistoricalPrediction[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [lastSeenNewId, setLastSeenNewId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [showAll, setShowAll] = useState(false);
 
-
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
+  // 1. Fetch Data from DB
+  const loadData = async () => {
+    setIsLoadingData(true);
+    const { data, error } = await getUserAnalyses();
+    if (error) {
+      toast({ title: "Error", description: "Failed to load history.", variant: "destructive" });
+    } else {
+      setPredictions(data);
+    }
+    setIsLoadingData(false);
+  };
 
-  const syncPredictionsFromStorage = useCallback(() => {
-    if (!IS_BROWSER) return;
-    const newPredictionId = localStorage.getItem(MOCK_NEW_PREDICTIONS_KEY);
-    
-    // Check if the trigger value has changed to avoid redundant updates
-    if (newPredictionId && newPredictionId !== lastSeenNewId) {
-      const allPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
-      if (allPredictionsString) {
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  // 2. Migration Logic: Sync LocalStorage to DB Once
+  useEffect(() => {
+    const migrateLocalStorage = async () => {
+        if (typeof window === 'undefined' || !user) return;
+        
+        const localData = localStorage.getItem(MAIN_PERFORMANCE_KEY);
+        if (!localData) return;
+
         try {
-          const allPredictions: HistoricalPrediction[] = JSON.parse(allPredictionsString);
-          setPredictions(allPredictions);
-        } catch (error) {
-          console.error("Error parsing performance data from storage:", error);
+            const localPredictions: HistoricalPrediction[] = JSON.parse(localData);
+            if (localPredictions.length > 0) {
+                toast({ title: "Syncing Data", description: "Migrating your local history to the cloud..." });
+                
+                let successCount = 0;
+                for (const pred of localPredictions) {
+                    // We only save if we have the core data. 
+                    // Using Promise.all would be faster but might hit rate limits, so we loop sequentially or batch.
+                    const result = await saveAnalysisToHistory(pred.analysis!, pred.prediction, pred.imagePreviewUrls || [pred.imagePreviewUrl]);
+                    if(result.success) successCount++;
+                }
+
+                if (successCount > 0) {
+                    toast({ title: "Migration Complete", description: `Moved ${successCount} records to the database.` });
+                    localStorage.removeItem(MAIN_PERFORMANCE_KEY); // Clear after sync
+                    loadData(); // Refresh list
+                }
+            }
+        } catch (e) {
+            console.error("Migration failed", e);
         }
-      }
-      setLastSeenNewId(newPredictionId);
-    }
-  }, [lastSeenNewId]);
-
-
-  useEffect(() => {
-    syncPredictionsFromStorage(); // Initial sync
-
-    const handleStorageChange = (event: StorageEvent) => {
-      // Listen for changes to the main data store or the trigger key
-      if (event.key === MAIN_PERFORMANCE_KEY || event.key === MOCK_NEW_PREDICTIONS_KEY) {
-        syncPredictionsFromStorage();
-      }
     };
-    if (IS_BROWSER) {
-      window.addEventListener('storage', handleStorageChange);
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
+
+    if (user && !isLoadingData) {
+        migrateLocalStorage();
     }
-  }, [syncPredictionsFromStorage]);
+  }, [user, isLoadingData]);
 
 
-  useEffect(() => {
-    if (IS_BROWSER) {
-       localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictions));
-    }
-  }, [predictions]);
-
-  const handleFlagTrade = (predictionId: string, flag: 'successful' | 'unsuccessful') => {
-    setPredictions((prevPredictions) =>
-      prevPredictions.map((pred) =>
-        pred.id === predictionId ? { ...pred, manualFlag: flag } : pred
-      )
-    );
-    toast({
-      title: "Trade Flagged",
-      description: `Prediction marked as ${flag}.`,
-    });
-  };
-
-  const handleDeletePrediction = (predictionId: string) => {
-    const predictionToDelete = predictions.find(p => p.id === predictionId);
-    if (predictionToDelete) {
-      setPredictions(prevPredictions => prevPredictions.filter(p => p.id !== predictionId));
-      toast({
-        title: "Prediction Deleted",
-        description: `The analysis from ${new Date(predictionToDelete.date).toLocaleDateString()} has been removed.`,
-        variant: "destructive"
-      });
+  const handleFlagTrade = async (predictionId: string, flag: 'successful' | 'unsuccessful') => {
+    // Optimistic update
+    setPredictions((prev) => prev.map((p) => p.id === predictionId ? { ...p, manualFlag: flag } : p));
+    
+    const result = await updateAnalysisFlag(predictionId, flag);
+    if (result.success) {
+        toast({ title: "Trade Flagged", description: `Prediction marked as ${flag}.` });
+    } else {
+        toast({ title: "Error", description: "Failed to update flag.", variant: "destructive" });
+        loadData(); // Revert on error
     }
   };
 
-  if (loading) {
+  const handleDeletePrediction = async (predictionId: string) => {
+    // Optimistic update
+    const backup = [...predictions];
+    setPredictions((prev) => prev.filter(p => p.id !== predictionId));
+
+    const result = await deleteAnalysisAction(predictionId);
+    if (result.success) {
+      toast({ title: "Prediction Deleted", description: "The analysis has been removed." });
+    } else {
+      setPredictions(backup); // Revert
+      toast({ title: "Error", description: "Could not delete analysis.", variant: "destructive" });
+    }
+  };
+
+  if (authLoading || isLoadingData) {
      return (
       <main className="flex-1 items-start gap-4 p-2 sm:px-6 sm:py-0 md:gap-8 pb-16 md:pb-0">
         <div className="container mx-auto py-8 space-y-12">
            <div className="flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground">Loading History...</p>
             </div>
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                 <Skeleton className="h-40 w-full" />
-              </CardContent>
-            </Card>
+            <Card><CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>
         </div>
       </main>
     );
   }
   
-  if (!user) {
-    return null; // Return null to prevent rendering while redirecting
-  }
+  if (!user) return null;
 
   const displayedPredictions = showAll ? predictions : predictions.slice(0, 4);
 
@@ -146,7 +141,7 @@ export default function PerformancePage() {
             Performance <span className="text-accent">Metrics</span>
           </h1>
           <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-            Track and evaluate your prediction history.
+            Track and evaluate your prediction history from the cloud.
           </p>
         </header>
 
@@ -168,7 +163,7 @@ export default function PerformancePage() {
                 </div>
               ) : isMobile ? (
                 <div className="space-y-4">
-                  {predictions.map((pred) => (
+                  {displayedPredictions.map((pred) => (
                     <SimplePredictionCard
                       key={pred.id}
                       prediction={pred}
@@ -189,7 +184,7 @@ export default function PerformancePage() {
                   ))}
                 </div>
               )}
-              {!showAll && predictions.length > 4 && !isMobile && (
+              {!showAll && predictions.length > 4 && (
                 <div className="mt-8 text-center">
                   <Button onClick={() => setShowAll(true)}>
                     Load More

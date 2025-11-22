@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -100,7 +99,8 @@ export function NewsFeed() {
             <CardHeader>
               <CardTitle className="text-base font-bold leading-tight">{item.title}</CardTitle>
               <div className="text-xs text-muted-foreground pt-1">
-                <span>By {item.author_email || 'FinSight AI'}</span> &bull; <span>{format(new Date(item.created_at), "MMM dd, yyyy")}</span>
+                {/* UPDATED: Display only the date */}
+                <span>{format(new Date(item.created_at), "MMM dd, yyyy")}</span>
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
@@ -127,7 +127,8 @@ export function NewsFeed() {
             <DialogHeader>
                 <DialogTitle className="text-2xl font-headline">{item.title}</DialogTitle>
                 <div className="text-sm text-muted-foreground pt-1">
-                    <span>By {item.author_email || 'FinSight AI'}</span> &bull; <span>{format(new Date(item.created_at), "MMM dd, yyyy")}</span>
+                    {/* UPDATED: Display only the date */}
+                    <span>{format(new Date(item.created_at), "MMM dd, yyyy")}</span>
                 </div>
             </DialogHeader>
             <ScrollArea className="h-[60vh] pr-4">

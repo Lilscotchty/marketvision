@@ -1,4 +1,3 @@
-// src/app/admin/page.tsx
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -39,6 +38,7 @@ async function getAdminData() {
      redirect("/");
   }
 
+  // 2. Fetch all stats and data at the same time
   const [userCountResult, subscriberCountResult, analysisCountResult, profilesResult, newsPostsResult] =
     await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
@@ -46,19 +46,20 @@ async function getAdminData() {
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("has_active_subscription", true),
-      supabase.from("analyses").select("*", { count: "exact", head: true }), 
-      // UPDATED: Ensure we select the specific columns we need
+      supabase.from("analyses").select("*", { count: "exact", head: true }),
+      // UPDATED: Added 'chart_analysis_trial_points' to this query
       supabase.from("profiles").select("id, email, roles, has_active_subscription, chart_analysis_trial_points"), 
       getNewsPosts(),
     ]);
 
-  // UPDATED: Map the database value to the type
+  // 3. Format profiles data for the client
   const managedUsers: UserManagementProfile[] = profilesResult.data?.map(p => ({
     userId: p.id,
     email: p.email,
     roles: p.roles || ['User'], 
     hasActiveSubscription: p.has_active_subscription, 
-    chartAnalysisTrialPoints: p.chart_analysis_trial_points ?? 0, // Now pulls from DB
+    // UPDATED: Now correctly reading from DB instead of hardcoded 0
+    chartAnalysisTrialPoints: p.chart_analysis_trial_points ?? 0, 
   })) ?? [];
   
   const newsPosts: NewsPost[] = newsPostsResult.data || [];

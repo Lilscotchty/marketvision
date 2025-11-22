@@ -13,6 +13,7 @@ import type {
   Role, 
   NewsPost,
   NewsPostFormValues,
+  HistoricalPrediction,
 } from '@/types';
 import { createSupabaseServerClient } from '@/lib/supabase/server'; 
 import { revalidatePath } from 'next/cache'; 
@@ -646,7 +647,7 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
       banner_image_url,
       sentiment,
       author_id,
-      profiles ( email )
+      profiles ( email, username )
     `)
     .order('created_at', { ascending: false });
 
@@ -655,18 +656,33 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
     return { data: null, error: error.message };
   }
 
-  // Remap the data to include author_email at the top level
-  const remappedData = data.map(post => {
-    const author_email = Array.isArray(post.profiles) && post.profiles.length > 0
-      ? post.profiles[0].email
-      : post.profiles && !Array.isArray(post.profiles)
-      // @ts-ignore
-      ? post.profiles.email
-      : 'Unknown Author';
+  // Remap the data to include author info at the top level
+  // FIX 1: Cast 'post' to 'any' to treat it as a flexible object (fixes 'profiles' error)
+  const remappedData = data.map((post: any) => {
+    const profileData = post.profiles;
+    
+    // profileData could be an array or object depending on the join, though usually object for single relation
+    const profile = Array.isArray(profileData) 
+      ? (profileData.length > 0 ? profileData[0] : null)
+      : profileData;
+
+    // Prefer username, fallback to email, then "Unknown"
+    let authorDisplay = 'Unknown Author';
+    
+    if (profile) {
+        if (profile.username) {
+            authorDisplay = profile.username;
+        } else if (profile.email) {
+            authorDisplay = profile.email;
+        }
+    }
+
+    // FIX 2: Destructure 'profiles' OUT of the object.
+    const { profiles, ...postWithoutProfiles } = post;
 
     return {
-      ...post,
-      author_email: author_email
+      ...postWithoutProfiles,
+      author_email: authorDisplay 
     };
   });
 
@@ -689,7 +705,7 @@ export async function upsertNewsPost(
     return { success: false, message: 'Not authenticated.' };
   }
 
-  // Ensure a profile exists for the user, creating one if necessary.
+  // --- FIX START: Ensure Profile Exists ---
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
@@ -697,23 +713,30 @@ export async function upsertNewsPost(
     .single();
 
   if (!profile) {
-    // Profile doesn't exist, create it.
     const userRoles: Role[] =
       user.email === 'pb7552212@gmail.com' ? ['Owner'] : ['User'];
-    const { error: insertError } = await supabase.from('profiles').insert({
+      
+    // Try to grab username from metadata if creating a fallback profile
+    const usernameFromMeta = user.user_metadata?.username || user.user_metadata?.full_name || null;
+
+    const { error: insertProfileError } = await supabase.from('profiles').insert({
       id: user.id,
       email: user.email,
+      username: usernameFromMeta,
       roles: userRoles,
+      has_active_subscription: false,
+      chart_analysis_trial_points: 5
     });
 
-    if (insertError) {
-      console.error('Error creating profile on-the-fly:', insertError);
+    if (insertProfileError) {
+      console.error('Error creating fallback profile:', insertProfileError);
       return {
         success: false,
-        message: `Failed to create user profile: ${insertError.message}`,
+        message: `Failed to create user profile: ${insertProfileError.message}`,
       };
     }
   }
+  // --- FIX END ---
 
   const postData = {
     ...values,
@@ -901,4 +924,89 @@ export async function simulateSubscriptionSuccess(): Promise<ActionResponse> {
     
     revalidatePath('/');
     return { success: true, message: "Subscription activated!" };
+}
+
+// --- Analysis History Management (Database) ---
+
+export async function saveAnalysisToHistory(
+  analysis: AnalysisOutput,
+  prediction: PredictionOutput,
+  imageUrls: (string | null)[]
+): Promise<ActionResponse> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, message: 'Not authenticated' };
+
+  const validImageUrls = imageUrls.filter((url): url is string => url !== null);
+
+  const { error } = await supabase.from('analyses').insert({
+    user_id: user.id,
+    asset_symbol: analysis.asset || 'Unknown',
+    prediction_data: prediction,
+    analysis_data: analysis,
+    image_urls: validImageUrls,
+  });
+
+  if (error) {
+    console.error("Error saving analysis:", error);
+    return { success: false, message: 'Failed to save analysis to history.' };
+  }
+
+  return { success: true, message: 'Analysis saved to database.' };
+}
+
+export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[]; error: string | null }> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+  
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) return { data: [], error: error.message };
+
+  // Map DB format to HistoricalPrediction type
+  const history: HistoricalPrediction[] = data.map((item) => ({
+    id: item.id,
+    date: item.created_at,
+    asset: item.asset_symbol,
+    prediction: item.prediction_data,
+    analysis: item.analysis_data,
+    imagePreviewUrls: item.image_urls,
+    imagePreviewUrl: item.image_urls?.[0] || '',
+    manualFlag: item.manual_flag,
+  }));
+
+  return { data: history, error: null };
+}
+
+export async function updateAnalysisFlag(analysisId: string, flag: 'successful' | 'unsuccessful'): Promise<ActionResponse> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+
+  const { error } = await supabase
+    .from('analyses')
+    .update({ manual_flag: flag })
+    .eq('id', analysisId);
+
+  if (error) return { success: false, message: error.message };
+  revalidatePath('/performance');
+  return { success: true, message: 'Flag updated.' };
+}
+
+export async function deleteAnalysisAction(analysisId: string): Promise<ActionResponse> {
+  const cookieStore = await cookies();
+  const supabase = createSupabaseServerClient(cookieStore);
+
+  const { error } = await supabase
+    .from('analyses')
+    .delete()
+    .eq('id', analysisId);
+
+  if (error) return { success: false, message: error.message };
+  revalidatePath('/performance');
+  return { success: true, message: 'Analysis deleted.' };
 }

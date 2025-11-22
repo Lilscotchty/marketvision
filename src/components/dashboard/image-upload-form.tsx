@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "next/link"; // Fixed: Added missing Link import
 import { 
     handleImageAnalysisAction, 
     uploadChartImages, 
@@ -54,9 +54,15 @@ export function ImageUploadForm() {
   const loadUserData = useCallback(() => {
     if (typeof window !== 'undefined' && user) {
       const data = localStorage.getItem(`marketVisionUserData_${user.id}`);
-      // We primarily rely on auth-context now, but keep this for any legacy local sync needs
+      if (data) {
+        // We can sync if needed, but context takes precedence
+        const parsed = JSON.parse(data);
+        if (!localCredits && parsed.chartAnalysisTrialPoints) {
+             setLocalCredits(parsed.chartAnalysisTrialPoints);
+        }
+      }
     }
-  }, [user]);
+  }, [user, localCredits]);
 
   useEffect(() => {
     loadUserData();
@@ -193,7 +199,6 @@ export function ImageUploadForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
-    // 1. First Check: Local validation
     if (!files.length || !user) return;
     if (!canAnalyze) {
         setIsSubscriptionModalOpen(true);
@@ -203,7 +208,6 @@ export function ImageUploadForm() {
     setUploadingMessage("Verifying credits...");
     
     startTransition(async () => {
-        // 2. Second Check: Server-side credit consumption
         const creditResult = await consumeAnalysisCredit();
         
         if (!creditResult.success) {
@@ -217,12 +221,10 @@ export function ImageUploadForm() {
             return;
         }
 
-        // Update local display of credits if returned
         if (creditResult.remainingCredits !== undefined) {
             setLocalCredits(creditResult.remainingCredits);
         }
 
-        // 3. Proceed with Upload
         setUploadingMessage("Uploading charts...");
         const uploadResults = await uploadChartImages(files);
         
@@ -237,7 +239,6 @@ export function ImageUploadForm() {
             uploadedUrls.push(result.publicUrl);
         }
 
-        // 4. Proceed with Analysis
         setUploadingMessage("Running AI analysis...");
         const result = await handleImageAnalysisAction(uploadedUrls);
         
@@ -248,7 +249,6 @@ export function ImageUploadForm() {
         if (result && !result.error && result.imagePreviewUrls) {
             setPreviewUrls(result.imagePreviewUrls.filter(Boolean) as string[]);
             
-            // Save to local history
             const newPredictionEntry: HistoricalPrediction = {
                 id: `pred_${new Date().getTime()}`,
                 date: new Date().toISOString(),
@@ -274,11 +274,10 @@ export function ImageUploadForm() {
     });
   };
 
-  // Define variables needed for rendering
   const hasFiles = previewUrls.length > 0;
+  // Fixed: Defined isProcessing variable
   const isProcessing = isPending || uploadingMessage !== null;
 
-  // Helper to get status bar content
   const getStatusContent = () => {
     if (interactionDisabledForAuth) return {
       icon: Lock,
@@ -312,8 +311,8 @@ export function ImageUploadForm() {
     <div
       className={cn(
         "group relative flex flex-col items-center justify-center w-full h-64 rounded-2xl cursor-pointer transition-all duration-300 ease-out overflow-hidden",
-        "border-2 border-dashed border-border", // Light/Dark aware border
-        "bg-secondary/20 dark:bg-secondary/10", // Subtle backgrounds
+        "border-2 border-dashed border-border", 
+        "bg-secondary/20 dark:bg-secondary/10", 
         isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "hover:bg-secondary/40 hover:border-muted-foreground/40",
         (interactionDisabledForAuth || needsSubscription || isProcessing) && "cursor-not-allowed opacity-50"
       )}
@@ -371,15 +370,12 @@ export function ImageUploadForm() {
       <div className="group relative w-full rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:border-primary/20 shadow-2xl">
         
         {/* --- PROFESSIONAL BACKGROUND EFFECTS --- */}
-        
-        {/* 1. Technical Grid */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
-        
-        {/* 2. Animated Gradient Orbs (Subtle in light, glowing in dark) */}
+    
+        {/* 2. Animated Gradient Orbs */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 dark:bg-purple-600/10 rounded-full blur-[100px] -z-10 animate-pulse delay-700" />
 
-        {/* 3. Stardust Texture (Adds film grain realism) */}
+        {/* 3. Stardust Texture */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-overlay" />
 
 
@@ -457,12 +453,9 @@ export function ImageUploadForm() {
 
             {/* Footer Actions */}
             <div className="px-6 py-4 bg-muted/30 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center gap-4 backdrop-blur-sm">
-                
-                {/* Modern Status Pill */}
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                     <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors shadow-sm", status.bg, status.color, "border-current/20")}>
-                        <status.icon className="w-3 h-3" />
-                        {status.text}
+                        <status.icon className="w-3 h-3" /> {status.text}
                     </div>
                     
                     {needsSubscription && (
