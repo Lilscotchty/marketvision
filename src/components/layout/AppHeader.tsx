@@ -12,10 +12,12 @@ import {
   Settings,
   Sun,
   User,
+  Crown, // Import Crown for Pro users
+  Sparkles // Import Sparkles for visual flair
 } from 'lucide-react';
 
 import { useTheme } from '@/contexts/theme-context';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Added AvatarImage
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -34,17 +36,17 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export function AppHeader() {
   const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, userData } = useAuth(); // Destructure userData to check subscription
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
-
 
   const handleLogout = async () => {
     try {
@@ -67,11 +69,17 @@ export function AppHeader() {
     return email.substring(0, 2).toUpperCase();
   };
 
+  // Check for active subscription
+  const isPro = userData?.hasActiveSubscription;
+
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between gap-4 border-b bg-background px-4 py-2">
+    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-2">
       {/* Left Section */}
       <div className="flex items-center gap-2">
-        <Link href="/" className="font-bold text-lg tracking-tight">
+        <Link href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
+          <div className="bg-primary/10 p-1 rounded-md">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
           MarketVision
         </Link>
         <DropdownMenu>
@@ -79,7 +87,7 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-sm font-semibold"
+              className="h-7 gap-1 text-sm font-semibold hidden sm:flex"
             >
               <ChevronDown className="h-4 w-4" />
             </Button>
@@ -89,15 +97,10 @@ export function AppHeader() {
             <DropdownMenuItem>Project 2</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 hidden md:block" />
         <span className="text-sm font-medium text-muted-foreground hidden md:block">
           Main Dashboard
         </span>
-      </div>
-
-      {/* Middle Section (Placeholder) */}
-      <div className="hidden md:flex">
-        {/* Intentionally empty for now, can add "Connect" button here */}
       </div>
 
       {/* Right Section */}
@@ -116,25 +119,23 @@ export function AppHeader() {
         </div>
 
         <TooltipProvider>
-          {/* Theme Toggle: Hidden on mobile, visible on md+ */}
+          {/* Theme Toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
               {isClient ? (
                 <Button
                   variant="ghost"
                   size="icon"
-                  // UPDATED: added 'hidden md:inline-flex'
-                  className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground"
+                  className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                   {theme === 'dark' ? (
-                    <Sun className="h-4 w-4 rounded-full" />
+                    <Sun className="h-4 w-4" />
                   ) : (
-                    <Moon className=" h-4 w-4 rounded-full" />
+                    <Moon className="h-4 w-4" />
                   )}
                 </Button>
               ) : (
-                // UPDATED: added 'hidden md:block' to the placeholder as well
                 <div className="hidden md:block h-8 w-8 rounded-full border" /> 
               )}
             </TooltipTrigger>
@@ -143,15 +144,14 @@ export function AppHeader() {
             </TooltipContent>
           </Tooltip>
 
-          {/* Support Icon: Hidden on mobile, visible on md+ */}
+          {/* Support Icon */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
                 asChild 
                 variant="ghost" 
                 size="icon" 
-                // UPDATED: added 'hidden md:inline-flex'
-                className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground"
+                className="hidden md:inline-flex h-8 w-8 rounded-full border text-muted-foreground hover:text-foreground transition-colors"
               >
                  <Link href="/support"><Headset className="h-4 w-4" /></Link>
               </Button>
@@ -161,11 +161,14 @@ export function AppHeader() {
             </TooltipContent>
           </Tooltip>
 
-          {/* Notifications: Visible on all screens */}
+          {/* Notifications */}
           <Tooltip>
             <TooltipTrigger asChild>
-               <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
-                <Link href="/notifications"><Bell className="h-4 w-4" /></Link>
+               <Button asChild variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground hover:text-foreground transition-colors relative">
+                <Link href="/notifications">
+                  <Bell className="h-4 w-4" />
+                  {/* Optional: Add a red dot here if notifications exist */}
+                </Link>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -174,33 +177,62 @@ export function AppHeader() {
           </Tooltip>
         </TooltipProvider>
 
+        {/* User Profile Dropdown - The NEW Design */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border text-muted-foreground">
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                    "h-9 w-9 rounded-full transition-all duration-300 ml-1",
+                    // Pro User Styling: Golden Ring
+                    isPro 
+                        ? "ring-2 ring-amber-500 ring-offset-2 ring-offset-background hover:ring-amber-400" 
+                        : "hover:bg-secondary"
+                )}
+            >
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
+                <AvatarImage src={user?.user_metadata?.avatar_url} alt="User" />
+                <AvatarFallback className={cn(
+                    "text-xs font-bold text-white",
+                    // Pro User: Golden Gradient Background
+                    // Free User: Deep Indigo Gradient Background
+                    isPro 
+                        ? "bg-gradient-to-br from-amber-500 to-orange-600" 
+                        : "bg-gradient-to-br from-blue-600 to-indigo-700"
+                )}>
+                  {isPro ? <Crown className="h-4 w-4" /> : getInitials(user?.email)}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
              {user ? (
               <>
+                {/* User Info Header in Menu */}
+                <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                        {isPro && <p className="font-medium text-xs text-amber-500 flex items-center gap-1"><Crown className="h-3 w-3"/> Pro Member</p>}
+                        <p className="font-medium">{user.email}</p>
+                    </div>
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                   <Link href="/settings"><Settings className="mr-2" /> Settings</Link>
+                   <Link href="/settings" className="cursor-pointer"><Settings className="mr-2 h-4 w-4" /> Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                  <LogOut className="mr-2" />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
                   Log Out
                 </DropdownMenuItem>
               </>
             ) : (
                <>
                 <DropdownMenuItem asChild>
-                   <Link href="/login"><LogOut className="mr-2" /> Log In</Link>
+                   <Link href="/login"><LogOut className="mr-2 h-4 w-4" /> Log In</Link>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
-                   <Link href="/signup"><User className="mr-2" /> Sign Up</Link>
+                   <Link href="/signup"><User className="mr-2 h-4 w-4" /> Sign Up</Link>
                 </DropdownMenuItem>
               </>
             )}

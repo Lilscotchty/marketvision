@@ -13,9 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, Lock, User } from 'lucide-react';
+import { Loader2, UserPlus, Lock, User, Eye, EyeOff } from 'lucide-react';
 
-// ... (Icons kept same as before) ...
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
       <path
@@ -65,6 +64,8 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState<null | 'google' | 'facebook'>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -103,7 +104,6 @@ export default function SignupPage() {
       password: data.password,
       options: {
         emailRedirectTo: `${location.origin}/api/auth/callback`,
-        // This data object is passed to the database trigger
         data: {
           username: data.username,
         }
@@ -154,7 +154,6 @@ export default function SignupPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* NEW USERNAME FIELD */}
           <FormField
             control={form.control}
             name="username"
@@ -192,7 +191,27 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>Password <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Min 8 characters" {...field} />
+                  <div className="relative">
+                    <Input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Min 8 characters" 
+                      {...field} 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -205,7 +224,27 @@ export default function SignupPage() {
               <FormItem>
                 <FormLabel>Confirm Password <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="Confirm password" {...field} />
+                   <div className="relative">
+                    <Input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      placeholder="Confirm password" 
+                      {...field} 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="sr-only">{showConfirmPassword ? "Hide password" : "Show password"}</span>
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -253,7 +292,7 @@ export default function SignupPage() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
         <Lock className="h-3 w-3" />
-        Your data is securely encrypted
+        Your data is securely encrypted and protected
       </p>
     </AuthFormWrapper>
   );
