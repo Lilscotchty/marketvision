@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -8,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { mainNav, accountNav } from './sidebar-nav';
 
-const NavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string; }) => {
+// Fix: Update the inline interface for props as well
+const NavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType<{ className?: string }>; label: string; }) => {
   const pathname = usePathname();
   const isActive = pathname === href;
 

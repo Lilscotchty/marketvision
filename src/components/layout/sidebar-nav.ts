@@ -11,14 +11,15 @@ import {
   LifeBuoy,
   Users,
   Bot,
-  CreditCard, // New Icon
-  Info,       // New Icon
-  Mail        // New Icon
+  CreditCard,
+  Info,
+  Mail
 } from "lucide-react";
 
 export type NavItem = {
     href: string;
-    icon: React.ElementType;
+    // Fix: Explicitly type the icon to accept className to resolve build error
+    icon: React.ElementType<{ className?: string }>;
     label: string;
     authRequired?: boolean;
     guestOnly?: boolean;
@@ -32,7 +33,6 @@ export const mainNav: NavItem[] = [
   { href: "/alerts", icon: BellRing, label: "Alerts", authRequired: true },
   { href: "/news", icon: Newspaper, label: "News", authRequired: true },
   { href: "/performance", icon: BarChart3, label: "History", authRequired: true },
-  // Added Pricing to main tools
   { href: "/pricing", icon: CreditCard, label: "Pricing" }, 
 ];
 
@@ -40,7 +40,6 @@ export const accountNav: NavItem[] = [
   { href: "/settings", icon: Settings, label: "Settings", authRequired: true },
   { href: "/notifications", icon: Inbox, label: "Notifications", authRequired: true, showBadge: true },
   { href: "/support", icon: LifeBuoy, label: "Support" },
-  // Added About and Contact
   { href: "/about", icon: Info, label: "About Us" }, 
   { href: "/contact", icon: Mail, label: "Contact" },
   { href: "/admin", icon: Users, label: "Admin", developerOnly: true },
