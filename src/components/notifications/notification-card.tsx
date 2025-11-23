@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -18,7 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 
-const iconMap: Record<string, React.ElementType> = {
+// Fix 1: Type the map values to explicitly accept className
+const iconMap: Record<string, React.ElementType<{ className?: string }>> = {
   BellRing,
   Info,
   AlertTriangle,
@@ -29,7 +29,8 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 const NotificationIcon = ({ type, iconName }: { type: NotificationType; iconName?: string }) => {
-  let SpecificIcon: React.ElementType = Bell;
+  // Fix 2: Type the component variable to explicitly accept className
+  let SpecificIcon: React.ElementType<{ className?: string }> = Bell;
 
   if (iconName && iconMap[iconName]) {
     SpecificIcon = iconMap[iconName];

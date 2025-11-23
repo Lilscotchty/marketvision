@@ -110,7 +110,7 @@ const TradingStrategyCards: React.FC = () => {
                 </div>
                 {strategy.tag && (
                   <Badge
-                    className="bg-cyan-800 text-white-300 text-xs 
+                    className="bg-cyan-800 text-grey-300 text-xs 
                                hover:bg-gray-700" // Exact badge colors
                   >
                     {strategy.tag}
