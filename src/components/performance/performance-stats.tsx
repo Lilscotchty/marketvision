@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -219,8 +218,10 @@ export function PerformanceStats({ predictions }: PerformanceStatsProps) {
 }
 
 
+// --- FIXED INTERFACE BELOW ---
 interface StatCardProps {
-    icon: React.ElementType;
+    // Explicitly define that the icon component accepts a className
+    icon: React.ElementType<{ className?: string }>;
     title: string;
     value: string;
     description: string;
@@ -245,6 +246,7 @@ const StatCard = ({ icon: Icon, title, value, description, iconBgClass, iconColo
         <p className={cn("text-xs text-muted-foreground mt-2", descriptionClassName)}>{description}</p>
     </Card>
 )
+
     
 
 
