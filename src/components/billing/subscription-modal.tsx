@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
-  Smartphone, 
   Bitcoin, 
   CircleDollarSign, 
   Repeat, 
@@ -27,7 +26,8 @@ interface PaymentOption {
   id: string;
   name: string;
   description: string;
-  icon: React.ElementType;
+  // Fix: Explicitly type the icon to accept className
+  icon: React.ElementType<{ className?: string }>;
   actionType: 'link' | 'toast';
   link?: string;
   toastMessage?: string;
@@ -143,46 +143,52 @@ export function SubscriptionModal({
           </p>
           
           <div className="grid grid-cols-1 gap-3">
-            {paymentOptions.map((option) => (
-              <div
-                key={option.id}
-                onClick={() => setSelectedMethod(option.id)}
-                className={cn(
-                  "relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all duration-200 group",
-                  selectedMethod === option.id
-                    ? "bg-primary/5 border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.1)]"
-                    : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900"
-                )}
-              >
-                <div className={cn(
-                  "p-3 rounded-full transition-colors",
-                  selectedMethod === option.id ? "bg-primary/20 text-primary" : "bg-zinc-800 text-zinc-400 group-hover:text-zinc-200"
-                )}>
-                  <option.icon className="w-5 h-5" />
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className={cn("font-semibold text-sm", selectedMethod === option.id ? "text-white" : "text-zinc-300")}>
-                      {option.name}
-                    </p>
-                    {option.isRecommended && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold">
-                        FAST
-                      </span>
-                    )}
+            {paymentOptions.map((option) => {
+              // Fix: Assign to a capitalized variable to ensure correct component usage
+              const Icon = option.icon;
+              
+              return (
+                <div
+                  key={option.id}
+                  onClick={() => setSelectedMethod(option.id)}
+                  className={cn(
+                    "relative flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all duration-200 group",
+                    selectedMethod === option.id
+                      ? "bg-primary/5 border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.1)]"
+                      : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900"
+                  )}
+                >
+                  <div className={cn(
+                    "p-3 rounded-full transition-colors",
+                    selectedMethod === option.id ? "bg-primary/20 text-primary" : "bg-zinc-800 text-zinc-400 group-hover:text-zinc-200"
+                  )}>
+                    {/* Fix: Use the capitalized Icon variable */}
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <p className="text-xs text-zinc-500">{option.description}</p>
-                </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className={cn("font-semibold text-sm", selectedMethod === option.id ? "text-white" : "text-zinc-300")}>
+                        {option.name}
+                      </p>
+                      {option.isRecommended && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold">
+                          FAST
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500">{option.description}</p>
+                  </div>
 
-                <div className={cn(
-                  "w-5 h-5 rounded-full border flex items-center justify-center transition-all",
-                  selectedMethod === option.id ? "border-primary bg-primary text-black" : "border-zinc-700"
-                )}>
-                  {selectedMethod === option.id && <Check className="w-3 h-3" />}
+                  <div className={cn(
+                    "w-5 h-5 rounded-full border flex items-center justify-center transition-all",
+                    selectedMethod === option.id ? "border-primary bg-primary text-black" : "border-zinc-700"
+                  )}>
+                    {selectedMethod === option.id && <Check className="w-3 h-3" />}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
