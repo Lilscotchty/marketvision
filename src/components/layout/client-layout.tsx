@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7,10 +6,12 @@ import { BottomNavigation } from './bottom-navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { mainNav, accountNav } from './sidebar-nav'; // Combine navs for mobile
 import { AppHeader } from './AppHeader';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const [isClient, setIsClient] = useState(false);
+  const { user } = useAuth(); // Get the user status
   const navItems = [...mainNav, ...accountNav];
 
   useEffect(() => {
@@ -23,7 +24,12 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-y-auto">
               {children}
           </main>
-          {isClient && isMobile && <BottomNavigation items={navItems} />}
+          {/* Only show BottomNavigation if:
+              1. We are on the client (hydration fix)
+              2. It is a mobile device
+              3. The user is LOGGED IN (This removes it from the landing page)
+          */}
+          {isClient && isMobile && user && <BottomNavigation items={navItems} />}
       </div>
   );
 }
