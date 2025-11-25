@@ -12,6 +12,9 @@ import StyledComponentsRegistry from './registry'; // <-- 1. Import the registry
 export const metadata: Metadata = {
   title: 'FinSight AI',
   description: 'Advanced trading tools and insights by FinSight AI',
+  icons: {
+    icon: '/src/app/icon.jpg', // If placed in the public folder
+  },
 };
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
