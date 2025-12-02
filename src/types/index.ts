@@ -13,9 +13,6 @@ import { z } from 'zod';
 import type { MessageData } from 'genkit';
 
 // --- NEW SCHEMAS ---
-// These schemas are based on the ones in your AI flow,
-// but defining them here makes them re-usable in the frontend.
-
 export const ICTElementSchema = z.object({
   type: z.string().describe("The type of ICT element (e.g., 'Fair Value Gap (FVG)', 'Order Block (OB)', 'Breaker Block', 'Liquidity Pool')."),
   location_description: z.string().describe("A brief description of where this element is located on the chart."),
@@ -36,17 +33,19 @@ export interface UploadedImageAnalysis {
   flaggedStatus?: 'successful' | 'unsuccessful' | null;
 }
 
+// UPDATED: Fixed Modifier Conflict & Added user_id
 export interface AlertConfig {
   id: string;
+  user_id?: string; // Added to support database mapping
   name: string;
   asset: string; 
   conditionType: 'price_target' | 'confidence_change' | 'pattern_detected';
   value: string | number; 
   notificationMethod: 'email' | 'sms' | 'in-app'; 
   isActive: boolean;
-  createdAt: string; // ISO string for when the alert was created
-  originalPrice?: number; // The price of the asset when the alert was created
-  category?: AssetCategory; // Optional: To store the category
+  createdAt?: string; // Changed to optional (?) to fix TS(2687) error
+  originalPrice?: number; 
+  category?: AssetCategory; 
 }
 
 export type PredictionOutput = PredictMarketMovementOutput['prediction'];
@@ -54,8 +53,8 @@ export type AnalysisOutput = AnalyzeCandlestickChartOutput;
 
 export interface HistoricalPrediction {
   id: string;
-  imagePreviewUrl: string; // Legacy for single image display
-  imagePreviewUrls?: (string | null)[]; // For multi-image display
+  imagePreviewUrl: string; 
+  imagePreviewUrls?: (string | null)[]; 
   date: string;
   asset?: string; 
   prediction: PredictionOutput;
@@ -69,7 +68,7 @@ export type AnalyzeMarketDataOutput = FlowAnalyzeMarketDataOutput;
 
 
 // For the quote service (our data provider) Global Quote
-export interface AlphaVantageGlobalQuote { // Keeping name generic as it's a structure
+export interface AlphaVantageGlobalQuote { 
   symbol: string;
   open: number;
   high: number;
@@ -82,7 +81,7 @@ export interface AlphaVantageGlobalQuote { // Keeping name generic as it's a str
   changePercent: string;
 }
 
-// Ensure TradingSession is derived correctly from the (now correctly imported) AnalyzeMarketDataInput type
+// Ensure TradingSession is derived correctly
 export type TradingSession = AnalyzeMarketDataInput['activeTradingSession'];
 
 // Define available timeframes
@@ -99,8 +98,8 @@ export interface AppNotification {
   timestamp: string; // ISO string
   read: boolean;
   type: NotificationType;
-  relatedLink?: string; // e.g., link to the specific alert or asset
-  iconName?: string; // Optional: Lucide icon name for visual cue e.g. "BellRing", "Info"
+  relatedLink?: string; 
+  iconName?: string; 
 }
 
 // --- Roles and User Data ---
@@ -172,7 +171,7 @@ export interface NewsPost {
   banner_image_url?: string | null;
   sentiment: Sentiment;
   author_id: string;
-  author_email?: string; // For display purposes
+  author_email?: string; 
 }
 
 export const NewsPostSchema = z.object({

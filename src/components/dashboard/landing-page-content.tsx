@@ -7,8 +7,10 @@ import Link from "next/link";
 import { Zap, Lock, TrendingUp } from "lucide-react";
 import { Odometer } from "@/components/ui/odometer";
 import { MagneticButton } from "@/components/ui/magnetic-button";
-import { Hero3DScene } from "./hero-3d-scene";
+import ColorBends from "./hero-3d-scene";
 import { cn } from "@/lib/utils";
+import { LandingHeader } from "@/components/layout/landing-header";
+
 
 // Mock Data
 const chartData = Array.from({ length: 24 }).map((_, i) => ({
@@ -29,18 +31,31 @@ export function LuxuryLandingPage() {
   const yGrid = useTransform(scrollYProgress, [0.3, 0.6], [100, 0]);
 
   return (
-    <div ref={containerRef} className="relative w-full bg-[#030303] text-slate-200 selection:bg-cyan-500/30 selection:text-cyan-100 overflow-hidden">
-      
-      {/* BACKGROUND ATMOSPHERE (Blue/Cyan) */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-blue-950/20 rounded-full blur-[180px] opacity-60" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-cyan-900/20 rounded-full blur-[150px] opacity-60" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-soft-light" />
-      </div>
 
-      {/* 3D SCENE */}
-      <div className="fixed inset-0 z-10 h-screen pointer-events-auto">
-        <Hero3DScene />
+    
+    <div ref={containerRef} className="relative w-full bg-[#050505] text-slate-200 selection:bg-cyan-500/30 selection:text-cyan-100 overflow-hidden">
+      
+      <LandingHeader/>
+
+      {/* 3D SCENE / COLOR BENDS */}
+      {/* Placed at z-0. Removed overlay layers to ensure vividness */}
+      <div className="fixed inset-0 z-0 h-screen pointer-events-auto bg-black">
+  
+
+  <ColorBends
+  colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+   rotation={0}
+    speed={0.3}
+    scale={1.0}
+    frequency={2.6}
+    warpStrength={1.0}
+    mouseInfluence={1.4}
+    parallax={0.6}
+    noise={0.0}
+    transparent
+  />
+        {/* Subtle noise overlay on top of the 3D scene for texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay pointer-events-none" />
       </div>
 
       {/* CONTENT */}
@@ -50,19 +65,19 @@ export function LuxuryLandingPage() {
         <section className="relative min-h-screen flex flex-col justify-center items-center px-6">
           <motion.div style={{ y: yHero, opacity: opacityHero }} className="flex flex-col items-center text-center max-w-5xl mx-auto">
             
-            {/* Badge (Cyan) */}
+            {/* Badge */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="mb-8 pointer-events-auto inline-flex items-center gap-2 border border-cyan-500/30 bg-cyan-950/30 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-mono text-cyan-400 uppercase tracking-[0.3em] shadow-[0_0_20px_-5px_rgba(34,211,238,0.3)]"
+              className="mb-8 pointer-events-auto inline-flex items-center gap-2 border border-white/10 bg-black/40 px-4 py-1.5 rounded-full text-[10px] font-mono text-cyan-400 uppercase tracking-[0.3em] shadow-2xl"
             >
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
               Institutional Access
             </motion.div>
 
             {/* Main Title */}
-            <h1 className="font-headline text-7xl md:text-[9rem] lg:text-[11rem] font-bold tracking-tighter text-white mb-6 leading-[0.85] mix-blend-overlay opacity-90">
+            <h1 className="font-headline text-7xl md:text-[9rem] lg:text-[11rem] font-bold tracking-tighter text-white mb-6 leading-[0.85] ">
               MARKET<br />VISION
             </h1>
 
@@ -71,16 +86,16 @@ export function LuxuryLandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.8 }}
-              className="font-sans text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-10 pointer-events-auto"
+              className="font-sans text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-10 pointer-events-auto drop-shadow-md"
             >
               The first terminal designed for the <span className="text-cyan-200 font-medium">Post-Fiat Era</span>. 
               Visualize liquidity, predict order flow, and execute with algorithmic precision.
             </motion.p>
 
-            {/* CTAs (Cyan/Blue Theme) */}
+            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-6 pointer-events-auto">
               <Link href="/signup">
-                <MagneticButton className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold px-10 py-5 shadow-[0_0_50px_-15px_rgba(34,211,238,0.5)] border-none min-w-[200px]">
+                <MagneticButton className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold px-10 py-5 border-none min-w-[200px] shadow-cyan-500/20 shadow-lg">
                   Initialize
                 </MagneticButton>
               </Link>
@@ -94,7 +109,7 @@ export function LuxuryLandingPage() {
           </motion.div>
 
           {/* Bottom Ticker Tape */}
-          <div className="absolute bottom-0 w-full border-t border-white/5 bg-black/20 backdrop-blur-sm pointer-events-auto">
+          <div className="absolute bottom-0 w-full border-t border-white/5 bg-black/60 backdrop-blur-md pointer-events-auto">
             <div className="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-end">
                 <div className="flex gap-12 font-mono text-xs">
                      <div className="group cursor-pointer">
@@ -104,7 +119,6 @@ export function LuxuryLandingPage() {
                             <span className="text-emerald-500 text-xs">▲ 2.4%</span>
                          </div>
                      </div>
-                     {/* Other tickers... */}
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-slate-600 font-mono uppercase tracking-widest">
                     System Optimal <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
@@ -113,9 +127,10 @@ export function LuxuryLandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 2: THE ENGINE (Gradient Fade) --- */}
+        {/* --- SECTION 2: THE ENGINE --- */}
         <section className="relative py-32 px-6 pointer-events-auto">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030303]/80 to-[#030303] z-0" />
+          {/* Smooth fade to solid black for readability of lower sections */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#050505]/90 to-[#050505] z-0" />
 
           <div className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div style={{ y: yEngine }} className="lg:col-span-5">
@@ -143,7 +158,7 @@ export function LuxuryLandingPage() {
               </div>
             </motion.div>
 
-            {/* Breathing Chart UI (Cyan Theme) */}
+            {/* Breathing Chart UI */}
             <div className="lg:col-span-7">
                <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000" />
@@ -208,7 +223,7 @@ export function LuxuryLandingPage() {
         </section>
 
         {/* --- SECTION 3: GRID --- */}
-        <section className="relative py-32 px-6 bg-[#030303] pointer-events-auto">
+        <section className="relative py-32 px-6 bg-[#050505] pointer-events-auto">
            <div className="max-w-7xl mx-auto">
               <motion.div style={{ y: yGrid }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   
@@ -270,7 +285,7 @@ export function LuxuryLandingPage() {
         </section>
 
         {/* --- FOOTER CTA --- */}
-        <section className="relative py-48 px-6 text-center overflow-hidden pointer-events-auto bg-[#030303]">
+        <section className="relative py-48 px-6 text-center overflow-hidden pointer-events-auto bg-[#050505]">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-cyan-900/10 blur-[120px] rounded-full" />
             
             <div className="relative z-10">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -31,44 +30,65 @@ import {
   SheetDescription,
   SheetTrigger
 } from "@/components/ui/sheet";
-import { fetchMarketDataFromAV } from "@/lib/actions";
+import { 
+  fetchMarketData, 
+  createAlertAction, 
+  getAlertsAction, 
+  deleteAlertAction, 
+  toggleAlertStatusAction 
+} from "@/lib/actions";
 
 const IS_BROWSER = typeof window !== 'undefined';
-const POLLING_INTERVAL = 30000; // 30 seconds
+const POLLING_INTERVAL = 10000;
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<AlertConfig[]>(() => {
-    if (!IS_BROWSER) return [];
-    const savedAlerts = localStorage.getItem("marketVisionAlerts");
-    return savedAlerts ? JSON.parse(savedAlerts) : [];
-  });
+  const [alerts, setAlerts] = useState<AlertConfig[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
   const { toast } = useToast();
   const { addNotification } = useNotificationCenter();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const isMobile = useIsMobile();
-  const activeAlerts = alerts.filter(a => a.isActive);
   const pollingRef = useRef<NodeJS.Timeout>();
 
+  const activeAlerts = alerts.filter(a => a.isActive);
+  const inactiveAlerts = alerts.filter(a => !a.isActive);
 
+  // 1. Fetch Alerts from DB
   useEffect(() => {
-    if (!loading && !user) {
+    async function loadAlerts() {
+      if (!user) return;
+      setLoadingData(true);
+      const { data, error } = await getAlertsAction();
+      if (error) {
+        toast({ title: "Error loading alerts", description: error, variant: "destructive" });
+      } else {
+        setAlerts(data);
+      }
+      setLoadingData(false);
+    }
+
+    if (!authLoading && user) {
+      loadAlerts();
+    } else if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router, toast]);
 
-
+  // Request Notification Permissions
   useEffect(() => {
-    if (IS_BROWSER) {
-      localStorage.setItem("marketVisionAlerts", JSON.stringify(alerts));
+    if (IS_BROWSER && "Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
     }
-  }, [alerts]);
+  }, []);
   
+  // 2. Trigger Logic
   const triggerAlertNotification = useCallback(async (alert: AlertConfig, currentPrice: number) => {
-    const notificationTitle = `Alert Triggered: ${alert.name}`;
-    const notificationMessage = `Your alert for ${alert.asset} met its condition: Price reached ${currentPrice}.`;
+    const notificationTitle = `Target Hit: ${alert.asset}`;
+    const notificationMessage = `${alert.name} triggered! Price hit ${currentPrice.toLocaleString()} (Target: ${Number(alert.value).toLocaleString()})`;
 
+    // In-App
     addNotification({
       title: notificationTitle,
       message: notificationMessage,
@@ -77,131 +97,130 @@ export default function AlertsPage() {
       relatedLink: `/alerts#${alert.id}`
     });
 
-    if (alert.notificationMethod === 'email') {
-      if (!user?.email) return; 
-      try {
-        await sendEmailNotification({
-          to: user.email,
-          subject: `FinSight AI Alert: ${alert.name}`,
-          body: notificationMessage,
-        });
-        addNotification({
-          title: "Email Alert Sent",
-          message: `An email confirmation for "${alert.name}" was sent to ${user.email}.`,
-          type: 'info',
-          iconName: 'Mail', 
-          relatedLink: `/alerts#${alert.id}`
-        });
-      } catch (error) {
-         console.error("Failed to send email notification:", error);
-      }
+    // Native Browser Push
+    if (IS_BROWSER && "Notification" in window && Notification.permission === "granted") {
+      new Notification(notificationTitle, {
+        body: notificationMessage,
+        icon: "/icon.jpg",
+        tag: `alert-${alert.id}`
+      });
     }
-    // Deactivate alert after it has been triggered
+
+    // Email
+    if (alert.notificationMethod === 'email') {
+      if (user?.email) {
+        try {
+          await sendEmailNotification({
+            to: user.email,
+            subject: `FinSight AI Alert: ${alert.name}`,
+            body: notificationMessage,
+          });
+        } catch (error) {
+           console.error("Failed to send email:", error);
+        }
+      }
+    } else {
+        toast({ title: notificationTitle, description: notificationMessage });
+    }
+
+    // Deactivate in DB
+    await toggleAlertStatusAction(alert.id, false);
+    
+    // Update UI
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isActive: false } : a));
 
-  }, [addNotification, user?.email]);
+  }, [addNotification, user?.email, toast]);
 
 
-  // Polling logic
+  // 3. Polling Logic (Price Check)
   useEffect(() => {
     const checkAlerts = async () => {
       const activePriceAlerts = alerts.filter(a => a.isActive && a.conditionType === 'price_target');
       if (activePriceAlerts.length === 0) return;
 
-      // Create a map to fetch price for each unique symbol only once
+      const uniqueAssets = Array.from(new Set(activePriceAlerts.map(a => a.asset.toUpperCase())));
+      
+      const priceResults = await Promise.all(uniqueAssets.map(async (asset) => {
+         const result = await fetchMarketData(asset);
+         return { asset, price: result.data?.price };
+      }));
+
       const symbolPriceMap = new Map<string, number>();
+      priceResults.forEach(r => {
+          if (r.price !== undefined) symbolPriceMap.set(r.asset, r.price);
+      });
 
       for (const alert of activePriceAlerts) {
-        try {
-          let price: number | undefined = symbolPriceMap.get(alert.asset.toUpperCase());
-          
-          if (price === undefined) {
-            const result = await fetchMarketDataFromAV(alert.asset);
-            if (result.data) {
-              price = result.data.price;
-              symbolPriceMap.set(alert.asset.toUpperCase(), price);
-            } else {
-              console.warn(`Could not fetch price for ${alert.asset}: ${result.error}`);
-              continue; // Skip this alert if price fetch fails
-            }
-          }
-          
-          const targetPrice = Number(alert.value);
-          if (isNaN(targetPrice) || price === undefined) continue;
+        const currentPrice = symbolPriceMap.get(alert.asset.toUpperCase());
+        const targetPrice = Number(alert.value);
 
-          const originalPrice = alert.originalPrice;
-          let shouldTrigger = false;
+        if (currentPrice === undefined || isNaN(targetPrice)) continue;
 
-          if (originalPrice !== undefined) {
-            // If original price is known, trigger only when crossing the target
-            if (originalPrice > targetPrice && price <= targetPrice) {
-              shouldTrigger = true;
-            } else if (originalPrice < targetPrice && price >= targetPrice) {
-              shouldTrigger = true;
-            }
-          } else {
-            // Fallback for older alerts without originalPrice
-            if (price >= targetPrice) { // Simple "at or above" check
-              shouldTrigger = true;
-            }
-          }
+        let shouldTrigger = false;
+        const originalPrice = alert.originalPrice;
 
-          if (shouldTrigger) {
-            triggerAlertNotification(alert, price);
-          }
+        if (originalPrice !== undefined) {
+          const wasBullish = targetPrice > originalPrice; 
+          const wasBearish = targetPrice < originalPrice; 
 
-        } catch (error) {
-          console.error(`Error checking alert for ${alert.asset}:`, error);
+          if (wasBullish && currentPrice >= targetPrice) shouldTrigger = true;
+          else if (wasBearish && currentPrice <= targetPrice) shouldTrigger = true;
+        } else {
+           if (currentPrice >= targetPrice) shouldTrigger = true;
+        }
+
+        if (shouldTrigger) {
+          triggerAlertNotification(alert, currentPrice);
         }
       }
     };
     
-    // Clear any existing interval
-    if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-    }
+    if (pollingRef.current) clearInterval(pollingRef.current);
 
-    // Start new interval if there are active alerts
     if (activeAlerts.length > 0) {
-        // Run once immediately, then start interval
         checkAlerts();
         pollingRef.current = setInterval(checkAlerts, POLLING_INTERVAL);
     }
 
-    // Cleanup on component unmount
     return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-      }
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [alerts, triggerAlertNotification, activeAlerts.length]); // Rerun when alerts change
+  }, [alerts, triggerAlertNotification, activeAlerts.length]);
 
-  const handleAddAlert = (newAlert: AlertConfig) => {
-    setAlerts((prevAlerts) => [newAlert, ...prevAlerts]);
-    setIsFormOpen(false); // Close the dialog/sheet after adding
-  };
-
-  const handleDeleteAlert = (alertId: string) => {
-    const alertToDelete = alerts.find(a => a.id === alertId);
-    if (alertToDelete) {
-      setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== alertId));
-      toast({
-        title: "Alert Deleted",
-        description: `The alert "${alertToDelete.name}" has been successfully removed.`,
-        variant: "destructive",
-      });
+  const handleAddAlert = async (alertData: AlertConfig) => {
+    const response = await createAlertAction(alertData);
+    if (response.success && response.alert) {
+        setAlerts(prev => [response.alert!, ...prev]);
+        setIsFormOpen(false);
+        toast({ title: "Alert Saved", description: "Your alert is now active." });
+    } else {
+        toast({ title: "Error", description: response.message, variant: "destructive" });
     }
   };
 
-  if (loading) {
+  const handleDeleteAlert = async (alertId: string) => {
+    const prevAlerts = [...alerts];
+    setAlerts(prev => prev.filter(a => a.id !== alertId));
+
+    const response = await deleteAlertAction(alertId);
+    if (!response.success) {
+        setAlerts(prevAlerts); 
+        toast({ title: "Error", description: "Failed to delete alert.", variant: "destructive" });
+    } else {
+        toast({ title: "Alert Deleted", description: "Removed from database." });
+    }
+  };
+
+  if (authLoading || loadingData) {
     return (
       <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-16 md:pb-8">
         <div className="container mx-auto py-8">
+           <div className="flex items-center gap-2 mb-8">
+             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+             <span className="text-muted-foreground">Syncing alerts...</span>
+           </div>
           <Skeleton className="h-10 w-48 mb-4" />
-          <Skeleton className="h-8 w-full max-w-md mb-8" />
           <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
           </div>
         </div>
@@ -209,19 +228,14 @@ export default function AlertsPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const inactiveAlerts = alerts.filter(a => !a.isActive);
-  
   const FormDialog = isMobile ? Sheet : Dialog;
   const FormDialogTrigger = isMobile ? SheetTrigger : DialogTrigger;
   const FormDialogContent = isMobile ? SheetContent : DialogContent;
   const FormDialogHeader = isMobile ? SheetHeader : DialogHeader;
   const FormDialogTitle = isMobile ? SheetTitle : DialogTitle;
   const FormDialogDescription = isMobile ? SheetDescription : DialogDescription;
-
 
   return (
     <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-24 md:pb-8">
@@ -234,6 +248,11 @@ export default function AlertsPage() {
             <p className="text-lg text-muted-foreground">
               Manage your custom market alerts.
             </p>
+            {IS_BROWSER && "Notification" in window && Notification.permission === "default" && (
+                <Button variant="outline" size="sm" onClick={() => Notification.requestPermission()}>
+                    Enable Push Notifications
+                </Button>
+            )}
           </div>
         </header>
 
@@ -244,22 +263,13 @@ export default function AlertsPage() {
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
-            <AlertListDisplay
-              alerts={alerts}
-              onDeleteAlert={handleDeleteAlert}
-            />
+            <AlertListDisplay alerts={alerts} onDeleteAlert={handleDeleteAlert} />
           </TabsContent>
           <TabsContent value="active" className="mt-6">
-            <AlertListDisplay
-              alerts={activeAlerts}
-              onDeleteAlert={handleDeleteAlert}
-            />
+            <AlertListDisplay alerts={activeAlerts} onDeleteAlert={handleDeleteAlert} />
           </TabsContent>
           <TabsContent value="inactive" className="mt-6">
-             <AlertListDisplay
-              alerts={inactiveAlerts}
-              onDeleteAlert={handleDeleteAlert}
-            />
+             <AlertListDisplay alerts={inactiveAlerts} onDeleteAlert={handleDeleteAlert} />
           </TabsContent>
         </Tabs>
 
@@ -270,14 +280,19 @@ export default function AlertsPage() {
               <span className="sr-only">Add Alert</span>
             </Button>
           </FormDialogTrigger>
-          <FormDialogContent side={isMobile ? 'bottom' : undefined} className={isMobile ? 'h-[90vh]' : 'sm:max-w-[425px]'}>
+          
+          {/* UI FIX: Flex column layout to handle scrolling properly */}
+          <FormDialogContent 
+             side={isMobile ? 'bottom' : undefined} 
+             className={isMobile ? 'flex flex-col h-[90vh]' : 'sm:max-w-[425px] flex flex-col max-h-[85vh]'}
+          >
             <FormDialogHeader>
               <FormDialogTitle>Create a New Alert</FormDialogTitle>
               <FormDialogDescription>
-                Set up a new market event notification. It will appear in your feed.
+                Set up a new market event notification.
               </FormDialogDescription>
             </FormDialogHeader>
-            <div className={isMobile ? 'overflow-y-auto' : ''}>
+            <div className="flex-1 overflow-y-auto pr-1">
               <AlertConfigForm onAddAlert={handleAddAlert} />
             </div>
           </FormDialogContent>

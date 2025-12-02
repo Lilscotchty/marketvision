@@ -1,24 +1,22 @@
-import { createServerClient } from "@supabase/ssr";
-import { type ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-export function createSupabaseServerClient(cookieStore: ReadonlyRequestCookies) {
-  // Add fallbacks to prevent build-time crashes if env vars are missing
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+export async function createSupabaseServerClient(cookieStore?: any) { // Accept optional store
+  const cookieStoreToUse = cookieStore || (await cookies());
 
   return createServerClient(
-    supabaseUrl,
-    supabaseKey,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return cookieStoreToUse.getAll()
         },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set({ name, value, ...options })
-            );
+              cookieStoreToUse.set(name, value, options)
+            )
           } catch {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
@@ -27,5 +25,5 @@ export function createSupabaseServerClient(cookieStore: ReadonlyRequestCookies) 
         },
       },
     }
-  );
+  )
 }

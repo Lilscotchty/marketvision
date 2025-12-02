@@ -14,13 +14,17 @@ import type {
   NewsPost,
   NewsPostFormValues,
   HistoricalPrediction,
+  AlertConfig
 } from '@/types';
 import { createSupabaseServerClient } from '@/lib/supabase/server'; 
 import { revalidatePath } from 'next/cache'; 
 import { v4 as uuidv4 } from 'uuid';
 import { cookies } from 'next/headers';
+import yahooFinance from 'yahoo-finance2';
 
 const BUCKET_NAME = 'chart_uploads';
+
+// --- CHART UPLOAD & ANALYSIS ---
 
 export interface AnalysisResult {
   prediction?: PredictionOutput;
@@ -29,17 +33,11 @@ export interface AnalysisResult {
   imagePreviewUrls?: (string | null)[];
 }
 
-/**
- * Uploads an array of files to a user-specific folder in Supabase Storage.
- * This is a Server Action and must be called from a client component.
- * @param files - An array of File objects to upload.
- * @returns An array of objects, each containing either a `publicUrl` or an `error`.
- */
 export async function uploadChartImages(
   files: File[]
 ): Promise<{ publicUrl: string | null; error: any }[]> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const {
     data: { session },
@@ -74,7 +72,6 @@ export async function uploadChartImages(
       return { publicUrl: null, error };
     }
 
-    // Get the public URL for the newly uploaded file
     const {
       data: { publicUrl },
     } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
@@ -142,118 +139,24 @@ export async function handleImageAnalysisAction(
   }
 }
 
-interface AssetInfo {
-  type: 'stock' | 'forex' | 'crypto' | 'unknown';
-  apiSymbol: string;
-  fromCurrency?: string;
-  toCurrency?: string;
-  market?: string;
-  originalSymbol: string;
-}
+// --- MARKET DATA FETCHING (YAHOO FINANCE) ---
 
-function determineAssetType(symbol: string): AssetInfo {
-  const upperSymbol = symbol.toUpperCase().trim();
-  const originalSymbol = symbol;
-
-  if (/^[A-Z]{6}$/.test(upperSymbol)) {
-    return {
-      type: 'forex',
-      fromCurrency: upperSymbol.substring(0, 3),
-      toCurrency: upperSymbol.substring(3),
-      apiSymbol: '',
-      originalSymbol: `${upperSymbol.substring(0, 3)}/${upperSymbol.substring(
-        3
-      )}`,
-    };
+function convertToYahooSymbol(symbol: string): string {
+  let s = symbol.toUpperCase().trim();
+  
+  if (s.includes('/') && (s.endsWith('USD') || s.endsWith('USDT'))) {
+    return s.replace('/', '-');
+  }
+  if (!s.includes('-') && (s.endsWith('USD') || s.endsWith('USDT')) && s.length > 3) {
+     if (s.endsWith('USD')) return s.replace('USD', '-USD');
+     if (s.endsWith('USDT')) return s.replace('USDT', '-USDT');
   }
 
-  if (upperSymbol.includes('/') && upperSymbol.length === 7) {
-    const parts = upperSymbol.split('/');
-    if (
-      parts.length === 2 &&
-      parts[0].length === 3 &&
-      parts[1].length === 3 &&
-      /^[A-Z]{3}$/.test(parts[0]) &&
-      /^[A-Z]{3}$/.test(parts[1])
-    ) {
-      return {
-        type: 'forex',
-        fromCurrency: parts[0],
-        toCurrency: parts[1],
-        apiSymbol: '',
-        originalSymbol: `${parts[0]}/${parts[1]}`,
-      };
-    }
+  if (s.includes('/') && s.length === 7) {
+      return s.replace('/', '') + "=X";
   }
-
-  const commonFiats = [
-    'USD',
-    'EUR',
-    'GBP',
-    'JPY',
-    'CAD',
-    'AUD',
-    'CNY',
-    'INR',
-    'USDT',
-    'USDC',
-    'BUSD',
-  ];
-  let match;
-
-  if (upperSymbol.includes('/')) {
-    match = upperSymbol.match(/^([A-Z0-9]{2,5})\/([A-Z]{3,4})$/);
-    if (match) {
-      const crypto = match[1];
-      const fiatMarket = match[2];
-      if (commonFiats.includes(fiatMarket)) {
-        return {
-          type: 'crypto',
-          apiSymbol: crypto,
-          market: fiatMarket,
-          originalSymbol: `${crypto}/${fiatMarket}`,
-        };
-      }
-    }
-  } else {
-    if (upperSymbol.length > 3 && upperSymbol.length <= 8) {
-      for (const fiat of commonFiats) {
-        if (upperSymbol.endsWith(fiat)) {
-          const crypto = upperSymbol.substring(
-            0,
-            upperSymbol.length - fiat.length
-          );
-          if (
-            crypto.length >= 2 &&
-            crypto.length <= 5 &&
-            /^[A-Z0-9]+$/.test(crypto)
-          ) {
-            return {
-              type: 'crypto',
-              apiSymbol: crypto,
-              market: fiat,
-              originalSymbol: `${crypto}/${fiat}`,
-            };
-          }
-        }
-      }
-    }
-  }
-
-  if (
-    !upperSymbol.includes('/') &&
-    upperSymbol.length <= 5 &&
-    /^[A-Z0-9\.]+$/.test(upperSymbol) &&
-    !commonFiats.includes(upperSymbol)
-  ) {
-    return {
-      type: 'stock',
-      apiSymbol: upperSymbol,
-      originalSymbol: upperSymbol,
-    };
-  }
-
-  return { type: 'unknown', apiSymbol: upperSymbol, originalSymbol: symbol };
+  
+  return s;
 }
 
 export interface FetchMarketDataResult {
@@ -262,242 +165,50 @@ export interface FetchMarketDataResult {
   assetType?: 'stock' | 'forex' | 'crypto' | 'unknown';
 }
 
+export async function fetchMarketData(symbol: string): Promise<FetchMarketDataResult> {
+  try {
+    const yahooSymbol = convertToYahooSymbol(symbol);
+    // Suppress notices to prevent log clutter affecting server responses
+    yahooFinance.suppressNotices(['yahooSurvey']); 
+    
+    const quote = await yahooFinance.quote(yahooSymbol);
+
+    if (!quote) {
+        return { error: `No data found for symbol: ${symbol}` };
+    }
+
+    const marketData: AlphaVantageGlobalQuote = {
+        symbol: quote.symbol,
+        open: quote.regularMarketOpen || 0,
+        high: quote.regularMarketDayHigh || 0,
+        low: quote.regularMarketDayLow || 0,
+        price: quote.regularMarketPrice || 0,
+        volume: quote.regularMarketVolume || 0,
+        latestTradingDay: quote.regularMarketTime ? new Date(quote.regularMarketTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        previousClose: quote.regularMarketPreviousClose || 0,
+        change: quote.regularMarketChange || 0,
+        changePercent: quote.regularMarketChangePercent ? quote.regularMarketChangePercent.toFixed(2) + '%' : '0%',
+    };
+
+    let assetType: 'stock' | 'forex' | 'crypto' | 'unknown' = 'stock';
+    if (quote.quoteType === 'CRYPTOCURRENCY') assetType = 'crypto';
+    else if (quote.quoteType === 'CURRENCY') assetType = 'forex';
+
+    return { data: marketData, assetType };
+
+  } catch (error) {
+    console.error(`Failed to fetch market data for ${symbol}:`, error);
+    return { error: `Failed to fetch data. Ensure the symbol is correct (e.g., BTC-USD, AAPL).` };
+  }
+}
+
 export async function fetchMarketDataFromAV(
   symbol: string
 ): Promise<FetchMarketDataResult> {
-  const apiKey = process.env.ALPHAVANTAGE_API_KEY;
-  if (!apiKey) {
-    console.warn(
-      'AlphaVantage API key is not configured. Live quote fetching is disabled.'
-    );
-    return { error: 'Quote service API key is not configured.' };
-  }
-
-  const assetInfo = determineAssetType(symbol);
-  let url = '';
-
-  if (assetInfo.type === 'unknown') {
-    return {
-      error: `Symbol format "${symbol}" not recognized. Try formats like AAPL, EUR/USD, or BTC/USD.`,
-      assetType: 'unknown',
-    };
-  }
-
-  try {
-    if (assetInfo.type === 'stock') {
-      url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${assetInfo.apiSymbol}&apikey=${apiKey}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        return {
-          error: `Stock API request failed: ${response.statusText}`,
-          assetType: 'stock',
-        };
-      }
-      const data = await response.json();
-
-      if (data['Error Message']) {
-        return {
-          error: `Quote service (Stock): ${data['Error Message']}`,
-          assetType: 'stock',
-        };
-      }
-      if (data['Note']) {
-        console.warn('Quote service API Note (Stock):', data['Note']);
-      }
-
-      const globalQuote = data['Global Quote'];
-      if (!globalQuote || Object.keys(globalQuote).length === 0) {
-        return {
-          error: `No stock data for "${assetInfo.apiSymbol}". It may be unsupported or not a stock.`,
-          assetType: 'stock',
-        };
-      }
-
-      return {
-        data: {
-          symbol: globalQuote['01. symbol'] || assetInfo.originalSymbol,
-          open: parseFloat(globalQuote['02. open']),
-          high: parseFloat(globalQuote['03. high']),
-          low: parseFloat(globalQuote['04. low']),
-          price: parseFloat(globalQuote['05. price']),
-          volume: parseInt(globalQuote['06. volume'], 10),
-          latestTradingDay: globalQuote['07. latest trading day'],
-          previousClose: parseFloat(globalQuote['08. previous close']),
-          change: parseFloat(globalQuote['09. change']),
-          changePercent: globalQuote['10. change percent'],
-        },
-        assetType: 'stock',
-      };
-    } else if (
-      assetInfo.type === 'forex' &&
-      assetInfo.fromCurrency &&
-      assetInfo.toCurrency
-    ) {
-      url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${assetInfo.fromCurrency}&to_symbol=${assetInfo.toCurrency}&apikey=${apiKey}`;
-      const response = await fetch(url);
-      if (!response.ok)
-        return {
-          error: `Forex API request failed: ${response.statusText}`,
-          assetType: 'forex',
-        };
-
-      const data = await response.json();
-
-      if (data['Error Message']) {
-        return { error: data['Error Message'], assetType: 'forex' };
-      }
-      if (data['Note']) {
-        console.warn('Quote service API Note (Forex):', data['Note']);
-      }
-
-      const timeSeriesKey = 'Time Series FX (Daily)';
-      const timeSeries = data[timeSeriesKey];
-
-      if (!timeSeries) {
-        return {
-          error: `No Forex time series data for ${assetInfo.fromCurrency}/${assetInfo.toCurrency}.`,
-          assetType: 'forex',
-        };
-      }
-
-      const dates = Object.keys(timeSeries);
-      if (dates.length < 2) {
-        return {
-          error: 'Not enough forex data to calculate change.',
-          assetType: 'forex',
-        };
-      }
-
-      const latestDate = dates[0];
-      const previousDate = dates[1];
-
-      const latestDayData = timeSeries[latestDate];
-      const previousDayData = timeSeries[previousDate];
-
-      const price = parseFloat(latestDayData['4. close']);
-      const previousClose = parseFloat(previousDayData['4. close']);
-      const change = price - previousClose;
-      const changePercent = ((change / previousClose) * 100).toFixed(2) + '%';
-
-      return {
-        data: {
-          symbol: assetInfo.originalSymbol,
-          open: parseFloat(latestDayData['1. open']),
-          high: parseFloat(latestDayData['2. high']),
-          low: parseFloat(latestDayData['3. low']),
-          price: price,
-          volume: 0, 
-          latestTradingDay: latestDate,
-          previousClose: previousClose,
-          change: change,
-          changePercent: changePercent,
-        },
-        assetType: 'forex',
-      };
-    } else if (
-      assetInfo.type === 'crypto' &&
-      assetInfo.apiSymbol &&
-      assetInfo.market
-    ) {
-      url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${assetInfo.apiSymbol}&market=${assetInfo.market}&apikey=${apiKey}`;
-      const response = await fetch(url);
-      if (!response.ok)
-        return {
-          error: `Crypto API request failed: ${response.statusText}`,
-          assetType: 'crypto',
-        };
-      const data = await response.json();
-
-      if (data['Error Message']) {
-        return { error: data['Error Message'], assetType: 'crypto' };
-      }
-      if (data['Note']) {
-        console.warn('Quote service API Note (Crypto):', data['Note']);
-      }
-
-      const timeSeriesKey = 'Time Series (Digital Currency Daily)';
-      const timeSeries = data[timeSeriesKey];
-
-      if (!timeSeries) {
-        return {
-          error: `No Crypto time series data for ${assetInfo.apiSymbol}/${assetInfo.market}.`,
-          assetType: 'crypto',
-        };
-      }
-
-      const dates = Object.keys(timeSeries); 
-      if (dates.length < 2) {
-        return {
-          error: 'Not enough crypto data to calculate change.',
-          assetType: 'crypto',
-        };
-      }
-
-      const latestDate = dates[0]; 
-      const previousDate = dates[1]; 
-
-      const latestDayData = timeSeries[latestDate];
-      const previousDayData = timeSeries[previousDate];
-
-      const openKey = `1a. open (${assetInfo.market})`;
-      const highKey = `2a. high (${assetInfo.market})`;
-      const lowKey = `3a. low (${assetInfo.market})`;
-      const closeKey = `4. close`; 
-      const volumeKey = `5. volume`;
-
-      const altOpenKey = `1. open`;
-      const altHighKey = `2. high`;
-      const altLowKey = `3. low`;
-      const altCloseKey = `4. close`;
-
-      const getSafeValue = (dayData: any, primaryKey: string, fallbackKey: string) => {
-        return parseFloat(dayData[primaryKey] || dayData[fallbackKey]);
-      };
-
-      const price = getSafeValue(latestDayData, closeKey, altCloseKey);
-      const previousClose = getSafeValue(
-        previousDayData,
-        closeKey,
-        altCloseKey
-      );
-      const change = price - previousClose;
-      const changePercent = ((change / previousClose) * 100).toFixed(2) + '%';
-
-      return {
-        data: {
-          symbol: assetInfo.originalSymbol,
-          open: getSafeValue(latestDayData, openKey, altOpenKey),
-          high: getSafeValue(latestDayData, highKey, altHighKey),
-          low: getSafeValue(latestDayData, lowKey, altLowKey),
-          price: price,
-          volume: parseFloat(latestDayData[volumeKey]),
-          latestTradingDay: latestDate,
-          previousClose: previousClose,
-          change: change,
-          changePercent: changePercent,
-        },
-        assetType: 'crypto',
-      };
-    } else {
-      return {
-        error: `Unsupported asset type or format for fetching: ${symbol}`,
-        assetType: assetInfo.type,
-      };
-    }
-  } catch (error) {
-    console.error(
-      `Failed to fetch market data for symbol "${symbol}" (type: ${assetInfo.type}):`,
-      error
-    );
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : 'An unexpected error occurred while fetching data.',
-      assetType: assetInfo.type,
-    };
-  }
+    return fetchMarketData(symbol);
 }
+
+// --- NEWS FETCHING ---
 
 export interface FetchNewsResult {
   data?: ApiMarketNewsItem[];
@@ -562,6 +273,8 @@ export async function categorizeAssetAction(
   }
 }
 
+// --- USER & ROLE MANAGEMENT ---
+
 type ActionResponse = {
   success: boolean;
   message: string;
@@ -572,7 +285,7 @@ export async function updateUserRoles(
   newRoles: Role[]
 ): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const {
     data: { user: adminUser },
@@ -632,10 +345,11 @@ export async function updateUserRoles(
   return { success: true, message: 'Roles updated successfully.' };
 }
 
-// Server Action to get all news posts
+// --- NEWS POST MANAGEMENT ---
+
 export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: string | null }> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
   
   const { data, error } = await supabase
     .from('news_posts')
@@ -656,17 +370,13 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
     return { data: null, error: error.message };
   }
 
-  // Remap the data to include author info at the top level
-  // FIX 1: Cast 'post' to 'any' to treat it as a flexible object (fixes 'profiles' error)
   const remappedData = data.map((post: any) => {
     const profileData = post.profiles;
     
-    // profileData could be an array or object depending on the join, though usually object for single relation
     const profile = Array.isArray(profileData) 
       ? (profileData.length > 0 ? profileData[0] : null)
       : profileData;
 
-    // Prefer username, fallback to email, then "Unknown"
     let authorDisplay = 'Unknown Author';
     
     if (profile) {
@@ -677,7 +387,6 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
         }
     }
 
-    // FIX 2: Destructure 'profiles' OUT of the object.
     const { profiles, ...postWithoutProfiles } = post;
 
     return {
@@ -689,13 +398,12 @@ export async function getNewsPosts(): Promise<{ data: NewsPost[] | null; error: 
   return { data: remappedData, error: null };
 }
 
-// Server action to create/update a news post
 export async function upsertNewsPost(
   values: NewsPostFormValues,
   postId?: string
 ): Promise<ActionResponse & { postId?: string }> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const {
     data: { user },
@@ -705,7 +413,6 @@ export async function upsertNewsPost(
     return { success: false, message: 'Not authenticated.' };
   }
 
-  // --- FIX START: Ensure Profile Exists ---
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
@@ -716,7 +423,6 @@ export async function upsertNewsPost(
     const userRoles: Role[] =
       user.email === 'pb7552212@gmail.com' ? ['Owner'] : ['User'];
       
-    // Try to grab username from metadata if creating a fallback profile
     const usernameFromMeta = user.user_metadata?.username || user.user_metadata?.full_name || null;
 
     const { error: insertProfileError } = await supabase.from('profiles').insert({
@@ -736,7 +442,6 @@ export async function upsertNewsPost(
       };
     }
   }
-  // --- FIX END ---
 
   const postData = {
     ...values,
@@ -744,7 +449,6 @@ export async function upsertNewsPost(
   };
 
   if (postId) {
-    // Update existing post
     const { error } = await supabase
       .from('news_posts')
       .update(postData)
@@ -759,7 +463,6 @@ export async function upsertNewsPost(
     revalidatePath('/news');
     return { success: true, message: 'Post updated successfully.', postId };
   } else {
-    // Create new post
     const { data, error } = await supabase
       .from('news_posts')
       .insert(postData)
@@ -777,10 +480,9 @@ export async function upsertNewsPost(
   }
 }
 
-// Server action to delete a news post
 export async function deleteNewsPost(postId: string): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const { error } = await supabase.from('news_posts').delete().eq('id', postId);
   if (error) {
@@ -794,20 +496,15 @@ export async function deleteNewsPost(postId: string): Promise<ActionResponse> {
   return { success: true, message: 'Post deleted successfully.' };
 }
 
-// --- Credit & Subscription Management ---
+// --- CREDIT & SUBSCRIPTION MANAGEMENT ---
 
-/**
- * Attempts to consume 1 analysis credit for the current user.
- * Returns success: true if user has subscription OR has credits > 0.
- */
 export async function consumeAnalysisCredit(): Promise<{ success: boolean; message?: string; remainingCredits?: number }> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: 'Not authenticated' };
 
-  // Fetch profile
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('has_active_subscription, chart_analysis_trial_points')
@@ -818,12 +515,10 @@ export async function consumeAnalysisCredit(): Promise<{ success: boolean; messa
     return { success: false, message: 'Profile not found' };
   }
 
-  // 1. Check Subscription (Unlimited Access)
   if (profile.has_active_subscription) {
     return { success: true, message: 'Subscription active' }; 
   }
 
-  // 2. Check & Consume Credits
   if ((profile.chart_analysis_trial_points || 0) > 0) {
     const newPoints = (profile.chart_analysis_trial_points || 0) - 1;
     
@@ -836,21 +531,17 @@ export async function consumeAnalysisCredit(): Promise<{ success: boolean; messa
       return { success: false, message: 'Failed to update credits' };
     }
     
-    revalidatePath('/'); // Refresh dashboard data
+    revalidatePath('/'); 
     return { success: true, remainingCredits: newPoints };
   }
 
   return { success: false, message: 'Insufficient credits' };
 }
 
-/**
- * Admin Action: Add credits to a specific user
- */
 export async function adminAddCredits(userId: string, amount: number): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
-  // Verify Admin/Owner
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: 'Not authenticated' };
   
@@ -861,7 +552,6 @@ export async function adminAddCredits(userId: string, amount: number): Promise<A
     return { success: false, message: 'Unauthorized' };
   }
 
-  // Get current points first to add to them
   const { data: targetProfile } = await supabase.from('profiles').select('chart_analysis_trial_points').eq('id', userId).single();
   const currentPoints = targetProfile?.chart_analysis_trial_points || 0;
   
@@ -876,14 +566,10 @@ export async function adminAddCredits(userId: string, amount: number): Promise<A
   return { success: true, message: `Added ${amount} credits successfully.` };
 }
 
-/**
- * Admin Action: Toggle Subscription Status
- */
 export async function adminToggleSubscription(userId: string, status: boolean): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
-   // Verify Admin/Owner
    const { data: { user } } = await supabase.auth.getUser();
    if (!user) return { success: false, message: 'Not authenticated' };
    
@@ -905,12 +591,9 @@ export async function adminToggleSubscription(userId: string, status: boolean): 
   return { success: true, message: `Subscription set to ${status}` };
 }
 
-/**
- * Client Simulation: Self-activate subscription (For the modal "Simulate Success" button)
- */
 export async function simulateSubscriptionSuccess(): Promise<ActionResponse> {
     const cookieStore = await cookies();
-    const supabase = createSupabaseServerClient(cookieStore);
+    const supabase = await createSupabaseServerClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return { success: false, message: "Not authenticated" };
@@ -926,7 +609,7 @@ export async function simulateSubscriptionSuccess(): Promise<ActionResponse> {
     return { success: true, message: "Subscription activated!" };
 }
 
-// --- Analysis History Management (Database) ---
+// --- ANALYSIS HISTORY ---
 
 export async function saveAnalysisToHistory(
   analysis: AnalysisOutput,
@@ -934,7 +617,7 @@ export async function saveAnalysisToHistory(
   imageUrls: (string | null)[]
 ): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: 'Not authenticated' };
@@ -959,7 +642,7 @@ export async function saveAnalysisToHistory(
 
 export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[]; error: string | null }> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
   
   const { data, error } = await supabase
     .from('analyses')
@@ -968,7 +651,6 @@ export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[];
 
   if (error) return { data: [], error: error.message };
 
-  // Map DB format to HistoricalPrediction type
   const history: HistoricalPrediction[] = data.map((item) => ({
     id: item.id,
     date: item.created_at,
@@ -985,7 +667,7 @@ export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[];
 
 export async function updateAnalysisFlag(analysisId: string, flag: 'successful' | 'unsuccessful'): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const { error } = await supabase
     .from('analyses')
@@ -999,7 +681,7 @@ export async function updateAnalysisFlag(analysisId: string, flag: 'successful' 
 
 export async function deleteAnalysisAction(analysisId: string): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const { error } = await supabase
     .from('analyses')
@@ -1009,4 +691,131 @@ export async function deleteAnalysisAction(analysisId: string): Promise<ActionRe
   if (error) return { success: false, message: error.message };
   revalidatePath('/performance');
   return { success: true, message: 'Analysis deleted.' };
+}
+
+// --- ALERT SYSTEM ACTIONS (NEW & FIXED) ---
+
+export async function createAlertAction(alert: Omit<AlertConfig, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string; alert?: AlertConfig }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, message: 'Not authenticated' };
+
+    const { data, error } = await supabase
+      .from('alerts')
+      .insert({
+        user_id: user.id,
+        name: alert.name,
+        asset: alert.asset,
+        condition_type: alert.conditionType,
+        value: Number(alert.value), // Ensure numeric
+        notification_method: alert.notificationMethod,
+        is_active: alert.isActive,
+        original_price: alert.originalPrice,
+        category: alert.category,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase Error:", error);
+      return { success: false, message: `Database error: ${error.message}` };
+    }
+
+    const newAlert: AlertConfig = {
+      id: data.id,
+      createdAt: data.created_at,
+      name: data.name,
+      asset: data.asset,
+      conditionType: data.condition_type,
+      value: data.value,
+      notificationMethod: data.notification_method,
+      isActive: data.is_active,
+      originalPrice: data.original_price,
+      category: data.category,
+    };
+
+    try {
+      revalidatePath('/alerts');
+    } catch (e) {
+      // Ignore revalidation errors if path doesn't exist yet
+    }
+    
+    return { success: true, message: 'Alert created successfully', alert: newAlert };
+  } catch (err) {
+    console.error("Server Action Crash:", err);
+    return { success: false, message: "An internal server error occurred." };
+  }
+}
+
+export async function getAlertsAction(): Promise<{ data: AlertConfig[], error: string | null }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: 'Not authenticated' };
+
+    const { data, error } = await supabase
+      .from('alerts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) return { data: [], error: error.message };
+
+    const alerts: AlertConfig[] = data.map((item: any) => ({
+      id: item.id,
+      createdAt: item.created_at,
+      name: item.name,
+      asset: item.asset,
+      conditionType: item.condition_type,
+      value: item.value,
+      notificationMethod: item.notification_method,
+      isActive: item.is_active,
+      originalPrice: item.original_price,
+      category: item.category,
+    }));
+
+    return { data: alerts, error: null };
+  } catch (err) {
+    console.error("Fetch Alerts Crash:", err);
+    return { data: [], error: "Failed to load alerts." };
+  }
+}
+
+export async function deleteAlertAction(alertId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+    
+    const { error } = await supabase.from('alerts').delete().eq('id', alertId);
+
+    if (error) return { success: false, message: error.message };
+    
+    revalidatePath('/alerts');
+    return { success: true, message: 'Alert deleted' };
+  } catch (e) {
+    return { success: false, message: "Server error" };
+  }
+}
+
+export async function toggleAlertStatusAction(alertId: string, isActive: boolean): Promise<{ success: boolean; message: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+    
+    const { error } = await supabase
+      .from('alerts')
+      .update({ is_active: isActive })
+      .eq('id', alertId);
+
+    if (error) return { success: false, message: error.message };
+    
+    revalidatePath('/alerts');
+    return { success: true, message: 'Alert updated' };
+  } catch (e) {
+    return { success: false, message: "Server error" };
+  }
 }
