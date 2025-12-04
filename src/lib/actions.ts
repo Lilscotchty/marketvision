@@ -10,6 +10,8 @@ import type {
   AlphaVantageGlobalQuote,
   ApiMarketNewsItem,
   AssetCategory,
+  AppNotification,
+  NotificationType,
   Role, 
   NewsPost,
   NewsPostFormValues,
@@ -818,4 +820,116 @@ export async function toggleAlertStatusAction(alertId: string, isActive: boolean
   } catch (e) {
     return { success: false, message: "Server error" };
   }
+}
+
+// --- NOTIFICATION SYSTEM ACTIONS (NEW) ---
+export async function getNotificationsAction(): Promise<{ data: AppNotification[], error: string | null }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return { data: [], error: 'Not authenticated' };
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50); // Fetch last 50 notifications
+
+    if (error) return { data: [], error: error.message };
+
+    const notifications: AppNotification[] = data.map((n: any) => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      type: n.type as NotificationType,
+      read: n.read,
+      timestamp: n.created_at,
+      relatedLink: n.related_link,
+      iconName: n.icon_name,
+    }));
+
+    return { data: notifications, error: null };
+  } catch (e) {
+    return { data: [], error: "Failed to fetch notifications" };
+  }
+}
+
+export async function createNotificationAction(notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>): Promise<void> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = await createSupabaseServerClient(cookieStore);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return;
+
+    await supabase.from('notifications').insert({
+      user_id: user.id,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      read: false,
+      related_link: notification.relatedLink,
+      icon_name: notification.iconName,
+    });
+    
+    // We don't necessarily need to revalidate path here as the context will likely poll or update optimistically, 
+    // but it helps if the user navigates.
+    revalidatePath('/notifications');
+  } catch (e) {
+    console.error("Failed to create notification:", e);
+  }
+}
+
+export async function markNotificationReadAction(notificationId: string): Promise<void> {
+  const cookieStore = await cookies();
+  const supabase = await createSupabaseServerClient(cookieStore);
+  
+  await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+    
+  revalidatePath('/notifications');
+}
+
+export async function markAllNotificationsReadAction(): Promise<void> {
+  const cookieStore = await cookies();
+  const supabase = await createSupabaseServerClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user) return;
+
+  await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', user.id);
+    
+  revalidatePath('/notifications');
+}
+
+export async function deleteNotificationAction(notificationId: string): Promise<void> {
+  const cookieStore = await cookies();
+  const supabase = await createSupabaseServerClient(cookieStore);
+  
+  await supabase
+    .from('notifications')
+    .delete()
+    .eq('id', notificationId);
+    
+  revalidatePath('/notifications');
+}
+
+export async function clearAllNotificationsAction(): Promise<void> {
+  const cookieStore = await cookies();
+  const supabase = await createSupabaseServerClient(cookieStore);
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user) return;
+
+  await supabase
+    .from('notifications')
+    .delete()
+    .eq('user_id', user.id);
+    
+  revalidatePath('/notifications');
 }

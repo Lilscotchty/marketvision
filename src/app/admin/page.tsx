@@ -14,7 +14,8 @@ import { getNewsPosts } from "@/lib/actions";
 
 async function getAdminData() {
   const cookieStore = await cookies();
-  const supabase = createSupabaseServerClient(cookieStore);
+  // FIX: Added 'await' here because createSupabaseServerClient is now async
+  const supabase = await createSupabaseServerClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -47,7 +48,6 @@ async function getAdminData() {
         .select("*", { count: "exact", head: true })
         .eq("has_active_subscription", true),
       supabase.from("analyses").select("*", { count: "exact", head: true }),
-      // UPDATED: Added 'chart_analysis_trial_points' to this query
       supabase.from("profiles").select("id, email, roles, has_active_subscription, chart_analysis_trial_points"), 
       getNewsPosts(),
     ]);
@@ -58,7 +58,6 @@ async function getAdminData() {
     email: p.email,
     roles: p.roles || ['User'], 
     hasActiveSubscription: p.has_active_subscription, 
-    // UPDATED: Now correctly reading from DB instead of hardcoded 0
     chartAnalysisTrialPoints: p.chart_analysis_trial_points ?? 0, 
   })) ?? [];
   
