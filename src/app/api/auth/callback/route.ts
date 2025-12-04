@@ -11,7 +11,8 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies()
-    const supabase = createSupabaseServerClient(cookieStore)
+    // FIX: Added 'await' here. This is required because createSupabaseServerClient is async.
+    const supabase = await createSupabaseServerClient(cookieStore)
     
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
