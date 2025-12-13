@@ -1,4 +1,3 @@
-
 import { LifeBuoy, BookOpen, MessageSquare, Video } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -16,7 +15,7 @@ const faqs = [
   },
   {
     question: 'Is the analysis financial advice?',
-    answer: 'No. All analyses and predictions provided by FinSight AI are for educational and informational purposes only. They are not financial advice. Please do your own research and consult with a qualified financial advisor before making any investment decisions.',
+    answer: 'No. All analyses and predictions provided by NEVODEX AI are for educational and informational purposes only. They are not financial advice. Please do your own research and consult with a qualified financial advisor before making any investment decisions.',
   },
     {
     question: 'How do I set up a price alert?',
@@ -75,7 +74,7 @@ export default function SupportPage() {
             <CardContent>
               <div className="text-2xl font-bold">Watch & Learn</div>
               <p className="text-xs text-muted-foreground">
-                Visual guides to get the most out of FinSight.
+                Visual guides to get the most out of NEVODEX AI.
               </p>
             </CardContent>
           </Card>

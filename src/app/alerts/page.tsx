@@ -10,7 +10,7 @@ import { useNotificationCenter } from "@/contexts/notification-context";
 import { useAuth } from "@/contexts/auth-context";
 import { sendEmailNotification } from "@/ai/flows/send-email-flow";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, BellRing, Plus } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -39,11 +39,13 @@ import {
 } from "@/lib/actions";
 
 const IS_BROWSER = typeof window !== 'undefined';
-const POLLING_INTERVAL = 10000;
+const POLLING_INTERVAL = 10000; // Check every 10 seconds
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertConfig[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  
   const { toast } = useToast();
   const { addNotification } = useNotificationCenter();
   const { user, loading: authLoading } = useAuth();
@@ -55,14 +57,14 @@ export default function AlertsPage() {
   const activeAlerts = alerts.filter(a => a.isActive);
   const inactiveAlerts = alerts.filter(a => !a.isActive);
 
-  // 1. Fetch Alerts from DB
+  // 1. Initial Data Fetch
   useEffect(() => {
     async function loadAlerts() {
       if (!user) return;
       setLoadingData(true);
       const { data, error } = await getAlertsAction();
       if (error) {
-        toast({ title: "Error loading alerts", description: error, variant: "destructive" });
+        toast({ title: "Sync Error", description: "Could not load alerts.", variant: "destructive" });
       } else {
         setAlerts(data);
       }
@@ -76,19 +78,20 @@ export default function AlertsPage() {
     }
   }, [user, authLoading, router, toast]);
 
-  // Request Notification Permissions
+  // Request Permissions on Mount
   useEffect(() => {
-    if (IS_BROWSER && "Notification" in window && Notification.permission !== "granted") {
+    if (IS_BROWSER && "Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, []);
-  
-  // 2. Trigger Logic
+
+  // 2. Notification Logic (Trigger)
   const triggerAlertNotification = useCallback(async (alert: AlertConfig, currentPrice: number) => {
     const notificationTitle = `Target Hit: ${alert.asset}`;
-    const notificationMessage = `${alert.name} triggered! Price hit ${currentPrice.toLocaleString()} (Target: ${Number(alert.value).toLocaleString()})`;
+    const notificationMessage = `${alert.name} triggered! Price: ${currentPrice.toLocaleString()} (Target: ${Number(alert.value).toLocaleString()})`;
 
-    // In-App
+    // A. In-App Notification Center (Saved to DB via Context)
+    // This ensures the notification appears in the user's notification list
     addNotification({
       title: notificationTitle,
       message: notificationMessage,
@@ -97,46 +100,46 @@ export default function AlertsPage() {
       relatedLink: `/alerts#${alert.id}`
     });
 
-    // Native Browser Push
+    // B. Browser Push Notification
+    // This pushes a system-level alert to the device
     if (IS_BROWSER && "Notification" in window && Notification.permission === "granted") {
-      new Notification(notificationTitle, {
-        body: notificationMessage,
-        icon: "/icon.jpg",
-        tag: `alert-${alert.id}`
-      });
-    }
-
-    // Email
-    if (alert.notificationMethod === 'email') {
-      if (user?.email) {
-        try {
-          await sendEmailNotification({
-            to: user.email,
-            subject: `FinSight AI Alert: ${alert.name}`,
-            body: notificationMessage,
-          });
-        } catch (error) {
-           console.error("Failed to send email:", error);
-        }
+      try {
+        new Notification(notificationTitle, {
+          body: notificationMessage,
+          icon: "/icon.jpg", 
+          tag: `alert-${alert.id}`
+        });
+      } catch (e) {
+        console.error("Push failed", e);
       }
-    } else {
-        toast({ title: notificationTitle, description: notificationMessage });
     }
 
-    // Deactivate in DB
-    await toggleAlertStatusAction(alert.id, false);
-    
-    // Update UI
+    // C. Email
+    if (alert.notificationMethod === 'email' && user?.email) {
+        sendEmailNotification({
+          to: user.email,
+          subject: `NEVODEX Alert: ${alert.name}`,
+          body: notificationMessage,
+        }).catch(console.error);
+    } else if (!("Notification" in window) || Notification.permission !== "granted") {
+       // Fallback Toast if push is disabled
+       toast({ title: notificationTitle, description: notificationMessage, duration: 5000 });
+    }
+
+    // D. Deactivate Alert
     setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isActive: false } : a));
+    await toggleAlertStatusAction(alert.id, false);
 
   }, [addNotification, user?.email, toast]);
 
 
-  // 3. Polling Logic (Price Check)
+  // 3. Smart Polling Logic
   useEffect(() => {
     const checkAlerts = async () => {
       const activePriceAlerts = alerts.filter(a => a.isActive && a.conditionType === 'price_target');
       if (activePriceAlerts.length === 0) return;
+
+      setLastChecked(new Date());
 
       const uniqueAssets = Array.from(new Set(activePriceAlerts.map(a => a.asset.toUpperCase())));
       
@@ -157,16 +160,22 @@ export default function AlertsPage() {
         if (currentPrice === undefined || isNaN(targetPrice)) continue;
 
         let shouldTrigger = false;
-        const originalPrice = alert.originalPrice;
+        let originalPrice = alert.originalPrice;
 
-        if (originalPrice !== undefined) {
-          const wasBullish = targetPrice > originalPrice; 
-          const wasBearish = targetPrice < originalPrice; 
+        // Auto-detect direction if originalPrice missing
+        if (originalPrice === undefined || originalPrice === null) {
+            originalPrice = currentPrice; 
+        }
 
-          if (wasBullish && currentPrice >= targetPrice) shouldTrigger = true;
-          else if (wasBearish && currentPrice <= targetPrice) shouldTrigger = true;
-        } else {
+        const wasBullishSetup = targetPrice > originalPrice; 
+        const wasBearishSetup = targetPrice < originalPrice; 
+
+        if (wasBullishSetup) {
            if (currentPrice >= targetPrice) shouldTrigger = true;
+        } else if (wasBearishSetup) {
+           if (currentPrice <= targetPrice) shouldTrigger = true;
+        } else {
+           if (currentPrice === targetPrice) shouldTrigger = true;
         }
 
         if (shouldTrigger) {
@@ -178,7 +187,7 @@ export default function AlertsPage() {
     if (pollingRef.current) clearInterval(pollingRef.current);
 
     if (activeAlerts.length > 0) {
-        checkAlerts();
+        checkAlerts(); 
         pollingRef.current = setInterval(checkAlerts, POLLING_INTERVAL);
     }
 
@@ -188,12 +197,16 @@ export default function AlertsPage() {
   }, [alerts, triggerAlertNotification, activeAlerts.length]);
 
   const handleAddAlert = async (alertData: AlertConfig) => {
+    const tempAlert = { ...alertData, id: 'temp-' + Date.now() };
+    setAlerts(prev => [tempAlert, ...prev]);
+    setIsFormOpen(false);
+
     const response = await createAlertAction(alertData);
     if (response.success && response.alert) {
-        setAlerts(prev => [response.alert!, ...prev]);
-        setIsFormOpen(false);
-        toast({ title: "Alert Saved", description: "Your alert is now active." });
+        setAlerts(prev => [response.alert!, ...prev.filter(a => a.id !== tempAlert.id)]);
+        toast({ title: "Alert Saved", description: "Your alert is active." });
     } else {
+        setAlerts(prev => prev.filter(a => a.id !== tempAlert.id));
         toast({ title: "Error", description: response.message, variant: "destructive" });
     }
   };
@@ -240,19 +253,22 @@ export default function AlertsPage() {
   return (
     <main className="flex-1 p-4 sm:px-6 md:gap-8 pb-24 md:pb-8">
       <div className="container mx-auto py-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-headline font-bold tracking-tight">
-            Alerts Feed
-          </h1>
-          <div className="mt-1 flex justify-between items-center">
-            <p className="text-lg text-muted-foreground">
-              Manage your custom market alerts.
-            </p>
-            {IS_BROWSER && "Notification" in window && Notification.permission === "default" && (
-                <Button variant="outline" size="sm" onClick={() => Notification.requestPermission()}>
-                    Enable Push Notifications
-                </Button>
-            )}
+        <header className="mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-4">
+          <div>
+            <h1 className="text-3xl font-headline font-bold tracking-tight">
+              Alerts Feed
+            </h1>
+            <div className="mt-1 flex items-center gap-3">
+                <p className="text-lg text-muted-foreground">
+                Manage your custom market alerts.
+                </p>
+                {lastChecked && (
+                    <span className="text-xs text-muted-foreground/60 flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
+                        <RefreshCw className="h-3 w-3 animate-pulse" /> 
+                        Live: {lastChecked.toLocaleTimeString()}
+                    </span>
+                )}
+            </div>
           </div>
         </header>
 
@@ -281,7 +297,6 @@ export default function AlertsPage() {
             </Button>
           </FormDialogTrigger>
           
-          {/* UI FIX: Flex column layout to handle scrolling properly */}
           <FormDialogContent 
              side={isMobile ? 'bottom' : undefined} 
              className={isMobile ? 'flex flex-col h-[90vh]' : 'sm:max-w-[425px] flex flex-col max-h-[85vh]'}

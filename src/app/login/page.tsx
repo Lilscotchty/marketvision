@@ -106,7 +106,7 @@ export default function LoginPage() {
   return (
     <AuthFormWrapper
       title="Welcome Back!"
-      description="Log in to access your FinSight AI account."
+      description="Log in to access your NEVODEX AI account."
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

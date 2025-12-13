@@ -78,7 +78,7 @@ export function LuxuryLandingPage() {
 
             {/* Main Title */}
             <h1 className="font-headline text-7xl md:text-[9rem] lg:text-[11rem] font-bold tracking-tighter text-white mb-6 leading-[0.85] ">
-              MARKET<br />VISION
+              NEVODEX<br />AI
             </h1>
 
             {/* Subtext */}

@@ -1,23 +1,62 @@
-
 'use server';
 
 /**
  * @fileOverview Analyzes candlestick chart images to identify patterns, trends, basic ICT elements,
  * and apply a conceptual Daily Bias determination framework based on visual information from multiple timeframes.
  * It also auto-detects the asset symbol from the chart.
- *
- * - analyzeCandlestickChart - A function that handles the candlestick chart analysis process.
- * - AnalyzeCandlestickChartInput - The input type for the analyzeCandlestickChart function.
- * - AnalyzeCandlestickChartOutput - The return type for the analyzeCandlestickChart function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
+// --- 1. NEW: Asset Identification Schema & Flow ---
+
+const IdentifyAssetInputSchema = z.object({
+  chartImageUrl: z.string().url().describe("The URL of the chart image to identify.")
+});
+
+const IdentifyAssetOutputSchema = z.object({
+  symbol: z.string().describe("The asset symbol identified (e.g., BTC-USD, AAPL, EURUSD). Return 'UNKNOWN' if not visible."),
+  timeframe: z.string().describe("The timeframe identified (e.g., 15m, 1h, 4h, 1d). Return '1d' as default if not visible."),
+});
+
+export const identifyAssetPrompt = ai.definePrompt({
+  name: 'identifyAssetPrompt',
+  input: { schema: IdentifyAssetInputSchema },
+  output: { schema: IdentifyAssetOutputSchema },
+  model: 'googleai/gemini-2.5-flash',
+  prompt: `Look at the following chart image and identify the Asset Symbol and the Timeframe.
+  
+  Chart: {{media url=chartImageUrl}}
+  
+  - For Crypto, format as SYMBOL-USD (e.g., BTC-USD).
+  - For Forex, format as SYMBOL=X (e.g., EURUSD=X) if possible, otherwise standard.
+  - For Stocks, use the ticker (e.g., NVDA).
+  
+  If unsure, return 'UNKNOWN'.`
+});
+
+export const identifyAsset = ai.defineFlow(
+  {
+    name: 'identifyAssetFlow',
+    inputSchema: IdentifyAssetInputSchema,
+    outputSchema: IdentifyAssetOutputSchema,
+  },
+  async (input) => {
+    const { output } = await identifyAssetPrompt(input);
+    return output!;
+  }
+);
+
+// --- 2. UPDATED: Main Analysis Schema to accept Market Data ---
+
 const AnalyzeCandlestickChartInputSchema = z.object({
   chartImageUrls: z.array(z.string().url()).describe(
     "An array of public URLs of candlestick chart images. The AI should analyze them cohesively."
   ),
+  marketDataContext: z.string().optional().describe(
+    "Raw CSV-style or JSON string of recent historical OHLCV market data for this asset to assist analysis."
+  )
 });
 export type AnalyzeCandlestickChartInput = z.infer<typeof AnalyzeCandlestickChartInputSchema>;
 
@@ -32,7 +71,7 @@ const ICTElementSchema = z.object({
     "Breaker Block (Bullish)",
     "Breaker Block (Bearish)"
   ]).describe("The type of ICT element identified."),
-  location_description: z.string().describe("A textual description of where this element is visually located on the chart, referencing the timestamp or date from the chart's x-axis if visible. e.g., 'around the swing low on June 5th at 14:00', 'the large green candle near the top'.")
+  location_description: z.string().describe("A textual description of where this element is visually located on the chart, referencing the timestamp or date from the chart's x-axis if visible.")
 });
 
 const DailyBiasReasoningSchema = z.object({
@@ -52,9 +91,9 @@ const SniperEntrySetupSchema = z.object({
     fiveMinConfirmation: z.string().describe("Step 4: Description of the 5M MSS confirmation after the liquidity grab, specifically highlighting the creation of a new Fair Value Gap (FVG) or Breaker Block that can be used for entry.")
   }).optional(),
   tradeManagement: z.object({
-    entryPrice: z.number().describe("Step 5 (Entry): The PRECISE, NUMERIC entry price, targeting the retest of the 5M FVG or Breaker Block. For a bullish trade, this should be the top of the FVG (a discount entry). For a bearish trade, this should be the bottom of the FVG (a premium entry)."),
-    stopLossPrice: z.number().describe("Step 5 (Stop Loss): The precise, numeric stop loss price, placed logically just beyond the 15M liquidity grab wick high/low."),
-    takeProfitPrice: z.number().describe("Step 5 (Take Profit): The precise, numeric take profit price, targeting the most recent and logical 15M swing high/low for profit-taking.")
+    entryPrice: z.number().describe("Step 5 (Entry): The PRECISE, NUMERIC entry price based on the verified market data and visual FVG/Breaker."),
+    stopLossPrice: z.number().describe("Step 5 (Stop Loss): The precise, numeric stop loss price placed logically just beyond the liquidity grab wick."),
+    takeProfitPrice: z.number().describe("Step 5 (Take Profit): The precise, numeric take profit price targeting the most recent logical swing high/low.")
   }).optional()
 }).optional().describe("A conceptual trade setup based on the 'Intraday Sniper Entry' strategy if a similar pattern is visually identifiable on the chart.");
 
@@ -64,7 +103,7 @@ const AnalyzeCandlestickChartOutputSchema = z.object({
   timeframesDetected: z.array(z.string()).optional().describe("An array of the timeframes identified from each chart, e.g., ['4H', '15M', '5M']."),
   trend: z.string().describe('The identified trend in the candlestick chart.'),
   patterns: z.array(z.string()).describe('The candlestick patterns identified in the chart.'),
-  summary: z.string().describe('A summary of the analysis of the candlestick chart, incorporating daily bias insights.'),
+  summary: z.string().describe('A summary of the analysis of the candlestick chart, incorporating daily bias insights and market data confirmation.'),
   ictElements: z.array(ICTElementSchema).optional().describe("Key ICT elements identified visually on the chart, such as Order Blocks or Fair Value Gaps."),
   marketStructureAnalysis: z.string().optional().describe("Observations on market structure like Break of Structure (BOS) or Change of Character (CHoCH), if visually discernible."),
   potentialAMDCycle: z.object({
@@ -88,56 +127,47 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-2.5-flash',
   prompt: `You are an expert financial analyst specializing in multi-timeframe candlestick chart pattern recognition, Inner Circle Trader (ICT) concepts, and determining Daily Market Bias.
 
-You have been provided with one or more candlestick chart images. Your primary goal is to perform a cohesive, multi-timeframe analysis if multiple charts are available.
+You have been provided with:
+1. **Visual Charts:** One or more candlestick chart images.
+2. **Market Data Context (Optional):** Recent historical OHLCV data for the asset identified in the chart.
 
-**CRITICAL FIRST STEP: Timeframe and Asset Identification**
-
-1.  **Identify Asset:** First, try to identify the asset symbol from the chart images (e.g., BTC/USD, EUR/USD, TSLA).
-2.  **Infer Timeframes:** For each image, you MUST identify its timeframe (e.g., 4-hour, 1-hour, 15-minute, 5-minute). This is often visible in a corner of the chart. Populate the 'timeframesDetected' field with the list of identified timeframes (e.g., ["4H", "1H", "15M"]).
-
-**IMPORTANT RULE:** If you CANNOT CLEARLY identify the timeframe on AT LEAST ONE of the provided charts, you MUST STOP. In this case, set the 'asset' field to "Unclear", set the 'summary' to "Timeframe not visible", and leave all other fields empty or with default values. Do not attempt any further analysis.
-
-**If and only if timeframes are identifiable, proceed with the full analysis:**
+**CRITICAL INSTRUCTION: Data Cross-Referencing**
+If 'Market Data Context' is provided, you **MUST** use it to validate your visual observations.
+* **Trend Confirmation:** Compare visual trend with the numerical Close prices.
+* **Precision:** When identifying entry, stop-loss, or take-profit levels (especially in the Sniper Entry section), **use the specific High/Low/Close values from the market data** that correspond to the visual candles (e.g., the liquidity sweep candle). Do not rely solely on pixel estimation if data is available.
 
 **Analysis Steps:**
 
 1.  **Standard Analysis (Multi-Timeframe Context):**
-    *   **Overall Trend:** Determine the prevailing market trend by synthesizing information from all provided charts (e.g., "The 4H chart shows an uptrend, while the 15M chart is in a pullback.").
-    *   **Candlestick Patterns:** Identify any significant candlestick patterns visible on any of the charts. Note which timeframe they appear on if relevant.
-    *   **ICT Elements:** Visually identify key ICT elements on all charts. **For each element's location, you must reference the specific date and time from the chart's x-axis if visible.** For example: 'Bullish order block on the 1H chart located at the swing low on June 5th around 14:30.' Describe how elements on different timeframes interact (e.g., "LTF FVG is forming inside an HTF Order Block"). Include Order Blocks, FVGs, and especially **Breaker Blocks (Bullish/Bearish)**.
-    *   **Market Structure:** Comment on visible market structure (BOS, CHoCH) on each timeframe and describe the overall structural narrative.
-    *   **Potential AMD Cycle:** Suggest if the charts collectively indicate a phase of Accumulation, Manipulation, or Distribution.
-    *   **Daily Bias Determination (Conceptual):** Apply the visual framework using all charts to infer the Daily Bias (Bullish, Bearish, Neutral, or Unclear) and provide reasoning.
+    * **Identify Asset & Timeframes:** First, identify the asset symbol and timeframe.
+    * **Overall Trend:** Determine the prevailing market trend.
+    * **Candlestick Patterns:** Identify any significant candlestick patterns.
+    * **ICT Elements:** Visually identify key ICT elements (Order Blocks, FVGs, Breaker Blocks). **For each element's location, reference the specific date and time from the chart's x-axis.**
+    * **Market Structure:** Comment on BOS/CHoCH.
+    * **Potential AMD Cycle:** Suggest if the charts indicate Accumulation, Manipulation, or Distribution.
+    * **Daily Bias:** Apply the visual framework to infer the Daily Bias.
 
-2.  **Intraday Sniper Entry Strategy Analysis (Multi-Timeframe):**
-    *   **CONDITION:** ONLY perform this analysis if you have been provided with MORE THAN ONE chart image. If only one chart is provided, SKIP this entire step and leave the \`sniperEntrySetup\` field empty.
-    *   After your standard analysis, check if the charts visually present a pattern that resembles the "Intraday Sniper Entry" strategy. **Use your inferred timeframes to map the provided charts to the strategy's steps.**
-    *   If a pattern is identified, populate the \`sniperEntrySetup\` object. If not, you may omit this field.
-    *   **Strategy Breakdown (Contextual Description):**
-        *   **Daily Bias Setup (HTF Filter):**
-            *   **Step 1 & 2:** Use the charts you've identified as the highest timeframes (ideally 4H/1H) to conceptually describe if it shows a liquidity grab and a Market Structure Shift (MSS), which then forms an untapped **Breaker Block (BB)**.
-            *   Populate \`sniperEntrySetup.dailyBiasContext.fourHourAnalysis\` and \`sniperEntrySetup.dailyBiasContext.alignment\` based on these higher timeframe charts, confirming alignment.
-        *   **Intraday Sniper Entry (LTF Mechanic):**
-            *   **Step 3 (15M):** Use a lower timeframe chart (like 15M) to describe if there's a visual sign of a liquidity grab wick into the identified HTF Breaker Block.
-            *   **Step 4 (5M):** Use the chart you've identified as the lowest timeframe (ideally 5M) to look for a lower-timeframe MSS confirmation after the liquidity grab. **Crucially, identify the new Fair Value Gap (FVG) or Breaker Block created by this 5M MSS.** This is the entry target.
-            *   Populate \`sniperEntrySetup.entryMechanic.fifteenMinSetup\` and \`sniperEntrySetup.entryMechanic.fiveMinConfirmation\` based on these LTF charts.
-    *   **Trade Management (Precise, Actionable Values):**
-        *   **Step 5 (Entry, SL, TP):** Based on the visual patterns from the LTF charts, you MUST identify **PRECISE, NUMERIC price levels** for the trade.
-        *   **entryPrice**: Determine the numeric price for an optimal entry. This is NOT the current price. It's a future price based on a retest of the 5M FVG/Breaker identified in Step 4.
-            *   **For a Bullish (Buy) setup:** The entry price should be at the **top** of the bullish 5M FVG, representing an entry at a **discount**.
-            *   **For a Bearish (Sell) setup:** The entry price should be at the **bottom** of the bearish 5M FVG, representing an entry at a **premium**.
-        *   **stopLossPrice**: Determine the numeric price just beyond the high/low of the 15M liquidity grab wick.
-        *   **takeProfitPrice**: Determine the numeric price of the most logical recent 15M swing high/low to be targeted.
-        *   Populate the \`sniperEntrySetup.tradeManagement\` object with these exact numeric values.
+2.  **Intraday Sniper Entry Strategy Analysis:**
+    * **CONDITION:** ONLY if multiple charts are provided.
+    * **Strategy:** Map the visual charts to the 4H/1H Bias -> 15M Sweep -> 5M Entry model.
+    * **Trade Management (USE DATA):**
+        * **Entry:** Determine price for optimal entry (e.g., retest of FVG/Breaker).
+        * **Stop Loss:** Determine price just beyond the 15M liquidity grab wick (using High/Low from data).
+        * **Take Profit:** Determine price of the most logical recent swing high/low (using High/Low from data).
 
-3.  **Summary:** Provide a concise overall summary of your multi-timeframe analysis, integrating findings from all the above points.
+3.  **Summary:** Concise summary.
 
-Analyze the following candlestick charts:
+Analyze the following:
+{{#if marketDataContext}}
+**MARKET DATA CONTEXT:**
+{{marketDataContext}}
+{{/if}}
+
 {{#each chartImageUrls}}
 Chart: {{media url=this}}
 {{/each}}
 
-Output MUST be in JSON format according to the defined output schema. If specific elements are not clearly discernible, you may omit those fields, return empty arrays/strings, or state "Unclear" or "Not visually apparent".
+Output MUST be in JSON format.
 `,
 });
 

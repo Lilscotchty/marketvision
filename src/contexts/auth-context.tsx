@@ -93,10 +93,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Perform the initial session check
     const checkInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        await handleUserUpdate(session);
+        // FIX: Destructure error to handle "Invalid Refresh Token" scenarios
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+            // Specifically handle invalid refresh tokens by clearing the session
+            if (error.message.includes("Invalid Refresh Token") || error.message.includes("Refresh Token Not Found")) {
+                console.warn("Session invalid. Clearing stale auth data.");
+                await supabase.auth.signOut();
+                setUser(null);
+                setUserData(null);
+                return;
+            }
+            // Log other errors but don't crash
+            console.error("Error checking initial session:", error.message);
+        }
+
+        await handleUserUpdate(data.session);
       } catch (error) {
-        console.error("Error checking initial session:", error);
+        console.error("Unexpected error during session check:", error);
       } finally {
         // Only turn off loading once the initial check is complete
         setLoading(false);

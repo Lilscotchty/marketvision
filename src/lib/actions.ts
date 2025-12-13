@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { predictMarketMovement } from '@/ai/flows/predict-market-movement';
-import { analyzeCandlestickChart } from '@/ai/flows/analyze-candlestick-chart';
+import { analyzeCandlestickChart, identifyAsset } from '@/ai/flows/analyze-candlestick-chart';
 import { categorizeAsset } from '@/ai/flows/categorize-asset-flow';
 import type {
   PredictionOutput,
@@ -25,6 +25,59 @@ import { cookies } from 'next/headers';
 import yahooFinance from 'yahoo-finance2';
 
 const BUCKET_NAME = 'chart_uploads';
+
+// --- HELPER: Fetch Historical Data ---
+async function fetchHistoricalDataForContext(symbol: string, timeframe: string): Promise<string> {
+  try {
+    const yahooSymbol = convertToYahooSymbol(symbol);
+    
+    // Map generic timeframes to Yahoo intervals
+    let interval: "1m" | "2m" | "5m" | "15m" | "30m" | "60m" | "90m" | "1h" | "1d" | "5d" | "1wk" | "1mo" | "3mo" = "1d";
+    let period1 = new Date(); // Start date
+    
+    const tf = timeframe.toLowerCase();
+    
+    // Simple logic to grab "relevant recent data" for the AI
+    if (tf.includes('m')) {
+        interval = "15m"; // Default to 15m for minute charts to get granular data
+        period1.setDate(period1.getDate() - 5); // Last 5 days
+    } else if (tf.includes('h')) {
+        interval = "1h"; // Yahoo often supports 1h
+        period1.setDate(period1.getDate() - 20); // Last 20 days
+    } else {
+        interval = "1d";
+        period1.setDate(period1.getDate() - 90); // Last 3 months
+    }
+
+    // Suppress notices
+    yahooFinance.suppressNotices(['yahooSurvey', 'cantCookie']);
+
+    // FIX 1: Switched to .chart() to support intraday intervals like "15m" and "1h"
+    const result = await yahooFinance.chart(yahooSymbol, {
+      period1: period1.toISOString(),
+      interval: interval,
+    });
+
+    // Validation: Ensure we have quotes
+    if (!result || !result.quotes || result.quotes.length === 0) {
+      return "";
+    }
+
+    // FIX 2: Access .quotes property (since .chart returns an object) and typed 'row' as any
+    // Format as a simplified CSV-like string to save token space for the AI
+    const dataString = result.quotes.reverse().slice(0, 30).map((row: any) => { 
+      // Format: YYYY-MM-DD HH:mm | O: H: L: C: V:
+      const dateStr = row.date instanceof Date ? row.date.toISOString() : new Date(row.date).toISOString();
+      const simpleDate = dateStr.split('T')[0] + ' ' + dateStr.split('T')[1].substring(0,5);
+      return `${simpleDate} | O:${row.open} H:${row.high} L:${row.low} C:${row.close} V:${row.volume}`;
+    }).join('\n');
+
+    return `Recent Market Data for ${yahooSymbol} (${interval}):\n${dataString}`;
+  } catch (error) {
+    console.error("Failed to fetch historical context:", error);
+    return ""; // Return empty string on failure so analysis can proceed visually
+  }
+}
 
 // --- CHART UPLOAD & ANALYSIS ---
 
@@ -92,14 +145,31 @@ export async function handleImageAnalysisAction(
   }
 
   try {
+    // 1. Identify Asset First (Lightweight AI Call)
+    let marketDataString = "";
+    try {
+        const identity = await identifyAsset({ chartImageUrl: chartUrls[0] });
+        console.log("Identified Asset:", identity);
+        
+        if (identity.symbol && identity.symbol !== 'UNKNOWN') {
+            // 2. Fetch Historical Data (Yahoo Finance)
+            marketDataString = await fetchHistoricalDataForContext(identity.symbol, identity.timeframe);
+        }
+    } catch (e) {
+        console.warn("Asset identification failed, proceeding with visual-only analysis.", e);
+    }
+
+    // 3. Prepare Inputs
     const predictionInput = {
       candlestickChartImageUrl: chartUrls[0],
     };
 
     const analysisInput = {
       chartImageUrls: chartUrls,
+      marketDataContext: marketDataString // Pass the fetched data
     };
 
+    // 4. Run Analysis (Parallel)
     const [predictionResult, analysisResult] = await Promise.all([
       predictMarketMovement(predictionInput),
       analyzeCandlestickChart(analysisInput),
@@ -111,7 +181,7 @@ export async function handleImageAnalysisAction(
     ) {
       return {
         error:
-          'Could not identify timeframes on the chart. Please use a screenshot of the chart window instead of a downloaded image, as it helps capture the timeframe.',
+          'Could not identify timeframes on the chart. Please use a screenshot of the chart window instead of a downloaded image.',
       };
     }
 
@@ -146,6 +216,8 @@ export async function handleImageAnalysisAction(
 function convertToYahooSymbol(symbol: string): string {
   let s = symbol.toUpperCase().trim();
   
+  if (s.includes('PERP')) s = s.replace('PERP', '');
+
   if (s.includes('/') && (s.endsWith('USD') || s.endsWith('USDT'))) {
     return s.replace('/', '-');
   }
@@ -154,6 +226,13 @@ function convertToYahooSymbol(symbol: string): string {
      if (s.endsWith('USDT')) return s.replace('USDT', '-USDT');
   }
 
+  // Basic forex heuristic if not already formatted
+  if (!s.includes('=X') && s.length === 6 && !s.includes('-') && !['BTC', 'ETH', 'SOL'].some(c => s.startsWith(c))) {
+      // Very basic Forex check list
+      const commonForex = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'USDCHF'];
+      if(commonForex.includes(s)) return s + "=X";
+  }
+  
   if (s.includes('/') && s.length === 7) {
       return s.replace('/', '') + "=X";
   }
@@ -170,8 +249,7 @@ export interface FetchMarketDataResult {
 export async function fetchMarketData(symbol: string): Promise<FetchMarketDataResult> {
   try {
     const yahooSymbol = convertToYahooSymbol(symbol);
-    // Suppress notices to prevent log clutter affecting server responses
-    yahooFinance.suppressNotices(['yahooSurvey']); 
+    yahooFinance.suppressNotices(['yahooSurvey', 'cantCookie']); 
     
     const quote = await yahooFinance.quote(yahooSymbol);
 
@@ -200,7 +278,7 @@ export async function fetchMarketData(symbol: string): Promise<FetchMarketDataRe
 
   } catch (error) {
     console.error(`Failed to fetch market data for ${symbol}:`, error);
-    return { error: `Failed to fetch data. Ensure the symbol is correct (e.g., BTC-USD, AAPL).` };
+    return { error: `Failed to fetch data.` };
   }
 }
 
@@ -641,14 +719,26 @@ export async function saveAnalysisToHistory(
 
   return { success: true, message: 'Analysis saved to database.' };
 }
+// ... existing imports ...
+
+// ... [Keep all previous code unchanged up to getUserAnalyses] ...
 
 export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[]; error: string | null }> {
   const cookieStore = await cookies();
   const supabase = await createSupabaseServerClient(cookieStore);
   
+  // 1. Get the current authenticated user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { data: [], error: 'User not authenticated' };
+  }
+
+  // 2. Fetch data ONLY for this user_id
   const { data, error } = await supabase
     .from('analyses')
     .select('*')
+    .eq('user_id', user.id) // <--- CRITICAL FIX: Filter by user_id
     .order('created_at', { ascending: false });
 
   if (error) return { data: [], error: error.message };
@@ -666,6 +756,8 @@ export async function getUserAnalyses(): Promise<{ data: HistoricalPrediction[];
 
   return { data: history, error: null };
 }
+
+// ... [Keep the rest of the file unchanged] ...
 
 export async function updateAnalysisFlag(analysisId: string, flag: 'successful' | 'unsuccessful'): Promise<ActionResponse> {
   const cookieStore = await cookies();
@@ -695,7 +787,7 @@ export async function deleteAnalysisAction(analysisId: string): Promise<ActionRe
   return { success: true, message: 'Analysis deleted.' };
 }
 
-// --- ALERT SYSTEM ACTIONS (NEW & FIXED) ---
+// --- ALERT SYSTEM ACTIONS ---
 
 export async function createAlertAction(alert: Omit<AlertConfig, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string; alert?: AlertConfig }> {
   try {
@@ -712,7 +804,7 @@ export async function createAlertAction(alert: Omit<AlertConfig, 'id' | 'created
         name: alert.name,
         asset: alert.asset,
         condition_type: alert.conditionType,
-        value: Number(alert.value), // Ensure numeric
+        value: Number(alert.value), 
         notification_method: alert.notificationMethod,
         is_active: alert.isActive,
         original_price: alert.originalPrice,
@@ -742,7 +834,7 @@ export async function createAlertAction(alert: Omit<AlertConfig, 'id' | 'created
     try {
       revalidatePath('/alerts');
     } catch (e) {
-      // Ignore revalidation errors if path doesn't exist yet
+      // Ignore
     }
     
     return { success: true, message: 'Alert created successfully', alert: newAlert };
@@ -822,7 +914,7 @@ export async function toggleAlertStatusAction(alertId: string, isActive: boolean
   }
 }
 
-// --- NOTIFICATION SYSTEM ACTIONS (NEW) ---
+// --- NOTIFICATION SYSTEM ACTIONS ---
 export async function getNotificationsAction(): Promise<{ data: AppNotification[], error: string | null }> {
   try {
     const cookieStore = await cookies();
@@ -835,7 +927,7 @@ export async function getNotificationsAction(): Promise<{ data: AppNotification[
       .from('notifications')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50); // Fetch last 50 notifications
+      .limit(50); 
 
     if (error) return { data: [], error: error.message };
 
@@ -874,8 +966,6 @@ export async function createNotificationAction(notification: Omit<AppNotificatio
       icon_name: notification.iconName,
     });
     
-    // We don't necessarily need to revalidate path here as the context will likely poll or update optimistically, 
-    // but it helps if the user navigates.
     revalidatePath('/notifications');
   } catch (e) {
     console.error("Failed to create notification:", e);

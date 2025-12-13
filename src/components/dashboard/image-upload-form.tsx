@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import Image from "next/image";
-import Link from "next/link"; // Fixed: Added missing Link import
+import Link from "next/link";
 import { 
     handleImageAnalysisAction, 
     uploadChartImages, 
@@ -12,17 +12,23 @@ import {
 } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, CheckCircle, UploadCloud, X, ImagePlus, Sparkles, Lock, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle, UploadCloud, X, ImagePlus, Sparkles, Lock, Zap, XCircle } from "lucide-react";
 import { PredictionResults } from "./prediction-results";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionModal } from "@/components/billing/subscription-modal";
-import type { HistoricalPrediction, UserAppData } from "@/types";
+import type { HistoricalPrediction } from "@/types";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Loader from "./loader";
 import { TypingLoaderText } from "./typing-loader-text";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const KORAPAY_TEST_PAYMENT_LINK = "https://test-checkout.korapay.com/pay/7RZ4eL2uRlHObOg";
 const MOCK_NEW_PREDICTIONS_KEY = 'marketVisionNewPredictionTimestamp';
@@ -31,12 +37,14 @@ const MAIN_PERFORMANCE_KEY = 'marketVisionPerformance';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILES = 3;
-const INITIAL_TRIAL_POINTS = 5;
 
 export function ImageUploadForm() {
   const [state, setState] = useState<AnalysisResult | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
   const [uploadingMessage, setUploadingMessage] = useState<string | null>(null);
+
+  // Result Sheet State
+  const [isResultOpen, setIsResultOpen] = useState(false);
 
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -206,76 +214,86 @@ export function ImageUploadForm() {
     }
 
     setUploadingMessage("Verifying credits...");
+    setIsResultOpen(true); // Open sheet immediately
     
     startTransition(async () => {
-        const creditResult = await consumeAnalysisCredit();
-        
-        if (!creditResult.success) {
-            setUploadingMessage(null);
-            toast({ 
-                title: "Access Denied", 
-                description: creditResult.message || "Please upgrade your plan.", 
-                variant: "destructive" 
-            });
-            setIsSubscriptionModalOpen(true);
-            return;
-        }
-
-        if (creditResult.remainingCredits !== undefined) {
-            setLocalCredits(creditResult.remainingCredits);
-        }
-
-        setUploadingMessage("Uploading charts...");
-        const uploadResults = await uploadChartImages(files);
-        
-        const uploadedUrls: string[] = [];
-        for (const result of uploadResults) {
-            if (result.error || !result.publicUrl) {
-                console.error("Upload failed:", result.error);
+        try {
+            const creditResult = await consumeAnalysisCredit();
+            
+            if (!creditResult.success) {
                 setUploadingMessage(null);
-                toast({ title: "Upload Failed", description: "Could not upload images.", variant: "destructive" });
+                // Keep sheet open to show error or close it
+                setIsResultOpen(false); 
+                toast({ 
+                    title: "Access Denied", 
+                    description: creditResult.message || "Please upgrade your plan.", 
+                    variant: "destructive" 
+                });
+                setIsSubscriptionModalOpen(true);
                 return;
             }
-            uploadedUrls.push(result.publicUrl);
-        }
 
-        setUploadingMessage("Running AI analysis...");
-        const result = await handleImageAnalysisAction(uploadedUrls);
-        
-        previewUrls.forEach(url => URL.revokeObjectURL(url));
-        setState(result);
-        setUploadingMessage(null);
-
-        if (result && !result.error && result.imagePreviewUrls) {
-            setPreviewUrls(result.imagePreviewUrls.filter(Boolean) as string[]);
-            
-            const newPredictionEntry: HistoricalPrediction = {
-                id: `pred_${new Date().getTime()}`,
-                date: new Date().toISOString(),
-                asset: result.analysis?.asset || 'Unknown', 
-                imagePreviewUrl: result.imagePreviewUrls?.[0] || "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
-                prediction: result.prediction!,
-                analysis: result.analysis!,
-                imagePreviewUrls: result.imagePreviewUrls,
-                manualFlag: undefined,
-            };
-
-            const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
-            let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
-            const predictionsForStorage = [newPredictionEntry, ...existingPredictions];
-            
-            try {
-              localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictionsForStorage));
-            } catch (error) {
-               console.error("Failed to set item in localStorage:", error);
+            if (creditResult.remainingCredits !== undefined) {
+                setLocalCredits(creditResult.remainingCredits);
             }
-            localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
+
+            setUploadingMessage("Uploading charts...");
+            const uploadResults = await uploadChartImages(files);
+            
+            const uploadedUrls: string[] = [];
+            for (const result of uploadResults) {
+                if (result.error || !result.publicUrl) {
+                    console.error("Upload failed:", result.error);
+                    setUploadingMessage(null);
+                    setState({ error: "Could not upload images." }); // Show error in sheet
+                    return;
+                }
+                uploadedUrls.push(result.publicUrl);
+            }
+
+            setUploadingMessage("Running AI analysis...");
+            const result = await handleImageAnalysisAction(uploadedUrls);
+            
+            // Clean up local previews
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+            
+            setState(result);
+            setUploadingMessage(null);
+
+            if (result && !result.error && result.imagePreviewUrls) {
+                setPreviewUrls(result.imagePreviewUrls.filter(Boolean) as string[]);
+                
+                const newPredictionEntry: HistoricalPrediction = {
+                    id: `pred_${new Date().getTime()}`,
+                    date: new Date().toISOString(),
+                    asset: result.analysis?.asset || 'Unknown', 
+                    imagePreviewUrl: result.imagePreviewUrls?.[0] || "https://placehold.co/150x100/1e1e1e/a8a8a8.png?text=Chart",
+                    prediction: result.prediction!,
+                    analysis: result.analysis!,
+                    imagePreviewUrls: result.imagePreviewUrls,
+                    manualFlag: undefined,
+                };
+
+                const existingPredictionsString = localStorage.getItem(MAIN_PERFORMANCE_KEY);
+                let existingPredictions: HistoricalPrediction[] = existingPredictionsString ? JSON.parse(existingPredictionsString) : [];
+                const predictionsForStorage = [newPredictionEntry, ...existingPredictions];
+                
+                try {
+                  localStorage.setItem(MAIN_PERFORMANCE_KEY, JSON.stringify(predictionsForStorage));
+                } catch (error) {
+                   console.error("Failed to set item in localStorage:", error);
+                }
+                localStorage.setItem(MOCK_NEW_PREDICTIONS_KEY, newPredictionEntry.id);
+            }
+        } catch (error: any) {
+            console.error("Process error:", error);
+            setUploadingMessage(null);
+            setState({ error: error.message || "An unexpected error occurred." });
         }
     });
   };
 
   const hasFiles = previewUrls.length > 0;
-  // Fixed: Defined isProcessing variable
   const isProcessing = isPending || uploadingMessage !== null;
 
   const getStatusContent = () => {
@@ -322,7 +340,7 @@ export function ImageUploadForm() {
       onDragOver={handleDragEvents}
       onDrop={handleDrop}
     >
-      {/* Inner Grid Texture for Dropzone */}
+      {/* Texture for Dropzone */}
       <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
       
       <div className="flex flex-col items-center justify-center pt-5 pb-6 relative z-10">
@@ -369,15 +387,7 @@ export function ImageUploadForm() {
       {/* Main Card Container */}
       <div className="group relative w-full rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:border-primary/20 shadow-2xl">
         
-        {/* --- PROFESSIONAL BACKGROUND EFFECTS --- */}
-    
-        {/* 2. Animated Gradient Orbs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 dark:bg-primary/10 rounded-full blur-[100px] -z-10 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 dark:bg-purple-600/10 rounded-full blur-[100px] -z-10 animate-pulse delay-700" />
-
-        {/* 3. Stardust Texture */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] pointer-events-none mix-blend-overlay" />
-
+        {/* REMOVED: Colored Orbs and Texture as requested */}
 
         {isProcessing && (
             <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-background/70 backdrop-blur-md transition-all duration-500">
@@ -499,23 +509,61 @@ export function ImageUploadForm() {
         </div>
       </div>
 
-      {state?.error && (
-        <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 text-destructive shadow-lg">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Analysis Error</AlertTitle>
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      )}
-      
-      {state?.prediction && state.analysis && (
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-             <PredictionResults 
-                prediction={state.prediction} 
-                analysis={state.analysis} 
-                imagePreviewUrls={state.imagePreviewUrls || []}
-            />
-        </div>
-      )}
+      {/* --- RESULT POPUP SHEET --- */}
+      <Sheet open={isResultOpen} onOpenChange={setIsResultOpen}>
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-t border-white/10">
+           
+           {/* Accessible Title */}
+           <SheetHeader className="sr-only">
+              <SheetTitle>Market Analysis Results</SheetTitle>
+           </SheetHeader>
+
+           {isProcessing ? (
+               <div className="h-full flex flex-col items-center justify-center p-6 space-y-6 text-center">
+                   <div className="relative">
+                      <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full animate-pulse" />
+                      <Loader />
+                   </div>
+                   <div>
+                       <h3 className="text-xl font-bold font-headline mb-2">Analyzing Structure...</h3>
+                       {uploadingMessage ? (
+                          <p className="text-muted-foreground text-sm max-w-xs mx-auto animate-pulse">{uploadingMessage}</p>
+                       ) : (
+                          <div className="mt-2"><TypingLoaderText /></div>
+                       )}
+                   </div>
+               </div>
+           ) : state?.error ? (
+               <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4">
+                   <div className="p-4 rounded-full bg-destructive/10 text-destructive mb-2">
+                       <XCircle className="w-12 h-12" />
+                   </div>
+                   <h3 className="text-xl font-bold">Analysis Failed</h3>
+                   <p className="text-muted-foreground max-w-md">{state.error}</p>
+                   <Button onClick={() => setIsResultOpen(false)} variant="outline">Close</Button>
+               </div>
+           ) : state?.prediction && state.analysis ? (
+               <div className="h-full flex flex-col">
+                   <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20">
+                       <div>
+                           <h3 className="font-bold text-lg flex items-center gap-2">
+                               <Sparkles className="h-4 w-4 text-primary" /> Analysis Results
+                           </h3>
+                           <p className="text-xs text-muted-foreground">Confidence: {Math.round(state.prediction.confidenceLevel * 100)}%</p>
+                       </div>
+                       <Button variant="ghost" size="sm" onClick={() => setIsResultOpen(false)}>Close</Button>
+                   </div>
+                   <div className="flex-1 overflow-y-auto p-4 pb-20">
+                       <PredictionResults 
+                          prediction={state.prediction} 
+                          analysis={state.analysis} 
+                          imagePreviewUrls={state.imagePreviewUrls || []}
+                       />
+                   </div>
+               </div>
+           ) : null}
+        </SheetContent>
+      </Sheet>
       
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}

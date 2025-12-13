@@ -1,4 +1,3 @@
-
 import { ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -21,7 +20,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-xl font-bold text-foreground mb-2">1. Introduction</h2>
               <p>
-                Welcome to FinSight AI. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy, or our practices with regards to your personal information, please contact us.
+                Welcome to NEVODEX AI. We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy, or our practices with regards to your personal information, please contact us.
               </p>
             </section>
             
@@ -73,7 +72,7 @@ export default function PrivacyPolicyPage() {
              <section>
               <h2 className="text-xl font-bold text-foreground mb-2">8. Contact Us</h2>
               <p>
-                If you have questions or comments about this policy, you may email us at privacy@finsightai.com.
+                If you have questions or comments about this policy, you may email us at privacy@nevodex.ai.
               </p>
             </section>
           </CardContent>

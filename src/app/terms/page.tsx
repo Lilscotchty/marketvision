@@ -1,4 +1,3 @@
-
 import { FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
@@ -22,14 +21,14 @@ export default function TermsAndConditionsPage() {
             <section>
               <h2 className="text-lg font-bold text-foreground mb-2">1. Acceptance of Terms</h2>
               <p>
-                By accessing and using FinSight AI (the "Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using this Service's particular services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this Service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this Service.
+                By accessing and using NEVODEX AI (the "Service"), you accept and agree to be bound by the terms and provision of this agreement. In addition, when using this Service's particular services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this Service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this Service.
               </p>
             </section>
             
             <section>
               <h2 className="text-lg font-bold text-foreground mb-2">2. Description of Service</h2>
               <p>
-                FinSight AI provides artificial intelligence-based analysis of financial market data, including candlestick charts, for educational and informational purposes only. The Service is not intended to provide financial, investment, or trading advice.
+                NEVODEX AI provides artificial intelligence-based analysis of financial market data, including candlestick charts, for educational and informational purposes only. The Service is not intended to provide financial, investment, or trading advice.
               </p>
             </section>
 
@@ -53,7 +52,7 @@ export default function TermsAndConditionsPage() {
             <section>
               <h2 className="text-lg font-bold text-foreground mb-2">5. Intellectual Property</h2>
               <p>
-                The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of FinSight AI and its licensors. The Service is protected by copyright, trademark, and other laws of both the United States and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of FinSight AI.
+                The Service and its original content (excluding content provided by users), features, and functionality are and will remain the exclusive property of NEVODEX AI and its licensors. The Service is protected by copyright, trademark, and other laws of both the United States and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of NEVODEX AI.
               </p>
             </section>
 
@@ -93,7 +92,7 @@ export default function TermsAndConditionsPage() {
             <section>
               <h2 className="text-lg font-bold text-foreground mb-2">9. Limitation of Liability</h2>
               <p>
-                IN NO EVENT SHALL FINSIGHT AI, NOR ITS DIRECTORS, EMPLOYEES, PARTNERS, AGENTS, SUPPLIERS, OR AFFILIATES, BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION, LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM (I) YOUR ACCESS TO OR USE OF OR INABILITY TO ACCESS OR USE THE SERVICE; (II) ANY CONDUCT OR CONTENT OF ANY THIRD PARTY ON THE SERVICE; (III) ANY CONTENT OBTAINED FROM THE SERVICE; AND (IV) UNAUTHORIZED ACCESS, USE OR ALTERATION OF YOUR TRANSMISSIONS OR CONTENT, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE) OR ANY OTHER LEGAL THEORY, WHETHER OR NOT WE HAVE BEEN INFORMED OF THE POSSIBILITY OF SUCH DAMAGE.
+                IN NO EVENT SHALL NEVODEX AI, NOR ITS DIRECTORS, EMPLOYEES, PARTNERS, AGENTS, SUPPLIERS, OR AFFILIATES, BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION, LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM (I) YOUR ACCESS TO OR USE OF OR INABILITY TO ACCESS OR USE THE SERVICE; (II) ANY CONDUCT OR CONTENT OF ANY THIRD PARTY ON THE SERVICE; (III) ANY CONTENT OBTAINED FROM THE SERVICE; AND (IV) UNAUTHORIZED ACCESS, USE OR ALTERATION OF YOUR TRANSMISSIONS OR CONTENT, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE) OR ANY OTHER LEGAL THEORY, WHETHER OR NOT WE HAVE BEEN INFORMED OF THE POSSIBILITY OF SUCH DAMAGE.
               </p>
             </section>
 

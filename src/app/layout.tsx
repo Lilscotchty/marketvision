@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -10,8 +9,8 @@ import { NotificationProvider } from '@/contexts/notification-context';
 import StyledComponentsRegistry from './registry'; // <-- 1. Import the registry
 
 export const metadata: Metadata = {
-  title: 'FinSight AI',
-  description: 'Advanced trading tools and insights by FinSight AI',
+  title: 'NEVODEX AI',
+  description: 'Advanced trading tools and insights by NEVODEX AI',
   icons: {
     icon: '/src/app/icon.jpg', // If placed in the public folder
   },

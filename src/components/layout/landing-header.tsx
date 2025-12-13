@@ -44,13 +44,13 @@ export function LandingHeader() {
             {/* Using your uploaded logo image */}
             <Image 
               src="/icon.jpg" 
-              alt="MarketVision Logo" 
+              alt="NEVODEX AI Logo" 
               fill 
               className="object-cover"
             />
           </div>
           <span className="font-headline text-xl font-bold tracking-tight text-white hidden sm:block">
-            MarketVision
+            NEVODEX AI
           </span>
         </div>
 

@@ -1,7 +1,12 @@
-
+import type { Metadata } from 'next';
 import { Info, Users, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: 'Learn about NEVODEX AI, our mission to democratize institutional-grade trading tools, and the team behind our predictive analytics platform.',
+};
 
 const teamMembers = [
   {
@@ -20,7 +25,7 @@ const teamMembers = [
     name: 'Michael Chen',
     role: 'Chief Technology Officer',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026706d',
-    bio: 'Michael oversees the entire tech stack, ensuring scalability, security, and performance of the FinSight platform.',
+    bio: 'Michael oversees the entire tech stack, ensuring scalability, security, and performance of the NEVODEX AI platform.',
   },
 ];
 
@@ -31,7 +36,7 @@ export default function AboutPage() {
         <header className="text-center">
           <h1 className="text-4xl font-headline font-bold tracking-tight sm:text-5xl flex items-center justify-center">
             <Info className="mr-3 h-10 w-10 text-accent" />
-            About <span className="text-accent">FinSight AI</span>
+            About <span className="text-accent">NEVODEX AI</span>
           </h1>
           <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
             Leveraging cutting-edge AI to provide traders with unparalleled market intelligence and predictive analytics.
@@ -47,7 +52,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                At FinSight AI, our mission is to democratize access to institutional-grade trading tools. We believe that the power of artificial intelligence can level the playing field, enabling individual traders to make more informed decisions with confidence.
+                At NEVODEX AI, our mission is to democratize access to institutional-grade trading tools. We believe that the power of artificial intelligence can level the playing field, enabling individual traders to make more informed decisions with confidence.
               </p>
               <p>
                 We are committed to building a platform that is not only powerful but also intuitive and educational. By translating complex market structures and AI predictions into clear, actionable insights, we empower our users to navigate the financial markets more effectively.

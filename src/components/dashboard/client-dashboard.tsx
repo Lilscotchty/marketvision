@@ -29,7 +29,8 @@ export function ClientDashboard() {
       </div>
 
       {/* --- CONTENT LAYER (z-10) --- */}
-      <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-10 pointer-events-none"> 
+      {/* UPDATED: Changed padding to px-2 on mobile for wider containers and increased max-width */}
+      <div className="relative z-10 max-w-7xl mx-auto px-0 py-6 md:p-8 space-y-10 pointer-events-none"> 
         {/* Note: pointer-events-none on container allows clicks to pass through to the canvas background 
             IF the elements inside don't catch them. 
             However, we need buttons/forms to work. 
@@ -37,7 +38,7 @@ export function ClientDashboard() {
         */}
         
         {/* Dashboard Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-8 pointer-events-auto">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-8 pointer-events-auto px-2 md:px-0">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-[10px] font-bold tracking-wide text-green-700 dark:text-green-500 uppercase">
@@ -53,7 +54,7 @@ export function ClientDashboard() {
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-              MarketVision <span className="text-muted-foreground font-light">Studio</span>
+              NEVODEX AI <span className="text-muted-foreground font-light">Studio</span>
             </h1>
             <p className="text-muted-foreground text-lg max-w-xl leading-relaxed">
               Institutional-grade chart analysis powered by autonomous AI agents.
@@ -80,7 +81,8 @@ export function ClientDashboard() {
         </header>
 
         {/* Main Content Stack */}
-        <div className="flex flex-col gap-12 pointer-events-auto">
+        {/* UPDATED: Increased gap on mobile to gap-24 */}
+        <div className="flex flex-col gap-10 md:gap-12 pointer-events-auto">
           
           {/* 1. The Engine */}
           <div className="w-full relative group">
@@ -103,6 +105,10 @@ export function ClientDashboard() {
                 {showStrategies ? <ChevronUp className="w-4 h-4 ml-1 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 ml-1 text-muted-foreground" />}
             </Button>
           </div>
+
+          <div className="flex flex-col gap-10 md:gap-12 pointer-events-auto"> </div>
+
+
 
           {/* 2. Neural Models Section */}
           {showStrategies && (

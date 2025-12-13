@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef } from 'react';
@@ -80,7 +79,7 @@ export const SniperEntryCard = ({
           </div>
         </div>
         <div className="h-full pt-2 flex flex-col items-end text-white/50">
-          <span className="text-[10px] leading-[12px]">FinSight</span>
+          <span className="text-[10px] leading-[12px]">NEVODEX</span>
           <span className="text-[10px] leading-[13px]">Sniper</span>
           <div 
             onClick={handleDownload}

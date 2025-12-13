@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { AppNotification } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context'; // Import Auth to check user status
+import { useAuth } from '@/contexts/auth-context';
 import { 
   getNotificationsAction, 
   createNotificationAction, 
@@ -31,9 +31,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth(); // Only fetch if user exists
+  const { user } = useAuth();
 
-  // 1. Fetch Notifications on Mount (and when user changes)
+  // 1. Fetch from DB
   const refreshNotifications = useCallback(async () => {
     if (!user) return;
     try {
@@ -52,13 +52,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (user) {
       refreshNotifications();
     } else {
-      setNotifications([]); // Clear if logged out
+      setNotifications([]);
     }
   }, [user, refreshNotifications]);
 
-  // 2. Add Notification (Triggers DB Write + Optimistic UI)
+  // 2. Add Notification -> DB + UI
   const addNotification = useCallback(async (notificationData: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
-    // A. Show Toast Immediately
+    // UI Toast
     if (notificationData.type === 'alert_trigger') {
         toast({
             title: `🔔 ${notificationData.title}`,
@@ -73,7 +73,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         });
     }
 
-    // B. Optimistic Update (Temporary ID)
+    // Optimistic Update
     const tempId = Math.random().toString(36).substr(2, 9);
     const newNotification: AppNotification = {
       ...notificationData,
@@ -83,43 +83,33 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
     setNotifications(prev => [newNotification, ...prev]);
 
-    // C. Write to Database
+    // Persist to DB
     await createNotificationAction(notificationData);
     
-    // D. Re-fetch to get real ID and server timestamp
+    // Refresh to get real ID from server
     refreshNotifications();
 
   }, [toast, refreshNotifications]);
 
-  // 3. Mark Read
   const markAsRead = useCallback(async (notificationId: string) => {
-    // Optimistic
     setNotifications(prev =>
       prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
     );
-    // DB Update
     await markNotificationReadAction(notificationId);
   }, []);
 
   const markAllAsRead = useCallback(async () => {
-    // Optimistic
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    // DB Update
     await markAllNotificationsReadAction();
   }, []);
 
-  // 4. Delete
   const deleteNotification = useCallback(async (notificationId: string) => {
-    // Optimistic
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    // DB Update
     await deleteNotificationAction(notificationId);
   }, []);
 
   const clearAllNotifications = useCallback(async () => {
-    // Optimistic
     setNotifications([]);
-    // DB Update
     await clearAllNotificationsAction();
   }, []);
 
