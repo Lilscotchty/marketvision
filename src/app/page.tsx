@@ -4,7 +4,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { ClientDashboard } from '@/components/dashboard/client-dashboard';
-import { LuxuryLandingPage } from '@/components/dashboard/landing-page-content'; // Updated import
+import { ReforgeLandingPage } from '@/components/dashboard/landing-page-content'; // <--- NEW IMPORT
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
@@ -30,7 +30,7 @@ export default function HomePage() {
             <ClientDashboard />
          </div>
       ) : (
-         <LuxuryLandingPage />
+         <ReforgeLandingPage />
       )}
     </main>
   );

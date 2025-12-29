@@ -1,19 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient, User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import type { UserAppData, Role } from '@/types';
 import { useRouter } from 'next/navigation';
-
-// Define the shape of the user profile you'll fetch from your Supabase table
-interface UserProfile {
-  id: string;
-  email: string;
-  roles: Role[];
-  has_active_subscription: boolean;
-  chart_analysis_trial_points: number;
-}
 
 interface AuthContextType {
   supabase: SupabaseClient;
@@ -26,12 +17,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Time constants
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 Minutes
+const AUTH_INIT_TIMEOUT = 2500; // 2.5 Seconds fail-safe
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserAppData | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Ref to track inactivity timeout
+  const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
 
   const fetchUserProfile = useCallback(async (supabaseUser: User) => {
     try {
@@ -42,10 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        // Ignore JWT expired errors as they will be resolved by the TOKEN_REFRESHED event
-        if (error.message && error.message.includes("JWT expired")) {
-           return null;
-        }
+        if (error.message && error.message.includes("JWT expired")) return null;
         console.error('Error fetching user profile:', error.message);
         return null;
       }
@@ -75,86 +70,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchUserProfile]);
 
-  useEffect(() => {
-    // 1. Set up the listener for future changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
-        
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-           await handleUserUpdate(session);
-        } else if (event === 'SIGNED_OUT') {
-           setUser(null);
-           setUserData(null);
-           router.push('/login');
-        }
-      }
-    );
-
-    // 2. Perform the initial session check
-    const checkInitialSession = async () => {
-      try {
-        // FIX: Destructure error to handle "Invalid Refresh Token" scenarios
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-            // Specifically handle invalid refresh tokens by clearing the session
-            if (error.message.includes("Invalid Refresh Token") || error.message.includes("Refresh Token Not Found")) {
-                console.warn("Session invalid. Clearing stale auth data.");
-                await supabase.auth.signOut();
-                setUser(null);
-                setUserData(null);
-                return;
-            }
-            // Log other errors but don't crash
-            console.error("Error checking initial session:", error.message);
-        }
-
-        await handleUserUpdate(data.session);
-      } catch (error) {
-        console.error("Unexpected error during session check:", error);
-      } finally {
-        // Only turn off loading once the initial check is complete
-        setLoading(false);
-      }
-    };
-
-    checkInitialSession();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, handleUserUpdate, router]);
+  // --- NEW: INACTIVITY & RECOVERY LOGIC ---
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    
+    inactivityTimer.current = setTimeout(async () => {
+      console.warn("User inactive. Clearing session for security.");
+      await logout();
+    }, INACTIVITY_LIMIT);
+  }, []);
 
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setUserData(null);
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     router.push('/login');
+    // Force a hard reload to clear any stale memory states if needed
+    window.location.reload(); 
   };
 
+  useEffect(() => {
+    // 1. Auth Change Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+           await handleUserUpdate(session);
+           setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+           setUser(null);
+           setUserData(null);
+           setLoading(false);
+        }
+      }
+    );
+
+    // 2. Initial Session Check with Safety Timeout
+    const checkInitialSession = async () => {
+      // Fail-safe: If Supabase takes too long, stop "loading" so the UI shows up
+      const timeoutId = setTimeout(() => {
+        if (loading) {
+          console.warn("Auth initialization timed out. Forcing UI display.");
+          setLoading(false);
+        }
+      }, AUTH_INIT_TIMEOUT);
+
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+            if (error.message.includes("Invalid Refresh Token")) {
+                await supabase.auth.signOut();
+            }
+        }
+        await handleUserUpdate(data.session);
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      }
+    };
+
+    // 3. Activity Listeners
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(name => document.addEventListener(name, resetInactivityTimer));
+    
+    // 4. Tab Visibility Check (Re-sync on return)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkInitialSession();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    checkInitialSession();
+    resetInactivityTimer();
+
+    return () => {
+      subscription.unsubscribe();
+      events.forEach(name => document.removeEventListener(name, resetInactivityTimer));
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [supabase, handleUserUpdate, resetInactivityTimer]);
+
   const hasRole = (role: Role): boolean => {
-    if (user?.email === 'pb7552212@gmail.com') {
-      return true; 
-    }
+    if (user?.email === 'pb7552212@gmail.com') return true; 
     return userData?.roles?.includes(role) ?? false;
   };
 
-  const value = {
-    supabase,
-    user,
-    userData,
-    loading,
-    logout,
-    hasRole,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ supabase, user, userData, loading, logout, hasRole }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
